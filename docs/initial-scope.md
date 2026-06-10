@@ -1,4 +1,10 @@
 # Mage-OS Extension Directory
+
+> **Superseded.** These are the original scoping notes, kept for history. The decided
+> design lives in [architecture.md](architecture.md) and [decisions.md](decisions.md).
+> Notably, the two-source design sketched below (PackageMaven + Packagist) was simplified
+> to PackageMaven-only — see decision 2.
+
 Want to create an interface that allows people to explore and discover available open source and free modules (and services) via the Mage-OS admin panel, or possibly also mage-os.org
 
 Some context: https://github.com/orgs/mage-os-lab/discussions/3

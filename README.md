@@ -1,25 +1,59 @@
 # Mage-OS Extension Directory
 
-An interface for exploring and discovering open source and free modules (and services) for Mage-OS / Magento — surfaced through the Mage-OS admin panel, and potentially mage-os.org.
+A trustworthy catalog for discovering quality open source modules for Mage-OS / Magento —
+a public website first, designed for embedding into the Mage-OS admin panel later.
 
-## Concept
+## How it works
 
-Merchants and developers have no easy, trustworthy way to discover quality open source extensions. This project aims to fix that with:
+There is no backend service. A scheduled GitHub Actions pipeline aggregates package data
+into versioned static JSON, and publishes it together with a prerendered catalog site on
+Cloudflare Pages. The JSON feed *is* the public API.
 
-- **Discovery Service** — a standalone app aggregating package data from sources like [PackageMaven](https://package-maven.com/) and Packagist, layered with a Mage-OS-curated trust overlay (partner levels, quality indicators, editorial picks), exposed via a clean API.
-- **Admin module** — a thin Magento/Mage-OS module that shows what's installed (via composer introspection) and embeds the Discovery Service to browse the catalog in-admin.
+```
+PackageMaven export ─┐
+                     ├─→ daily pipeline → /api/v1/*.json → static site (Cloudflare Pages)
+GitHub (READMEs/★) ──┤
+                     │
+data/vendors/*.json ─┘
+```
 
-Key principles:
+- **[PackageMaven](https://package-maven.com/)** is the structural data backbone: it
+  indexes ~750 Magento modules and tests them against real Magento versions, producing
+  quality tiers, PHPStan levels, build status, and verified compatibility. The
+  directory's universe is PackageMaven's index, with full attribution and links back.
+- **GitHub** supplies READMEs and stars at build time (optional, failure-tolerant).
+- **Mage-OS vendor trust files** — per-vendor JSON files in `data/vendors/`, edited by
+  pull request — add the trust layer: trusted-vendor badges, partner tiers, editorial
+  picks, and warnings that derank or hide problem packages.
+- A transparent, config-tunable **ranking** blends trust, quality, freshness, and
+  popularity into the default ordering, with the per-signal breakdown published in the
+  feed.
 
-- **Read-only in production** — no installs from the admin panel; "install" means a copyable `composer require` command.
-- **Trust signals** — combination of automated indicators (compatibility, quality tiers, build status) and manual Mage-OS curation.
-- **Decoupled** — the Discovery Service works inside or independently of Mage-OS, so it can power a public site, CLI tools, or CI checks later.
+The browse/search UI is also built as a standalone embeddable bundle
+(`directory-ui.js`), which is how the future Magento admin module will reuse it.
 
-## Background
+## Key principles
 
+- **Read-only in production** — no installs from any UI; "install" means a copyable
+  `composer require` command.
+- **Trust signals over completeness** — a curated, quality-tested universe rather than
+  all of Packagist.
+- **Static and simple** — no servers to run; the whole system is a build artifact, and
+  every trust-data change is a pull request.
+
+## Documentation
+
+- **[Architecture](docs/architecture.md)** — data flow, pipeline, feed schema, vendor
+  trust file format, ranking model, site/UI design, milestones, risks.
+- **[Decision log](docs/decisions.md)** — what was chosen, why, and what was rejected.
+- **[PackageMaven data contract](docs/packagemaven-data-contract.md)** — the data-access
+  proposal for PackageMaven's author.
+- [Initial scoping notes](docs/initial-scope.md) — historical; superseded by the above.
 - Original discussion: [mage-os-lab discussion #3](https://github.com/orgs/mage-os-lab/discussions/3)
-- Initial scoping notes: [docs/initial-scope.md](docs/initial-scope.md)
 
 ## Status
 
-Early concept / scoping. Nothing is built yet — see the docs for the current thinking.
+**Design phase.** The architecture is decided and documented; implementation has not
+started. The first implementation milestones run against fixture data — securing
+PackageMaven data access is the launch gate (see
+[milestones](docs/architecture.md#milestones)).
