@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /** Current published schema version for /api/v1 artifacts. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 1 as const;
 
 /** Packagist package name, e.g. "acme/module-widget". */
 export const packageName = z

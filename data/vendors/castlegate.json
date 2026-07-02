@@ -1,0 +1,21 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "castlegate",
+  "vendorName": "Castlegate Payments",
+  "url": "https://castlegate.example",
+  "trustedVendor": false,
+  "partnerTier": "silver",
+  "packages": {
+    "castlegate/module-fraud-shield": {
+      "warnings": [
+        {
+          "code": "security-advisory",
+          "severity": "hide",
+          "message": "Versions below 3.2.0 expose an unauthenticated admin endpoint; fixed upstream, listing hidden until most installs migrate.",
+          "date": "2026-06-15",
+          "evidenceUrl": "https://github.com/castlegate/module-fraud-shield/security/advisories/GHSA-xxxx-example"
+        }
+      ]
+    }
+  }
+}

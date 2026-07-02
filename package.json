@@ -13,11 +13,11 @@
     "node": ">=22"
   },
   "scripts": {
-    "pipeline": "tsx src/pipeline/run.ts",
-    "pipeline:fixture": "tsx src/pipeline/run.ts --source fixture",
+    "pipeline": "tsx src/pipeline/run.ts --out public",
+    "pipeline:fixture": "tsx src/pipeline/run.ts --source fixture --out public",
     "build": "npm run pipeline:fixture && astro build",
     "build:ui": "vite build --config vite.ui.config.ts",
-    "dev": "astro dev",
+    "dev": "npm run pipeline:fixture && astro dev",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && astro check",

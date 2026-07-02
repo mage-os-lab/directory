@@ -6,11 +6,10 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "target": "ES2022",
-    "baseUrl": ".",
     "paths": {
-      "@schema/*": ["src/schema/*"],
-      "@pipeline/*": ["src/pipeline/*"],
-      "@ui/*": ["src/ui/*"]
+      "@schema/*": ["./src/schema/*"],
+      "@pipeline/*": ["./src/pipeline/*"],
+      "@ui/*": ["./src/ui/*"]
     },
     "types": ["node"]
   },

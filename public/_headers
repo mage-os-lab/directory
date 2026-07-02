@@ -1,0 +1,7 @@
+# Cloudflare Pages response headers.
+# CORS-open /api/v1/* is what lets the embeddable bundle (Magento admin, other
+# origins) fetch the feed; the short max-age keeps manifest.json's freshness
+# check honest instead of pinned at the edge.
+/api/v1/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300, must-revalidate

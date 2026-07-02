@@ -1,0 +1,25 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "northware",
+  "vendorName": "Northware Commerce",
+  "url": "https://northware.example",
+  "trustedVendor": true,
+  "partnerTier": "gold",
+  "packages": {
+    "northware/module-order-export": {
+      "displayName": "Order Export Suite",
+      "editorialPick": true
+    },
+    "northware/module-order-sync": {
+      "warnings": [
+        {
+          "code": "unmaintained",
+          "severity": "derank",
+          "message": "No release since 2023; maintainer confirmed the module is in maintenance-only mode.",
+          "date": "2026-05-01",
+          "evidenceUrl": "https://github.com/northware/module-order-sync/issues/87"
+        }
+      ]
+    }
+  }
+}

@@ -107,8 +107,9 @@ A TypeScript script under `src/pipeline/`, run by GitHub Actions:
   5. Compute the ranking score (see [Ranking](#ranking)).
   6. Validate the assembled output against the schema (the pipeline validates its own
      output before publishing).
-  7. Emit deterministic, sorted JSON to `dist/api/v1/`, then build the site and deploy
-     everything to Cloudflare Pages.
+  7. Emit deterministic, sorted JSON to `public/api/v1/` (gitignored; `astro dev`
+     serves it and `astro build` copies it into `dist/`), then build the site and
+     deploy everything to Cloudflare Pages.
 - **Full rebuild every run.** At this corpus size a run takes minutes, and full rebuilds
   eliminate cache-invalidation bugs. The HTTP ETag cache is the only incrementalism.
 - **Failure semantics:** the pipeline publishes its latest *raw normalized PM snapshot*
