@@ -1,0 +1,191 @@
+---
+import Base from '../../../layouts/Base.astro';
+import {
+  loadFeed,
+  loadPackageDetail,
+  packageNameSegment,
+  vendorHref,
+} from '../../../lib/data.js';
+
+export function getStaticPaths() {
+  const feed = loadFeed();
+  // Detail pages are generated for every package, including withdrawn
+  // (trust.hidden) ones — the page stays reachable with a warning banner
+  // instead of link-rotting; only listing surfaces filter hidden packages.
+  return feed.packages.map((pkg) => ({
+    params: { vendor: pkg.vendor, name: packageNameSegment(pkg) },
+  }));
+}
+
+const { vendor, name } = Astro.params;
+const pkg = loadPackageDetail(vendor as string, name as string);
+
+const QUALITY_LABELS: Record<string, string> = {
+  'strict-compliant': 'Strict compliant',
+  'no-errors': 'No errors',
+  'ready-to-install': 'Ready to install',
+  'needs-help': 'Needs help',
+};
+
+const installCommand = `composer require ${pkg.name}`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: pkg.displayName,
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Magento 2',
+  description: pkg.description,
+  softwareVersion: pkg.latestVersion ?? undefined,
+  datePublished: pkg.latestReleasedAt ?? undefined,
+  license: pkg.license?.[0] ?? undefined,
+  url: `https://mage-os-directory.pages.dev/packages/${pkg.name}/`,
+  ...(pkg.repositoryUrl ? { codeRepository: pkg.repositoryUrl } : {}),
+  ...(pkg.popularity.installs !== null
+    ? {
+        interactionStatistic: {
+          '@type': 'InteractionCounter',
+          interactionType: 'https://schema.org/InstallAction',
+          userInteractionCount: pkg.popularity.installs,
+        },
+      }
+    : {}),
+};
+---
+
+<Base title={pkg.displayName} description={pkg.description}>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+  {
+    pkg.trust.hidden && (
+      <div class="withdrawn-banner" role="alert">
+        <h2>This listing has been withdrawn from search results</h2>
+        <p>
+          {pkg.displayName} no longer appears in default directory search results. It remains
+          reachable here for reference only — no automatic delisting means link rot.
+        </p>
+        <ul>
+          {pkg.trust.warnings.map((w) => (
+            <li>
+              {w.message}
+              {' '}
+              <a href={w.evidenceUrl} rel="noopener">evidence</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  <div class="detail-header">
+    <h1>{pkg.displayName}</h1>
+    <p class="package-name">
+      <code>{pkg.name}</code>
+    </p>
+    <p>{pkg.description}</p>
+  </div>
+
+  <div class="detail-badges">
+    <span class={`badge badge-${pkg.quality.tier}`}>{QUALITY_LABELS[pkg.quality.tier]}</span>
+    {pkg.quality.phpstanLevel !== null && (
+      <span class="badge">PHPStan level {pkg.quality.phpstanLevel}</span>
+    )}
+    <span class="badge">Build {pkg.quality.buildStatus}</span>
+    {pkg.trust.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
+    {pkg.trust.partnerTier && (
+      <span class={`badge badge-partner-${pkg.trust.partnerTier}`}>{pkg.trust.partnerTier} partner</span>
+    )}
+    {pkg.trust.editorialPick && <span class="badge badge-pick">Editors&rsquo; pick</span>}
+    {!pkg.trust.hidden && pkg.trust.warnings.length > 0 && (
+      <span class="badge badge-warning">
+        {pkg.trust.warnings.length} warning{pkg.trust.warnings.length === 1 ? '' : 's'}
+      </span>
+    )}
+  </div>
+
+  {
+    !pkg.trust.hidden && pkg.trust.warnings.length > 0 && (
+      <div class="withdrawn-banner">
+        <h2>Warnings on record</h2>
+        <ul>
+          {pkg.trust.warnings.map((w) => (
+            <li>
+              <strong>{w.severity}</strong>: {w.message}
+              {' '}
+              <a href={w.evidenceUrl} rel="noopener">evidence</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  <p>
+    <strong>Supported Magento versions:</strong>{' '}
+    {pkg.supportedMagento.length > 0 ? pkg.supportedMagento.join(', ') : 'Not reported'}
+  </p>
+
+  <p class="detail-stats">
+    {pkg.popularity.installs !== null && <span>{pkg.popularity.installs.toLocaleString()} installs</span>}
+    {pkg.popularity.githubStars !== null && <span>★ {pkg.popularity.githubStars.toLocaleString()} stars</span>}
+    {pkg.latestVersion && <span>Latest: v{pkg.latestVersion}</span>}
+    {pkg.latestReleasedAt && <span>Released {pkg.latestReleasedAt.slice(0, 10)}</span>}
+  </p>
+
+  <div class="install-block">
+    <code id="install-command">{installCommand}</code>
+    <button type="button" id="copy-install" data-command={installCommand}>
+      Copy
+    </button>
+  </div>
+  <script>
+    const button = document.getElementById('copy-install');
+    button?.addEventListener('click', async () => {
+      const command = button.getAttribute('data-command') ?? '';
+      try {
+        await navigator.clipboard.writeText(command);
+        const original = button.textContent;
+        button.textContent = 'Copied!';
+        setTimeout(() => {
+          button.textContent = original;
+        }, 1500);
+      } catch {
+        // Clipboard API unavailable/denied — the command is still selectable text.
+      }
+    });
+  </script>
+
+  <div class="readme">
+    {
+      pkg.readmeHtml ? (
+        <Fragment set:html={pkg.readmeHtml} />
+      ) : (
+        <p>
+          No README is available yet.
+          {pkg.repositoryUrl ? (
+            <>
+              {' '}
+              See the <a href={pkg.repositoryUrl} rel="noopener">source repository</a>.
+            </>
+          ) : null}
+        </p>
+      )
+    }
+  </div>
+
+  <div class="links-section">
+    <h2>Links</h2>
+    <ul>
+      <li><a href={pkg.links.packagist} rel="noopener">Packagist</a></li>
+      <li>
+        <a href={pkg.links.packagemaven} rel="noopener">PackageMaven</a>
+        {' '}<span class="pm-attribution">— quality data by PackageMaven</span>
+      </li>
+      {pkg.links.repository && <li><a href={pkg.links.repository} rel="noopener">Repository</a></li>}
+      {pkg.links.issues && <li><a href={pkg.links.issues} rel="noopener">Issues</a></li>}
+      {pkg.links.docs && <li><a href={pkg.links.docs} rel="noopener">Documentation</a></li>}
+    </ul>
+  </div>
+
+  <a class="vendor-link" href={vendorHref(pkg.vendor)}>← All packages from {pkg.vendor}</a>
+</Base>
