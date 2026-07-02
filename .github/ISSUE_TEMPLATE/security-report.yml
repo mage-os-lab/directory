@@ -1,0 +1,43 @@
+name: Security report — malicious or dangerous package
+description: >-
+  Report a listed package you believe is malicious, backdoored, or dangerous.
+  Credible reports get an expedited response per the trust policy.
+title: '[security] <package name>'
+labels: [security]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        If the details should not be public before triage (e.g. an
+        unpatched vulnerability), do not file this issue — email the
+        maintainers instead: rhoerr@users.noreply.github.com. See
+        [docs/trust-policy.md](../../docs/trust-policy.md) for how reports
+        are handled.
+  - type: input
+    id: package
+    attributes:
+      label: Package
+      placeholder: vendor/module-name
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: What did you find, and how can it be verified?
+      description: >-
+        Concrete, checkable claims: code locations, advisory links,
+        reproduction steps. Unverifiable accusations can't be acted on.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Affected versions
+      placeholder: e.g. < 3.2.0, or all
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I believe this report is accurate and have linked evidence that can be independently checked.
+          required: true
