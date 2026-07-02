@@ -68,8 +68,12 @@ const jsonLd = {
           {pkg.trust.warnings.map((w) => (
             <li>
               {w.message}
-              {' '}
-              <a href={w.evidenceUrl} rel="noopener">evidence</a>
+              {w.evidenceUrl && (
+                <>
+                  {' '}
+                  <a href={w.evidenceUrl} rel="noopener">evidence</a>
+                </>
+              )}
             </li>
           ))}
         </ul>
@@ -111,8 +115,12 @@ const jsonLd = {
           {pkg.trust.warnings.map((w) => (
             <li>
               <strong>{w.severity}</strong>: {w.message}
-              {' '}
-              <a href={w.evidenceUrl} rel="noopener">evidence</a>
+              {w.evidenceUrl && (
+                <>
+                  {' '}
+                  <a href={w.evidenceUrl} rel="noopener">evidence</a>
+                </>
+              )}
             </li>
           ))}
         </ul>

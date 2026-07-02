@@ -1,0 +1,85 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="How to get listed"
+  description="How to get a Magento or Mage-OS module listed in the Mage-OS Extension Directory."
+>
+  <div class="prose">
+    <h1>How to get listed</h1>
+    <p>
+      The directory's universe is exactly <a href="https://package-maven.com/" rel="noopener">PackageMaven</a>'s
+      index. If your module is in PackageMaven, it shows up here automatically the next time the
+      pipeline runs; there's no separate submission to this site.
+    </p>
+
+    <h2>Steps</h2>
+    <ol>
+      <li>
+        <strong>Publish on Packagist.</strong> Your module needs a public Composer package name
+        (<code>vendor/module-name</code>) on <a href="https://packagist.org/" rel="noopener">Packagist</a>.
+      </li>
+      <li>
+        <strong>Submit to PackageMaven.</strong> Use the "Submit a Module" form on{' '}
+        <a href="https://package-maven.com/" rel="noopener">package-maven.com</a>. PackageMaven
+        tests each module against real Magento versions and produces the quality tier, PHPStan
+        level, and build status shown on every listing here — that's what makes compatibility
+        data trustworthy instead of guessed from version constraints.
+      </li>
+      <li>
+        <strong>Optional: request a vendor trust file.</strong> Trusted-vendor badges, partner
+        tiers, and editorial picks come from a human-curated overlay maintained in this
+        repository, not from PackageMaven. Open a pull request against{' '}
+        <a href="https://github.com/rhoerr/mage-os.directory" rel="noopener">the GitHub repository</a>{' '}
+        adding or editing <code>data/vendors/&lt;vendor&gt;.json</code>. Read the{' '}
+        <a
+          href="https://github.com/rhoerr/mage-os.directory/blob/main/docs/trust-policy.md"
+          rel="noopener"
+        >
+          trust policy
+        </a>{' '}
+        first — it covers vendor identity verification, trusted-vendor eligibility, and how
+        editorial picks are kept independent of partnership.
+      </li>
+    </ol>
+
+    <h2>What the badges mean</h2>
+    <ul>
+      <li>
+        <strong>Trusted vendor</strong> — a sustained track record (12+ months of maintenance, no
+        open serious warnings, responsive to issues), granted or revoked only by maintainer PR
+        review.
+      </li>
+      <li>
+        <strong>Partner tier</strong> (platinum / gold / silver / bronze) reflects a relationship
+        with the Mage-OS organization, which <strong>may be commercial</strong>. It contributes a
+        small, fixed, published weight to the ranking score — there is no pay-to-rank beyond that
+        bounded weight; a commercial partnership buys a badge and a bounded ranking bump, never
+        arbitrary placement.
+      </li>
+      <li>
+        <strong>Editors&rsquo; pick</strong> is a maintainer judgment about quality or usefulness,
+        independent of partner status. Being a partner does not make a package more likely to be
+        picked, and picks happen for non-partner vendors routinely.
+      </li>
+    </ul>
+
+    <h2>Warnings and disputes</h2>
+    <p>
+      Curators can attach warnings to a listing (info, derank, or hide severity) when there's a
+      documented problem — for example an unmaintained package or a security advisory. Any
+      <code>derank</code> or <code>hide</code> warning must link public evidence, and (outside a
+      security emergency) the vendor is notified with a response window before it merges. If you
+      believe a warning on your package is wrong or resolved, open an issue or a counter-PR with
+      evidence; a maintainer who wasn't involved in the original warning reviews the dispute. Full
+      details live in the{' '}
+      <a
+        href="https://github.com/rhoerr/mage-os.directory/blob/main/docs/trust-policy.md"
+        rel="noopener"
+      >
+        trust policy
+      </a>.
+    </p>
+  </div>
+</Base>
