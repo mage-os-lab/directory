@@ -1,0 +1,79 @@
+import { z } from 'zod';
+import {
+  buildStatus,
+  categorySlug,
+  isoDateTime,
+  packageName,
+  qualityTier,
+} from './common.js';
+
+/**
+ * The normalized PackageMaven source record — the shape the PM fetcher emits
+ * after normalizing whatever delivery format PM provides (export file, API,
+ * or a manually shared snapshot). This is the pipeline's internal contract
+ * with its structural source; docs/packagemaven-data-contract.md is the
+ * human-readable version sent to PM.
+ */
+export const sourcePackage = z.object({
+  /** Packagist name — the join key. */
+  name: packageName,
+  displayName: z.string().min(1),
+  description: z.string().default(''),
+  /** PM's raw category label(s), mapped to canonical slugs during merge. */
+  rawCategories: z.array(z.string()).default([]),
+  repositoryUrl: z.url().nullable().default(null),
+  latestVersion: z.string().nullable().default(null),
+  latestReleasedAt: isoDateTime.nullable().default(null),
+  /** Magento versions PM verified the module against, e.g. ["2.4.7"]. */
+  supportedMagento: z.array(z.string()).default([]),
+  qualityTier: qualityTier,
+  phpstanLevel: z.number().int().min(0).max(10).nullable().default(null),
+  buildStatus: buildStatus.default('unknown'),
+  installs: z.number().int().min(0).nullable().default(null),
+  /** Nice-to-have fields; null when PM's export doesn't carry them. */
+  license: z.array(z.string()).nullable().default(null),
+  abandoned: z.boolean().nullable().default(null),
+});
+export type SourcePackage = z.infer<typeof sourcePackage>;
+
+/**
+ * A PackageMaven snapshot: the raw normalized source universe. The pipeline
+ * persists its latest successful snapshot (dist/api/v1/sources/packagemaven.json)
+ * and carries it forward when a fetch fails, so trust data and ranking are
+ * always re-merged from source rather than from previously merged output.
+ */
+export const packageMavenSnapshot = z.object({
+  schemaVersion: z.literal(1),
+  fetchedAt: isoDateTime,
+  /** Where this snapshot came from: live fetch, manual drop, or fixture. */
+  origin: z.enum(['live', 'manual', 'fixture']),
+  packages: z.array(sourcePackage),
+});
+export type PackageMavenSnapshot = z.infer<typeof packageMavenSnapshot>;
+
+/** Per-source status block published in the feed. */
+export const sourceStatus = z.object({
+  id: z.enum(['packagemaven', 'github']),
+  ok: z.boolean(),
+  /** True when this run reused a previous snapshot because the fetch failed. */
+  stale: z.boolean(),
+  fetchedAt: isoDateTime.nullable(),
+});
+export type SourceStatus = z.infer<typeof sourceStatus>;
+
+/** Categories taxonomy file (data/categories.json). */
+export const categoriesFile = z.object({
+  $schema: z.string().optional(),
+  categories: z.array(
+    z.object({
+      slug: categorySlug,
+      name: z.string().min(1),
+      description: z.string().optional(),
+      /** PM raw category labels that map onto this canonical category. */
+      packageMavenLabels: z.array(z.string()).default([]),
+    }),
+  ),
+  /** Canonical slug for packages whose PM category maps to nothing. */
+  fallbackCategory: categorySlug,
+});
+export type CategoriesFile = z.infer<typeof categoriesFile>;

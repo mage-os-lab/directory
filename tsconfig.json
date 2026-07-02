@@ -1,0 +1,19 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "baseUrl": ".",
+    "paths": {
+      "@schema/*": ["src/schema/*"],
+      "@pipeline/*": ["src/pipeline/*"],
+      "@ui/*": ["src/ui/*"]
+    },
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "test/**/*", "vite.ui.config.ts"],
+  "exclude": ["dist", "node_modules"]
+}

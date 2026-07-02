@@ -92,8 +92,15 @@ custom-property theming.
 
 **Why:** the planned Magento admin module embeds this exact bundle later
 (`linkMode: 'event'`), so the public site and the admin experience share one codebase.
-Plain prefixed CSS (no Tailwind) is what makes embedding into the Magento admin safe —
-no global resets to fight — and keeps the contributor barrier low.
+
+**Amended after review:** class prefixes only stop our styles leaking *out*; they don't
+stop a host page's global element selectors (the Magento admin has plenty) leaking
+*in*. The bundle therefore renders inside an open Shadow DOM by default
+(`shadow: true`), with theming via CSS custom properties, which pierce the boundary.
+Plain prefixed CSS (no Tailwind) remains the styling approach for simplicity and a low
+contributor barrier — but Shadow DOM, not prefixing, is the isolation mechanism. The
+`mosd:select`/`mosd:error` event contract is specified in architecture.md so the admin
+module isn't designed against a moving target.
 
 ## 7. Slim feed + per-package detail files
 
@@ -114,14 +121,25 @@ per-component breakdown published in the feed.
 package ranked here?" is always answerable from the published data. Deranking and
 hiding are explicit, auditable acts recorded in the trust files — never silent.
 
-## 9. Launch gated on PackageMaven data
+## 9. Launch gated on PackageMaven *data*, not PackageMaven's API
 
-**Decision:** the public launch waits until live PM data is integrated (milestone M4).
-All other milestones build and preview against fixture data.
+**Decision:** the public launch waits until real PM data is in the feed (milestone
+M4a) — but "PM data" means *any machine-readable delivery*, including a manually
+regenerated export at whatever cadence PM's author finds convenient. Automated
+integration against a PM API (M4b) deliberately happens *after* launch.
 
 **Why:** quality signals are the directory's core value proposition; launching with
-"quality: pending" on every package would undercut it. Project decision, accepted
-trade-off: PM outreach sits on the critical path.
+"quality: pending" on every package would undercut it. But gating on PM's API would
+tie the launch to PM's engineering timeline — and as of 2026-07 that timeline is
+months out, while PM's author is already willing to collaborate (contract sent, he
+asked for specifics). The pipeline normalizes any delivery mechanism into the same
+internal snapshot (`origin: live | manual | fixture`), and the site discloses the
+refresh cadence with a "data as of" notice, so a manual export is an honest launch
+basis rather than a compromise.
+
+**Amended after review:** originally "launch gated on M4 (live PM integration)" as a
+single monolithic milestone; split into M4a/M4b when PM's positive-but-slow timeline
+made API-or-nothing gating needlessly expensive.
 
 ## 10. Cloudflare Pages, deployed from GitHub Actions
 
@@ -137,3 +155,23 @@ tier, global CDN, and the later domain move is trivial with the feed contract un
 
 **Rejected:** GitHub Pages (works, but adds a second hosting platform to operate when
 the rest of the infrastructure is on Cloudflare).
+
+## 11. Trust actions are governed, evidenced, and disputable
+
+**Decision:** trust-file powers (trusted-vendor badges, partner tiers, editorial picks,
+warnings) operate under a published [trust policy](trust-policy.md): vendor identity is
+verified before a trust file merges, `derank`/`hide` warnings require linked public
+evidence (schema-enforced via `evidenceUrl`) and vendor notification with a response
+window, editorial picks are firewalled from partner status, partner-tier ranking
+influence is disclosed on-site, and there is a public reporting channel plus an
+expedited hide path for malicious packages.
+
+**Why:** warnings are public claims about vendors' software, and ranking boosts imply
+endorsement — both are reputational (and potentially legal) surface. A PR + CODEOWNERS
+mechanism says *how* changes merge but not *what's legitimate*; without published
+criteria, the first contested derank or namespace-squatting attempt would be handled ad
+hoc in public. Cheap to write down now, expensive to improvise later.
+
+**Rejected:** pure maintainer discretion (opaque, indefensible under dispute);
+requiring evidence for `info`-severity notes too (friction disproportionate to a badge
+that carries no penalty).
