@@ -1,10 +1,13 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import {
+  byScoreDesc,
   loadFeed,
   loadPackageDetail,
+  packageHref,
   packageNameSegment,
   vendorHref,
+  visiblePackages,
 } from '../../../lib/data.js';
 
 export function getStaticPaths() {
@@ -28,6 +31,16 @@ const QUALITY_LABELS: Record<string, string> = {
 };
 
 const installCommand = `composer require ${pkg.name}`;
+
+// Related listings (marketplace pattern): same vendor, then same category —
+// each excluding the package itself and anything already shown.
+const others = visiblePackages(loadFeed()).filter((p) => p.name !== pkg.name);
+const moreFromVendor = others.filter((p) => p.vendor === pkg.vendor).sort(byScoreDesc).slice(0, 3);
+const shown = new Set(moreFromVendor.map((p) => p.name));
+const similar = others
+  .filter((p) => !shown.has(p.name) && p.categories.some((c) => pkg.categories.includes(c)))
+  .sort(byScoreDesc)
+  .slice(0, 3);
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -230,6 +243,39 @@ const jsonLd = {
       {pkg.links.docs && <li><a href={pkg.links.docs} rel="noopener">Documentation</a></li>}
     </ul>
   </div>
+
+  {
+    (moreFromVendor.length > 0 || similar.length > 0) && (
+      <div class="related">
+        {moreFromVendor.length > 0 && (
+          <section class="related-section">
+            <h2>More from {pkg.vendor}</h2>
+            <ul class="related-grid">
+              {moreFromVendor.map((p) => (
+                <li class="related-card">
+                  <a href={packageHref(p)}>{p.displayName}</a>
+                  <p class="related-desc">{p.description}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {similar.length > 0 && (
+          <section class="related-section">
+            <h2>Similar modules</h2>
+            <ul class="related-grid">
+              {similar.map((p) => (
+                <li class="related-card">
+                  <a href={packageHref(p)}>{p.displayName}</a>
+                  <p class="related-desc">{p.description}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+    )
+  }
 
   <a class="vendor-link" href={vendorHref(pkg.vendor)}>← All packages from {pkg.vendor}</a>
 </Base>

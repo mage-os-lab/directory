@@ -95,6 +95,12 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   const [installFilter, setInstallFilter] = useState<'' | InstallState>('');
   const [marked, setMarked] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
+  const [copiedCard, setCopiedCard] = useState<string | null>(null);
+
+  const categoryNames = useMemo(
+    () => new Map(feed.categories.map((c) => [c.slug, c.name])),
+    [feed],
+  );
 
   const [testedOnly, setTestedOnly] = useState(false);
 
@@ -225,6 +231,14 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     );
   };
 
+  const copyRequire = (pkg: PackageSummary) => {
+    const single = composerCommand([{ name: pkg.name, version: targetVersion(pkg) }]);
+    navigator.clipboard?.writeText(single).then(
+      () => setCopiedCard(pkg.name),
+      () => {},
+    );
+  };
+
   const magentoBadge = (pkg: PackageSummary) => {
     const support = magentoSupport(pkg);
     if (support === null) return null;
@@ -347,22 +361,67 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
       <ul class="mosd-results">
         {results.map((pkg) => (
           <li key={pkg.name} class="mosd-card">
-            <div class="mosd-card-head">
-              <a
-                class="mosd-card-title"
-                href={packageUrl(baseUrl, pkg)}
-                onClick={(e) => select(e, pkg)}
-              >
-                {pkg.displayName}
-              </a>
-              <span class={`mosd-badge mosd-badge-quality mosd-badge-${pkg.quality.tier}`}>
-                {QUALITY_LABELS[pkg.quality.tier]}
-              </span>
+            <div class="mosd-card-band">
+              <div class="mosd-card-head">
+                <a
+                  class="mosd-card-title"
+                  href={packageUrl(baseUrl, pkg)}
+                  onClick={(e) => select(e, pkg)}
+                >
+                  {pkg.displayName}
+                </a>
+                <span class={`mosd-badge mosd-badge-quality mosd-badge-${pkg.quality.tier}`}>
+                  {QUALITY_LABELS[pkg.quality.tier]}
+                </span>
+              </div>
+              <p class="mosd-card-name">
+                <code>{pkg.name}</code>
+              </p>
             </div>
-            <p class="mosd-card-name">
-              <code>{pkg.name}</code>
+            <div class="mosd-card-body">
+            <p class="mosd-card-vendor">
+              by{' '}
+              {linkMode === 'href' ? (
+                <a href={`${baseUrl}/vendors/${pkg.vendor}/`}>{pkg.vendor}</a>
+              ) : (
+                pkg.vendor
+              )}
             </p>
+            <div class="mosd-card-categories">
+              {pkg.categories.slice(0, 3).map((slug) => (
+                <button
+                  key={slug}
+                  type="button"
+                  class="mosd-chip"
+                  onClick={() => setCategory(slug)}
+                >
+                  {categoryNames.get(slug) ?? slug}
+                </button>
+              ))}
+            </div>
             <p class="mosd-card-description">{pkg.description}</p>
+            <p class="mosd-card-stats">
+              {pkg.popularity.githubStars !== null && (
+                <span class="mosd-stat">
+                  ★ <strong>{pkg.popularity.githubStars.toLocaleString()}</strong>
+                </span>
+              )}
+              {pkg.popularity.installs !== null && (
+                <span class="mosd-stat">
+                  ⤓ <strong>{pkg.popularity.installs.toLocaleString()}</strong>
+                </span>
+              )}
+              {pkg.quality.phpstanLevel !== null && (
+                <span class="mosd-stat">
+                  PHPStan <strong>L{pkg.quality.phpstanLevel}</strong>
+                </span>
+              )}
+              {pkg.latestVersion && (
+                <span class="mosd-stat">
+                  <strong>v{pkg.latestVersion}</strong>
+                </span>
+              )}
+            </p>
             <p class="mosd-card-meta">
               {pkg.trust.editorialPick && <span class="mosd-badge mosd-badge-pick">Editors’ pick</span>}
               {pkg.trust.trustedVendor && (
@@ -378,13 +437,6 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                   {pkg.trust.warnings.length} warning{pkg.trust.warnings.length === 1 ? '' : 's'}
                 </span>
               )}
-              {pkg.popularity.installs !== null && (
-                <span class="mosd-stat">{pkg.popularity.installs.toLocaleString()} installs</span>
-              )}
-              {pkg.popularity.githubStars !== null && (
-                <span class="mosd-stat">★ {pkg.popularity.githubStars.toLocaleString()}</span>
-              )}
-              {pkg.latestVersion && <span class="mosd-stat">v{pkg.latestVersion}</span>}
               {magentoBadge(pkg)}
               {installState(pkg) === 'installed' && (
                 <span class="mosd-badge mosd-badge-installed">
@@ -397,6 +449,17 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                 </span>
               )}
             </p>
+            <div class="mosd-require">
+              <code>{composerCommand([{ name: pkg.name, version: targetVersion(pkg) }])}</code>
+              <button
+                type="button"
+                class="mosd-require-copy"
+                aria-label={`Copy composer command for ${pkg.name}`}
+                onClick={() => copyRequire(pkg)}
+              >
+                {copiedCard === pkg.name ? '✓ Copied' : 'Copy'}
+              </button>
+            </div>
             {props.selectable && installState(pkg) !== 'installed' && (
               <p class="mosd-card-actions">
                 <button
@@ -412,6 +475,18 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                 </button>
               </p>
             )}
+            {pkg.quality.tier === 'needs-help' && (
+              <p class="mosd-contribute">
+                {pkg.repositoryUrl ? (
+                  <a href={pkg.repositoryUrl} rel="noopener">
+                    Needs help — contribute on the repository →
+                  </a>
+                ) : (
+                  'Needs help — contributions welcome'
+                )}
+              </p>
+            )}
+            </div>
           </li>
         ))}
       </ul>
