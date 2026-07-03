@@ -46,4 +46,12 @@ export interface MountOptions {
    * dispatches mosd:selection on the mount element.
    */
   selectable?: boolean;
+  /**
+   * The host shop's Magento/Mage-OS version (e.g. "2.4.6"), as known to the
+   * admin module. When provided, cards get tested-with badges (from PM's
+   * empirical test matrix — "not tested" never means "incompatible"), a
+   * tested-only filter, and the install list pins the newest release
+   * verified against this version instead of the latest.
+   */
+  magentoVersion?: string;
 }

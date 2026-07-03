@@ -133,6 +133,42 @@ const jsonLd = {
     {pkg.supportedMagento.length > 0 ? pkg.supportedMagento.join(', ') : 'Not reported'}
   </p>
 
+  {
+    pkg.releases.length > 1 && (
+      <details class="release-matrix">
+        <summary>Version compatibility ({pkg.releases.length} tested releases)</summary>
+        <table>
+          <thead>
+            <tr>
+              <th>Release</th>
+              <th>Released</th>
+              <th>Verified against</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pkg.releases.map((release) => (
+              <tr>
+                <td>
+                  <code>v{release.version}</code>
+                </td>
+                <td>{release.releasedAt ? release.releasedAt.slice(0, 10) : '—'}</td>
+                <td>
+                  {release.supportedMagento.length > 0
+                    ? release.supportedMagento.join(', ')
+                    : 'Not reported'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p class="release-matrix-note">
+          Compatibility is PackageMaven's verified test data. A version absent from a row was
+          not tested against that release — that is not a statement of incompatibility.
+        </p>
+      </details>
+    )
+  }
+
   <p class="detail-stats">
     {pkg.popularity.installs !== null && <span>{pkg.popularity.installs.toLocaleString()} installs</span>}
     {pkg.popularity.githubStars !== null && <span>★ {pkg.popularity.githubStars.toLocaleString()} stars</span>}

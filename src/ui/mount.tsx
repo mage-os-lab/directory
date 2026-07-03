@@ -15,6 +15,10 @@
  *    adds mark-for-install toggles and a copyable composer-require tray, with
  *    every change dispatched as CustomEvent('mosd:selection',
  *    {detail: {packages, command}}).
+ *  - magentoVersion (the host shop's Magento/Mage-OS version) adds
+ *    tested-with badges from PM's test matrix and a tested-only filter, and
+ *    makes the install list pin the newest release verified against that
+ *    version ("not tested" is never presented as "incompatible").
  */
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
@@ -28,7 +32,7 @@ import styles from './directory.css?inline';
 
 interface RootProps {
   options: Required<Pick<MountOptions, 'feedUrl' | 'linkMode' | 'baseUrl'>> &
-    Pick<MountOptions, 'initialFilters' | 'installed' | 'selectable'>;
+    Pick<MountOptions, 'initialFilters' | 'installed' | 'selectable' | 'magentoVersion'>;
   host: HTMLElement;
 }
 
@@ -91,6 +95,7 @@ function Root({ options, host }: RootProps) {
       initialFilters={options.initialFilters}
       installed={options.installed}
       selectable={options.selectable}
+      magentoVersion={options.magentoVersion}
       onSelect={(detail: SelectDetail) => {
         host.dispatchEvent(
           new CustomEvent('mosd:select', { bubbles: true, composed: true, detail }),
@@ -113,6 +118,7 @@ export function mountDirectory(el: HTMLElement, options: MountOptions = {}): () 
     initialFilters: options.initialFilters,
     installed: options.installed,
     selectable: options.selectable ?? false,
+    magentoVersion: options.magentoVersion,
   } as const;
   const shadow = options.shadow ?? true;
 

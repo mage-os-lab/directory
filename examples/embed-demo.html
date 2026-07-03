@@ -123,11 +123,17 @@
 
       // MageOSDirectory is the global exposed by the IIFE build
       // (vite.ui.config.ts: build.lib.name = "MageOSDirectory").
+      // magentoVersion is the shop's own version (also from composer.lock):
+      // cards get tested-with badges from PM's test matrix and the install
+      // list pins the newest release verified against it — e.g. the
+      // payment-gateway update below targets v5.0.0 (last release tested on
+      // 2.4.6), not the 2.4.7-only v5.1.0.
       MageOSDirectory.mountDirectory(host, {
         feedUrl: 'http://localhost:4321/api/v1/feed.json',
         linkMode: 'event',
         installed,
         selectable: true,
+        magentoVersion: '2.4.6',
       });
     </script>
   </body>

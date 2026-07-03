@@ -161,6 +161,9 @@
 .mosd-badge-warning { background: #ffe3e3; border-color: #ffa8a8; color: #c92a2a; }
 .mosd-badge-installed { background: #d3f9d8; border-color: #8ce99a; color: #2b8a3e; text-transform: none; }
 .mosd-badge-update { background: #fff3bf; border-color: #ffd43b; color: #997404; text-transform: none; }
+.mosd-badge-compat-ok { background: #e5f4ef; border-color: #9cd6bf; color: #14735c; text-transform: none; }
+.mosd-badge-compat-older { background: #fff3bf; border-color: #ffd43b; color: #997404; text-transform: none; }
+.mosd-badge-compat-untested { background: var(--mosd-bg-soft); border-color: var(--mosd-border); color: var(--mosd-fg-muted); text-transform: none; }
 
 .mosd-stat {
   color: var(--mosd-fg-muted);

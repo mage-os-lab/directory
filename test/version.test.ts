@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isNewer } from '../src/ui/version.js';
+import { compareVersions, isNewer } from '../src/shared/version.js';
 
 describe('isNewer', () => {
   it('compares numeric segments', () => {
@@ -24,5 +24,23 @@ describe('isNewer', () => {
   it('never flags unparseable versions', () => {
     expect(isNewer('1.5.0', 'dev-master')).toBe(false);
     expect(isNewer('dev-main', '1.0.0')).toBe(false);
+  });
+});
+
+describe('compareVersions', () => {
+  it('orders numerically, not lexicographically', () => {
+    expect(['2.4.10', '2.4.9', '2.4.7'].sort((a, b) => compareVersions(b, a))).toEqual([
+      '2.4.10',
+      '2.4.9',
+      '2.4.7',
+    ]);
+  });
+
+  it('sorts unparseable versions last, deterministically', () => {
+    expect(['dev-master', '1.0.0', 'dev-main'].sort((a, b) => compareVersions(b, a))).toEqual([
+      '1.0.0',
+      'dev-master',
+      'dev-main',
+    ]);
   });
 });

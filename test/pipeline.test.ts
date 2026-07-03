@@ -73,6 +73,42 @@ describe('pipeline on fixture data', () => {
     expect(overridden.categories).toEqual(['catalog']);
   });
 
+  it('derives per-Magento compatibility from the per-release test matrix', async () => {
+    await runPipeline({ source: 'fixture', rootDir, outDir, now });
+    const feed = feedSchema.parse(
+      JSON.parse(fs.readFileSync(path.join(outDir, 'api/v1/feed.json'), 'utf8')),
+    );
+    const byName = new Map(feed.packages.map((p) => [p.name, p]));
+
+    // Fixture matrix: latest 5.1.0 is 2.4.7-only; 5.0.0 covers 2.4.6, 4.9.0 covers 2.4.5.
+    const gateway = byName.get('castlegate/module-payment-gateway')!;
+    expect(gateway.compatibility).toEqual({
+      '2.4.7': '5.1.0',
+      '2.4.6': '5.0.0',
+      '2.4.5': '4.9.0',
+    });
+
+    // No per-release data → compatibility degrades to the latest release only.
+    const seo = byName.get('brightloom/module-seo-toolkit')!;
+    expect(seo.compatibility).toEqual({
+      '2.4.7': '3.2.1',
+      '2.4.6': '3.2.1',
+      '2.4.5': '3.2.1',
+    });
+
+    // Detail files publish the full matrix, newest release first, latest folded in.
+    const detail = packageDetail.parse(
+      JSON.parse(
+        fs.readFileSync(
+          path.join(outDir, 'api/v1/packages/castlegate/module-payment-gateway.json'),
+          'utf8',
+        ),
+      ),
+    );
+    expect(detail.releases.map((r) => r.version)).toEqual(['5.1.0', '5.0.0', '4.9.0', '4.8.0']);
+    expect(detail.releases[0].supportedMagento).toEqual(['2.4.7']);
+  });
+
   it('ranking components are published and scores are ordered sensibly', async () => {
     await runPipeline({ source: 'fixture', rootDir, outDir, now });
     const feed = feedSchema.parse(

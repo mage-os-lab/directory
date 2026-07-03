@@ -1,8 +1,15 @@
 import type { CategoriesFile, PackageMavenSnapshot, SourcePackage } from '../schema/source.js';
 import type { PackageWarning, VendorFile } from '../schema/vendor-file.js';
-import type { Feed, PackageDetail, PackageSummary, VendorSummary } from '../schema/feed.js';
+import type {
+  Feed,
+  PackageDetail,
+  PackageRelease,
+  PackageSummary,
+  VendorSummary,
+} from '../schema/feed.js';
 import type { RankingConfig } from '../schema/ranking-config.js';
 import { SCHEMA_VERSION } from '../schema/common.js';
+import { compareVersions, isNewer, parseVersion } from '../shared/version.js';
 import { buildRankingContext, rankPackage } from './rank.js';
 
 /** Per-package GitHub extras; both nullable, failure-tolerant. */
@@ -47,6 +54,49 @@ export function mapCategories(rawCategories: string[], categories: CategoriesFil
   return [...slugs].sort();
 }
 
+/**
+ * PM's per-release test matrix with the latest release folded in (unless the
+ * matrix already carries a row for it), newest release first.
+ */
+export function buildReleases(source: SourcePackage): PackageRelease[] {
+  const rows: PackageRelease[] = source.releases.map((r) => ({
+    version: r.version,
+    releasedAt: r.releasedAt,
+    supportedMagento: [...r.supportedMagento].sort((a, b) => compareVersions(b, a)),
+  }));
+  if (source.latestVersion && !rows.some((r) => r.version === source.latestVersion)) {
+    rows.push({
+      version: source.latestVersion,
+      releasedAt: source.latestReleasedAt,
+      supportedMagento: [...source.supportedMagento].sort((a, b) => compareVersions(b, a)),
+    });
+  }
+  return rows.sort((a, b) => compareVersions(b.version, a.version));
+}
+
+/**
+ * Magento version → newest release verified against it. Preferring a
+ * parseable version over an unparseable one, then strictly newer wins; ties
+ * keep the first (already newest-first) entry.
+ */
+export function buildCompatibility(releases: PackageRelease[]): Record<string, string> {
+  const map = new Map<string, string>();
+  for (const release of releases) {
+    for (const magento of release.supportedMagento) {
+      const current = map.get(magento);
+      const better =
+        current === undefined ||
+        (parseVersion(current) === null
+          ? parseVersion(release.version) !== null
+          : isNewer(release.version, current));
+      if (better) map.set(magento, release.version);
+    }
+  }
+  return Object.fromEntries(
+    [...map.entries()].sort(([a], [b]) => compareVersions(b, a)),
+  );
+}
+
 export function mergeToFeed(input: MergeInput): MergeOutput {
   const { snapshot, vendorFiles, categories, rankingConfig, github, now } = input;
 
@@ -71,6 +121,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
     const warnings = sortWarnings(trustEntry?.warnings ?? []);
     const deranked = warnings.some((w) => w.severity === 'derank' || w.severity === 'hide');
     const hidden = warnings.some((w) => w.severity === 'hide');
+    const releases = buildReleases(source);
 
     return {
       source,
@@ -78,6 +129,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
       vendorFile,
       trustEntry,
       extras,
+      releases,
       summaryBase: {
         name: source.name,
         vendor: vendorSlug,
@@ -90,6 +142,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         latestVersion: source.latestVersion,
         latestReleasedAt: source.latestReleasedAt,
         supportedMagento: source.supportedMagento,
+        compatibility: buildCompatibility(releases),
         abandoned: source.abandoned,
         quality: {
           tier: source.qualityTier,
@@ -153,6 +206,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         schemaVersion: SCHEMA_VERSION,
         generatedAt,
         readmeHtml: a.extras.readmeHtml,
+        releases: a.releases,
         license: a.source.license,
         links: {
           packagist: `https://packagist.org/packages/${a.source.name}`,

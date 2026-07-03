@@ -151,9 +151,7 @@
       "latestVersion": "5.1.0",
       "latestReleasedAt": "2026-04-22T11:20:00.000Z",
       "supportedMagento": [
-        "2.4.7",
-        "2.4.6",
-        "2.4.5"
+        "2.4.7"
       ],
       "qualityTier": "strict-compliant",
       "phpstanLevel": 9,
@@ -162,7 +160,33 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "releases": [
+        {
+          "version": "5.0.0",
+          "releasedAt": "2026-01-18T09:00:00.000Z",
+          "supportedMagento": [
+            "2.4.7",
+            "2.4.6"
+          ]
+        },
+        {
+          "version": "4.9.0",
+          "releasedAt": "2025-09-02T14:30:00.000Z",
+          "supportedMagento": [
+            "2.4.6",
+            "2.4.5"
+          ]
+        },
+        {
+          "version": "4.8.0",
+          "releasedAt": "2025-05-20T10:00:00.000Z",
+          "supportedMagento": [
+            "2.4.6",
+            "2.4.5"
+          ]
+        }
+      ]
     },
     {
       "name": "driftwood/module-customer-segments",
@@ -694,7 +718,25 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "releases": [
+        {
+          "version": "2.0.5",
+          "releasedAt": "2025-03-11T08:00:00.000Z",
+          "supportedMagento": [
+            "2.4.6",
+            "2.4.5"
+          ]
+        },
+        {
+          "version": "1.9.2",
+          "releasedAt": "2024-10-01T12:00:00.000Z",
+          "supportedMagento": [
+            "2.4.5",
+            "2.4.4"
+          ]
+        }
+      ]
     },
     {
       "name": "pixelforge/module-category-banners",

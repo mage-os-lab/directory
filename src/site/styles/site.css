@@ -329,6 +329,38 @@ h3 {
   margin: 12px 0;
 }
 
+.release-matrix {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 12px 0;
+  padding: 8px 14px;
+}
+
+.release-matrix summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.release-matrix table {
+  border-collapse: collapse;
+  margin: 10px 0 4px;
+  width: 100%;
+}
+
+.release-matrix th,
+.release-matrix td {
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  padding: 6px 12px 6px 0;
+  text-align: left;
+}
+
+.release-matrix-note {
+  color: var(--fg-muted);
+  font-size: 13px;
+  margin: 8px 0 4px;
+}
+
 .install-block {
   align-items: center;
   background: var(--bg-soft);

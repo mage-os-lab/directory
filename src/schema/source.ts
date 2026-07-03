@@ -14,6 +14,15 @@ import {
  * with its structural source; docs/packagemaven-data-contract.md is the
  * human-readable version sent to PM.
  */
+/** One row of PM's per-release test matrix. */
+export const sourceRelease = z.object({
+  version: z.string().min(1),
+  releasedAt: isoDateTime.nullable().default(null),
+  /** Magento/Mage-OS versions PM verified this release against. */
+  supportedMagento: z.array(z.string()).default([]),
+});
+export type SourceRelease = z.infer<typeof sourceRelease>;
+
 export const sourcePackage = z.object({
   /** Packagist name — the join key. */
   name: packageName,
@@ -24,8 +33,16 @@ export const sourcePackage = z.object({
   repositoryUrl: z.url().nullable().default(null),
   latestVersion: z.string().nullable().default(null),
   latestReleasedAt: isoDateTime.nullable().default(null),
-  /** Magento versions PM verified the module against, e.g. ["2.4.7"]. */
+  /** Magento versions PM verified the *latest* release against, e.g. ["2.4.7"]. */
   supportedMagento: z.array(z.string()).default([]),
+  /**
+   * Per-release test matrix (optional — see the PM data contract). When PM's
+   * export only covers the latest release, this stays empty and per-Magento
+   * compatibility degrades to latest-release-only. The latest release does
+   * not need to be repeated here; merge folds latestVersion/supportedMagento
+   * into the matrix.
+   */
+  releases: z.array(sourceRelease).default([]),
   qualityTier: qualityTier,
   phpstanLevel: z.number().int().min(0).max(10).nullable().default(null),
   buildStatus: buildStatus.default('unknown'),

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import MiniSearch from 'minisearch';
-import { isNewer } from './version.js';
+import { isNewer } from '../shared/version.js';
 import type {
   DirectoryFilters,
   Feed,
@@ -21,7 +21,19 @@ export interface DirectoryBrowserProps {
   /** Enable marking packages for install and the composer-command tray. */
   selectable?: boolean;
   onSelectionChange?: (detail: SelectionDetail) => void;
+  /** The host shop's Magento/Mage-OS version (e.g. "2.4.6"). */
+  magentoVersion?: string;
 }
+
+/**
+ * How a package relates to the host's Magento version, per PM's test matrix:
+ * the latest release is verified against it, only an older release is, or
+ * nothing is (which means "not tested", never "incompatible").
+ */
+type MagentoSupport =
+  | { state: 'tested'; version: string | null }
+  | { state: 'older'; version: string }
+  | { state: 'untested' };
 
 type InstallState = 'not-installed' | 'installed' | 'update';
 
@@ -32,8 +44,8 @@ const INSTALL_FILTERS: Array<{ key: '' | InstallState; label: string }> = [
   { key: 'not-installed', label: 'Not installed' },
 ];
 
-export function composerCommand(packages: PackageSummary[]): string {
-  const args = packages.map((p) => (p.latestVersion ? `${p.name}:^${p.latestVersion}` : p.name));
+export function composerCommand(entries: Array<{ name: string; version: string | null }>): string {
+  const args = entries.map((e) => (e.version ? `${e.name}:^${e.version}` : e.name));
   return `composer require ${args.join(' ')}`;
 }
 
@@ -84,11 +96,32 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   const [marked, setMarked] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
 
+  const [testedOnly, setTestedOnly] = useState(false);
+
+  const magentoSupport = (pkg: PackageSummary): MagentoSupport | null => {
+    const magento = props.magentoVersion;
+    if (!magento) return null;
+    if (pkg.supportedMagento.includes(magento)) {
+      return { state: 'tested', version: pkg.latestVersion };
+    }
+    const older = pkg.compatibility[magento];
+    if (older !== undefined) return { state: 'older', version: older };
+    return { state: 'untested' };
+  };
+
+  /** What the install list pins: the newest release verified against the
+   * host's Magento when that isn't the latest, else the latest. */
+  const targetVersion = (pkg: PackageSummary): string | null => {
+    const support = magentoSupport(pkg);
+    return support?.state === 'older' ? support.version : pkg.latestVersion;
+  };
+
   const installed = props.installed;
   const installState = (pkg: PackageSummary): InstallState => {
     const version = installed?.[pkg.name];
     if (version === undefined) return 'not-installed';
-    return pkg.latestVersion && isNewer(pkg.latestVersion, version) ? 'update' : 'installed';
+    const target = targetVersion(pkg);
+    return target && isNewer(target, version) ? 'update' : 'installed';
   };
 
   const search = useMemo(() => {
@@ -123,9 +156,22 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
         (showHidden || !p.trust.hidden) &&
         (category === '' || p.categories.includes(category)) &&
         (quality.size === 0 || quality.has(p.quality.tier)) &&
-        (installFilter === '' || installState(p) === installFilter),
+        (installFilter === '' || installState(p) === installFilter) &&
+        (!testedOnly || magentoSupport(p)?.state !== 'untested'),
     );
-  }, [feed, search, query, category, quality, sort, showHidden, installFilter, installed]);
+  }, [
+    feed,
+    search,
+    query,
+    category,
+    quality,
+    sort,
+    showHidden,
+    installFilter,
+    installed,
+    testedOnly,
+    props.magentoVersion,
+  ]);
 
   const toggleQuality = (tier: string) => {
     const next = new Set(quality);
@@ -141,8 +187,10 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     }
   };
 
-  const markedPackages = feed.packages.filter((p) => marked.has(p.name));
-  const command = markedPackages.length > 0 ? composerCommand(markedPackages) : '';
+  const markedEntries = feed.packages
+    .filter((p) => marked.has(p.name))
+    .map((p) => ({ name: p.name, version: targetVersion(p) }));
+  const command = markedEntries.length > 0 ? composerCommand(markedEntries) : '';
 
   // Emit selection changes from an effect (not the click handler) so rapid
   // marks can't act on a stale set; skip the initial mount's empty state.
@@ -152,10 +200,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
       emittedOnce.current = true;
       return;
     }
-    props.onSelectionChange?.({
-      packages: markedPackages.map((p) => ({ name: p.name, version: p.latestVersion })),
-      command,
-    });
+    props.onSelectionChange?.({ packages: markedEntries, command });
   }, [marked]);
 
   const toggleMark = (pkg: PackageSummary) => {
@@ -177,6 +222,28 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     navigator.clipboard?.writeText(command).then(
       () => setCopied(true),
       () => {},
+    );
+  };
+
+  const magentoBadge = (pkg: PackageSummary) => {
+    const support = magentoSupport(pkg);
+    if (support === null) return null;
+    if (support.state === 'tested') {
+      return (
+        <span class="mosd-badge mosd-badge-compat-ok">Tested with {props.magentoVersion}</span>
+      );
+    }
+    if (support.state === 'older') {
+      return (
+        <span class="mosd-badge mosd-badge-compat-older">
+          v{support.version} tested with {props.magentoVersion}
+        </span>
+      );
+    }
+    return (
+      <span class="mosd-badge mosd-badge-compat-untested">
+        Not tested with {props.magentoVersion}
+      </span>
     );
   };
 
@@ -252,6 +319,16 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
             {label}
           </label>
         ))}
+        {props.magentoVersion && (
+          <label class="mosd-quality-toggle mosd-tested-toggle">
+            <input
+              type="checkbox"
+              checked={testedOnly}
+              onChange={() => setTestedOnly(!testedOnly)}
+            />{' '}
+            Tested with {props.magentoVersion}
+          </label>
+        )}
       </div>
       <p class="mosd-count" role="status">
         {results.length} module{results.length === 1 ? '' : 's'}
@@ -308,6 +385,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                 <span class="mosd-stat">★ {pkg.popularity.githubStars.toLocaleString()}</span>
               )}
               {pkg.latestVersion && <span class="mosd-stat">v{pkg.latestVersion}</span>}
+              {magentoBadge(pkg)}
               {installState(pkg) === 'installed' && (
                 <span class="mosd-badge mosd-badge-installed">
                   Installed v{installed![pkg.name]}
@@ -315,7 +393,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
               )}
               {installState(pkg) === 'update' && (
                 <span class="mosd-badge mosd-badge-update">
-                  Installed v{installed![pkg.name]} → v{pkg.latestVersion}
+                  Installed v{installed![pkg.name]} → v{targetVersion(pkg)}
                 </span>
               )}
             </p>

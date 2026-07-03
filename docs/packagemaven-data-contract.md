@@ -51,6 +51,17 @@ per-page scraping, no load on the site.
 Nice to have, if already tracked: license, abandoned flag, download counts. If absent
 we can live without them or backfill from Packagist later.
 
+**Per-release test matrix (nice to have, high value).** The fields above describe the
+*latest* release. If PM also has results for earlier releases — which it presumably
+does internally — a `releases` list per package (version, release date, Magento
+versions verified) lets the directory answer "the latest release isn't verified on
+your Magento 2.4.6, but v4.9.0 is" and generate the right `composer require`
+constraint for a merchant's actual shop version. Without it, everything still works;
+compatibility statements just apply to the latest release only. Even a truncated
+matrix (say, the last 5 releases, or only releases still verified against a supported
+Magento) is useful — we never present "not tested" as "incompatible", so gaps are
+safe.
+
 A versioned schema (even just a `schemaVersion` field in the export) would let either
 side evolve the format without surprises.
 
@@ -74,9 +85,16 @@ a requirement (we map whatever names PM uses):
   "supportedMagento": ["2.4.7", "2.4.6"],
   "installs": 1834,
   "license": ["OSL-3.0"],
-  "abandoned": false
+  "abandoned": false,
+  "releases": [
+    { "version": "2.3.1", "releasedAt": "2026-05-14T09:30:00Z", "supportedMagento": ["2.4.7", "2.4.6"] },
+    { "version": "2.2.0", "releasedAt": "2025-11-02T10:00:00Z", "supportedMagento": ["2.4.6", "2.4.5"] }
+  ]
 }
 ```
+
+The `releases` matrix is the optional part described above — omit it (or truncate it)
+and the rest of the record stands on its own.
 
 Whatever strings PM uses for quality tiers and categories are fine as-is — we keep a
 mapping table on our side, so PM's labels can evolve without breaking anything. An
