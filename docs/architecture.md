@@ -344,6 +344,11 @@ mountDirectory(el: HTMLElement, options: {
   initialFilters?: { category?: string; quality?: string[]; query?: string };
   baseUrl?: string;                // href prefix for linkMode 'href'; default ""
   shadow?: boolean;                // default true: render inside an open Shadow DOM
+  installed?: Record<string, string>; // composer name → installed version, read by the
+                                   // host from composer.lock; adds Installed /
+                                   // "update available" badges + an installed-state filter
+  selectable?: boolean;            // default false: mark-for-install toggles + a tray
+                                   // with the copyable composer require command
 }): () => void;                    // returns unmount
 ```
 
@@ -355,6 +360,14 @@ Contract details the admin module depends on:
 - Feed fetch failure renders a retryable error state inside the component and
   dispatches `CustomEvent('mosd:error', { detail: { message } })`; it never throws out
   of `mountDirectory`.
+- With `selectable: true`, every change to the install list dispatches a bubbling,
+  composed `CustomEvent('mosd:selection', { detail: { packages: [{ name, version }],
+  command } })` — `command` is the ready-to-paste
+  `composer require vendor/a:^1.2 vendor/b` string (empty when the list is empty). The
+  directory never installs anything itself: version detection stays client-side
+  (`installed` comes from the host reading composer.lock) and the output is a command
+  the merchant runs manually — consistent with the copy-the-command model on detail
+  pages.
 - Class prefixes (`.mosd-*`) keep our styles from leaking out, but only Shadow DOM
   keeps host-page styles (like the Magento admin's global element resets) from leaking
   *in* — hence `shadow: true` by default for embeds. Theming still works because CSS

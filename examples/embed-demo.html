@@ -79,7 +79,7 @@
       <div id="host"></div>
 
       <div id="log-wrap">
-        <h2>Event log (<code>mosd:select</code> / <code>mosd:error</code>)</h2>
+        <h2>Event log (<code>mosd:select</code> / <code>mosd:selection</code> / <code>mosd:error</code>)</h2>
         <pre id="log">Waiting for events…</pre>
       </div>
     </div>
@@ -108,11 +108,26 @@
         appendLog(`mosd:error ${JSON.stringify(event.detail)}`);
       });
 
+      host.addEventListener('mosd:selection', (event) => {
+        console.log('mosd:selection', event.detail);
+        appendLog(`mosd:selection ${JSON.stringify(event.detail)}`);
+      });
+
+      // Stand-in for what the Magento admin module would read out of the
+      // shop's composer.lock: name → installed version. One current, one
+      // outdated, so both badge states show.
+      const installed = {
+        'brightloom/module-seo-toolkit': '3.2.1',
+        'castlegate/module-payment-gateway': '4.8.0',
+      };
+
       // MageOSDirectory is the global exposed by the IIFE build
       // (vite.ui.config.ts: build.lib.name = "MageOSDirectory").
       MageOSDirectory.mountDirectory(host, {
         feedUrl: 'http://localhost:4321/api/v1/feed.json',
         linkMode: 'event',
+        installed,
+        selectable: true,
       });
     </script>
   </body>

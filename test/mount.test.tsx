@@ -46,6 +46,29 @@ const feed: Feed = {
       popularity: { installs: 100, githubStars: null },
       ranking: { score: 0.7, components: { qualityTier: 0.8 } },
     },
+    {
+      name: 'acme/module-search',
+      vendor: 'acme',
+      displayName: 'Acme Search',
+      description: 'A search engine.',
+      categories: ['payments'],
+      repositoryUrl: null,
+      latestVersion: '2.1.0',
+      latestReleasedAt: '2026-05-01T00:00:00.000Z',
+      supportedMagento: ['2.4.7'],
+      abandoned: null,
+      quality: { tier: 'no-errors', phpstanLevel: 5, buildStatus: 'passing', stale: false },
+      trust: {
+        trustedVendor: true,
+        partnerTier: null,
+        editorialPick: false,
+        warnings: [],
+        deranked: false,
+        hidden: false,
+      },
+      popularity: { installs: 20, githubStars: null },
+      ranking: { score: 0.3, components: { qualityTier: 0.4 } },
+    },
   ],
 };
 
@@ -124,6 +147,72 @@ describe('mountDirectory', () => {
     retry.click();
     await flush();
     expect(el.textContent).toContain('Acme Pay');
+  });
+
+  it('shows installed and update-available badges from the installed map', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      installed: { 'acme/module-pay': '1.0.0', 'acme/module-search': '2.0.0' },
+    });
+    await flush();
+
+    const badges = [...el.querySelectorAll('.mosd-badge-installed, .mosd-badge-update')].map(
+      (b) => b.textContent,
+    );
+    expect(badges).toContain('Installed v1.0.0');
+    expect(badges).toContain('Installed v2.0.0 → v2.1.0');
+    // Up-to-date packages get no mark button even when selectable.
+    expect(el.querySelector('select.mosd-install-filter')).not.toBeNull();
+  });
+
+  it('builds the composer command and dispatches mosd:selection when marking', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const selections: unknown[] = [];
+    el.addEventListener('mosd:selection', (event) =>
+      selections.push((event as CustomEvent).detail),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, selectable: true });
+    await flush();
+
+    const buttons = [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')];
+    expect(buttons).toHaveLength(2);
+    buttons[0].click();
+    await flush();
+    [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')]
+      .filter((b) => !b.classList.contains('mosd-marked'))[0]
+      .click();
+    await flush();
+
+    expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(
+      'composer require acme/module-pay:^1.0.0 acme/module-search:^2.1.0',
+    );
+    expect(selections).toEqual([
+      {
+        packages: [{ name: 'acme/module-pay', version: '1.0.0' }],
+        command: 'composer require acme/module-pay:^1.0.0',
+      },
+      {
+        packages: [
+          { name: 'acme/module-pay', version: '1.0.0' },
+          { name: 'acme/module-search', version: '2.1.0' },
+        ],
+        command: 'composer require acme/module-pay:^1.0.0 acme/module-search:^2.1.0',
+      },
+    ]);
+
+    // Clear empties the list and announces it.
+    (el.querySelector('.mosd-tray .mosd-btn:not(.mosd-btn-primary)') as HTMLButtonElement).click();
+    await flush();
+    expect(el.querySelector('.mosd-tray')).toBeNull();
+    expect(selections[2]).toEqual({ packages: [], command: '' });
   });
 
   it('unmount cleans the tree', async () => {

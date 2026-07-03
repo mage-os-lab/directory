@@ -1,6 +1,14 @@
-import { useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import MiniSearch from 'minisearch';
-import type { DirectoryFilters, Feed, PackageSummary, SelectDetail, SortKey } from './types.js';
+import { isNewer } from './version.js';
+import type {
+  DirectoryFilters,
+  Feed,
+  PackageSummary,
+  SelectDetail,
+  SelectionDetail,
+  SortKey,
+} from './types.js';
 
 export interface DirectoryBrowserProps {
   feed: Feed;
@@ -8,6 +16,25 @@ export interface DirectoryBrowserProps {
   baseUrl: string;
   initialFilters?: DirectoryFilters;
   onSelect?: (detail: SelectDetail) => void;
+  /** Composer package name → installed version (from the host's composer.lock). */
+  installed?: Record<string, string>;
+  /** Enable marking packages for install and the composer-command tray. */
+  selectable?: boolean;
+  onSelectionChange?: (detail: SelectionDetail) => void;
+}
+
+type InstallState = 'not-installed' | 'installed' | 'update';
+
+const INSTALL_FILTERS: Array<{ key: '' | InstallState; label: string }> = [
+  { key: '', label: 'All modules' },
+  { key: 'installed', label: 'Installed' },
+  { key: 'update', label: 'Update available' },
+  { key: 'not-installed', label: 'Not installed' },
+];
+
+export function composerCommand(packages: PackageSummary[]): string {
+  const args = packages.map((p) => (p.latestVersion ? `${p.name}:^${p.latestVersion}` : p.name));
+  return `composer require ${args.join(' ')}`;
 }
 
 const QUALITY_LABELS: Record<string, string> = {
@@ -53,6 +80,16 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   );
   const [sort, setSort] = useState<SortKey>('recommended');
   const [showHidden, setShowHidden] = useState(false);
+  const [installFilter, setInstallFilter] = useState<'' | InstallState>('');
+  const [marked, setMarked] = useState<Set<string>>(new Set());
+  const [copied, setCopied] = useState(false);
+
+  const installed = props.installed;
+  const installState = (pkg: PackageSummary): InstallState => {
+    const version = installed?.[pkg.name];
+    if (version === undefined) return 'not-installed';
+    return pkg.latestVersion && isNewer(pkg.latestVersion, version) ? 'update' : 'installed';
+  };
 
   const search = useMemo(() => {
     const index = new MiniSearch<PackageSummary>({
@@ -85,9 +122,10 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
       (p) =>
         (showHidden || !p.trust.hidden) &&
         (category === '' || p.categories.includes(category)) &&
-        (quality.size === 0 || quality.has(p.quality.tier)),
+        (quality.size === 0 || quality.has(p.quality.tier)) &&
+        (installFilter === '' || installState(p) === installFilter),
     );
-  }, [feed, search, query, category, quality, sort, showHidden]);
+  }, [feed, search, query, category, quality, sort, showHidden, installFilter, installed]);
 
   const toggleQuality = (tier: string) => {
     const next = new Set(quality);
@@ -101,6 +139,45 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
       event.preventDefault();
       props.onSelect?.({ name: pkg.name, vendor: pkg.vendor, packageUrl: packageUrl(baseUrl, pkg) });
     }
+  };
+
+  const markedPackages = feed.packages.filter((p) => marked.has(p.name));
+  const command = markedPackages.length > 0 ? composerCommand(markedPackages) : '';
+
+  // Emit selection changes from an effect (not the click handler) so rapid
+  // marks can't act on a stale set; skip the initial mount's empty state.
+  const emittedOnce = useRef(false);
+  useEffect(() => {
+    if (!emittedOnce.current) {
+      emittedOnce.current = true;
+      return;
+    }
+    props.onSelectionChange?.({
+      packages: markedPackages.map((p) => ({ name: p.name, version: p.latestVersion })),
+      command,
+    });
+  }, [marked]);
+
+  const toggleMark = (pkg: PackageSummary) => {
+    setMarked((prev) => {
+      const next = new Set(prev);
+      if (next.has(pkg.name)) next.delete(pkg.name);
+      else next.add(pkg.name);
+      return next;
+    });
+    setCopied(false);
+  };
+
+  const clearMarks = () => {
+    setMarked(new Set());
+    setCopied(false);
+  };
+
+  const copyCommand = () => {
+    navigator.clipboard?.writeText(command).then(
+      () => setCopied(true),
+      () => {},
+    );
   };
 
   return (
@@ -147,6 +224,22 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
             </option>
           ))}
         </select>
+        {installed && (
+          <select
+            class="mosd-install-filter"
+            aria-label="Installed state"
+            value={installFilter}
+            onChange={(e) =>
+              setInstallFilter((e.target as HTMLSelectElement).value as '' | InstallState)
+            }
+          >
+            {INSTALL_FILTERS.map((f) => (
+              <option key={f.key} value={f.key}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
       <div class="mosd-quality-filters" role="group" aria-label="Quality tier">
         {Object.entries(QUALITY_LABELS).map(([tier, label]) => (
@@ -215,11 +308,50 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                 <span class="mosd-stat">★ {pkg.popularity.githubStars.toLocaleString()}</span>
               )}
               {pkg.latestVersion && <span class="mosd-stat">v{pkg.latestVersion}</span>}
+              {installState(pkg) === 'installed' && (
+                <span class="mosd-badge mosd-badge-installed">
+                  Installed v{installed![pkg.name]}
+                </span>
+              )}
+              {installState(pkg) === 'update' && (
+                <span class="mosd-badge mosd-badge-update">
+                  Installed v{installed![pkg.name]} → v{pkg.latestVersion}
+                </span>
+              )}
             </p>
+            {props.selectable && installState(pkg) !== 'installed' && (
+              <p class="mosd-card-actions">
+                <button
+                  type="button"
+                  class={`mosd-mark${marked.has(pkg.name) ? ' mosd-marked' : ''}`}
+                  onClick={() => toggleMark(pkg)}
+                >
+                  {marked.has(pkg.name)
+                    ? '✓ On install list'
+                    : installState(pkg) === 'update'
+                      ? '+ Mark for update'
+                      : '+ Mark for install'}
+                </button>
+              </p>
+            )}
           </li>
         ))}
       </ul>
       {results.length === 0 && <p class="mosd-empty">No modules match. Try widening the filters.</p>}
+      {props.selectable && marked.size > 0 && (
+        <div class="mosd-tray" role="region" aria-label="Install list">
+          <span class="mosd-tray-count">
+            {marked.size} module{marked.size === 1 ? '' : 's'} marked
+          </span>
+          <code class="mosd-tray-command">{command}</code>
+          <button type="button" class="mosd-btn mosd-btn-primary" onClick={copyCommand}>
+            {copied ? 'Copied ✓' : 'Copy command'}
+          </button>
+          <button type="button" class="mosd-btn" onClick={clearMarks}>
+            Clear
+          </button>
+        </div>
+      )}
     </div>
   );
 }

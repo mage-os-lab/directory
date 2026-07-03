@@ -67,21 +67,33 @@
 .mosd-results {
   display: grid;
   gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .mosd-card {
+  background: var(--mosd-bg);
   border: 1px solid var(--mosd-border);
   border-radius: var(--mosd-radius);
+  display: flex;
+  flex-direction: column;
   padding: 12px 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mosd-card:hover,
+.mosd-card:focus-within {
+  border-color: var(--mosd-accent);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.07);
 }
 
 .mosd-card-head {
   align-items: baseline;
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 4px 10px;
   justify-content: space-between;
 }
 
@@ -108,7 +120,12 @@
 }
 
 .mosd-card-description {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  display: -webkit-box;
+  flex: 1 1 auto;
   margin: 4px 0;
+  overflow: hidden;
 }
 
 .mosd-card-meta {
@@ -117,6 +134,10 @@
   flex-wrap: wrap;
   gap: 6px;
   margin: 6px 0 0;
+}
+
+.mosd-card-actions {
+  margin: 10px 0 0;
 }
 
 .mosd-badge {
@@ -138,6 +159,8 @@
 .mosd-badge-pick { background: #fdf0e5; border-color: #f8c99b; color: #b34f00; }
 .mosd-badge-trusted { background: #e5f4ef; border-color: #9cd6bf; color: #14735c; }
 .mosd-badge-warning { background: #ffe3e3; border-color: #ffa8a8; color: #c92a2a; }
+.mosd-badge-installed { background: #d3f9d8; border-color: #8ce99a; color: #2b8a3e; text-transform: none; }
+.mosd-badge-update { background: #fff3bf; border-color: #ffd43b; color: #997404; text-transform: none; }
 
 .mosd-stat {
   color: var(--mosd-fg-muted);
@@ -167,4 +190,78 @@
   font: inherit;
   margin-left: 8px;
   padding: 4px 12px;
+}
+
+/* Install-list marking (selectable mounts) */
+
+.mosd-mark {
+  background: var(--mosd-bg);
+  border: 1px solid var(--mosd-border);
+  border-radius: var(--mosd-radius);
+  color: var(--mosd-fg);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.mosd-mark:hover {
+  border-color: var(--mosd-accent);
+  color: var(--mosd-accent);
+}
+
+.mosd-mark.mosd-marked {
+  background: var(--mosd-accent);
+  border-color: var(--mosd-accent);
+  color: #fff;
+}
+
+.mosd-tray {
+  align-items: center;
+  background: var(--mosd-bg);
+  border: 1px solid var(--mosd-border);
+  border-radius: var(--mosd-radius);
+  bottom: 8px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  position: sticky;
+}
+
+.mosd-tray-count {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mosd-tray-command {
+  background: var(--mosd-bg-soft);
+  border-radius: 4px;
+  flex: 1 1 260px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  overflow-x: auto;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+.mosd-btn {
+  background: var(--mosd-bg);
+  border: 1px solid var(--mosd-border);
+  border-radius: var(--mosd-radius);
+  color: var(--mosd-fg);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 12px;
+}
+
+.mosd-btn-primary {
+  background: var(--mosd-accent);
+  border-color: var(--mosd-accent);
+  color: #fff;
 }
