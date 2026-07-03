@@ -15,8 +15,10 @@ import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { DirectoryBrowser } from './DirectoryBrowser.js';
 import type { Feed, MountOptions, SelectDetail } from './types.js';
-// Vite turns this into a plain string in both the Astro build and the
-// library build, so the styles can be injected into the shadow root.
+// The plain import makes the library build emit directory-ui.css, which is
+// what shadow:false embedders link. The ?inline import is the same styles as
+// a string, injected into the shadow root for the default shadow:true path.
+import './directory.css';
 import styles from './directory.css?inline';
 
 interface RootProps {

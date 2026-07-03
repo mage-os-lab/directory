@@ -15,7 +15,7 @@
   "scripts": {
     "pipeline": "tsx src/pipeline/run.ts --out public",
     "pipeline:fixture": "tsx src/pipeline/run.ts --source fixture --out public",
-    "build": "npm run pipeline:fixture && astro build",
+    "build": "npm run pipeline:fixture && npm run build:ui && astro build",
     "build:ui": "vite build --config vite.ui.config.ts",
     "dev": "npm run pipeline:fixture && astro dev",
     "test": "vitest run",

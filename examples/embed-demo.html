@@ -3,15 +3,16 @@
   Embeddable-bundle demo page.
 
   How to use:
-    1. npm run build:ui      # builds dist-ui/directory-ui.iife.js (+ .css)
-    2. npm run dev            # serves the Astro site (incl. /api/v1/feed.json)
-                               # at http://localhost:4321
+    1. npm run build:ui      # builds public/embed/directory-ui.iife.js (+ .js, .css)
+    2. npm run dev            # serves the Astro site (incl. /api/v1/feed.json
+                               # and /embed/*) at http://localhost:4321
     3. Open this file directly in a browser (e.g. `open examples/embed-demo.html`
        or drag it into a tab) while `npm run dev` is running in another terminal.
 
   This page is a stand-in for a third-party host page (e.g. the future Magento
   admin module) embedding the directory via the standalone IIFE bundle. It
-  loads ../dist-ui/directory-ui.iife.js, calls
+  loads the bundle from the directory's own origin — in production that is
+  https://<directory-host>/embed/directory-ui.iife.js — calls
   `MageOSDirectory.mountDirectory(el, { feedUrl, linkMode: 'event' })`, and
   logs every `mosd:select` / `mosd:error` CustomEvent to both the browser
   console and the visible <pre> log below — that event contract (bubbling,
@@ -83,7 +84,7 @@
       </div>
     </div>
 
-    <script src="../dist-ui/directory-ui.iife.js"></script>
+    <script src="http://localhost:4321/embed/directory-ui.iife.js"></script>
     <script>
       const host = document.getElementById('host');
       const log = document.getElementById('log');

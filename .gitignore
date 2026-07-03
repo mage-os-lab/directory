@@ -1,7 +1,7 @@
 node_modules/
 dist/
-dist-ui/
 public/api/
+public/embed/
 .astro/
 *.log
 .DS_Store

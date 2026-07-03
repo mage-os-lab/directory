@@ -318,6 +318,7 @@ experience as a Preact island using MiniSearch for client-side search over the f
 | `/categories/<category>/` | Prerendered category list, island preset to that filter |
 | `/how-to-get-listed/` | Rendered from docs |
 | `/api/v1/**` | The pipeline's static JSON output |
+| `/embed/*` | The embeddable bundle (`directory-ui.iife.js`, `directory-ui.js`, `directory-ui.css`), served CORS-open from the directory's own origin |
 
 Per-package and vendor pages are prerendered for SEO; search and filtering happen
 client-side against `feed.json`.
@@ -329,7 +330,11 @@ and the standalone library entry below. This boundary is what makes the dual bui
 mechanical rather than clever.
 
 **Embeddable bundle:** the component is also built standalone (Vite library mode) as
-`directory-ui.js` + `directory-ui.css`, exposing:
+`directory-ui.js` (ES) / `directory-ui.iife.js` (classic script, global
+`MageOSDirectory`) + `directory-ui.css` (only needed for `shadow: false` embedders —
+shadow mounts inline the styles). The build lands in `public/embed/`, so every deploy
+publishes it at `/embed/*` on the directory's own origin — that URL is what the future
+admin module loads. It exposes:
 
 ```ts
 mountDirectory(el: HTMLElement, options: {

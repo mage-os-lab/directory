@@ -36,6 +36,8 @@ jobs:
           PUBLISHED_BASE_URL: ${{ vars.PUBLISHED_BASE_URL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx tsx src/pipeline/run.ts --source "${{ inputs.source || 'live' }}" --out public
+      - name: Build embeddable bundle (published at /embed/*)
+        run: npm run build:ui
       - name: Build site
         run: npx astro build
       - name: Deploy to Cloudflare Pages

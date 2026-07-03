@@ -5,3 +5,11 @@
 /api/v1/*
   Access-Control-Allow-Origin: *
   Cache-Control: public, max-age=300, must-revalidate
+
+# The embeddable bundle lives at a stable (unfingerprinted) URL, so it gets
+# the same short max-age. CORS is required for cross-origin ES-module imports
+# of directory-ui.js (a classic <script src> of the IIFE doesn't need it, but
+# it costs nothing).
+/embed/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300, must-revalidate
