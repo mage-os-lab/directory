@@ -6,12 +6,15 @@ name: PackageMaven API probe
 # Manual-only; remove once the real fetcher integration lands.
 
 on:
+  push:
+    branches: ['claude/package-maven-api-review-m9993e']
+    paths: ['.github/pm-probe-paths.txt', '.github/workflows/pm-api-probe.yml']
   workflow_dispatch:
     inputs:
       paths:
         description: 'Space-separated URL paths to fetch (relative to https://package-maven.com)'
         required: false
-        default: '/api/docs'
+        default: ''
       max_bytes:
         description: 'Max response bytes to print per request'
         required: false
@@ -21,13 +24,16 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Fetch endpoints
         env:
           PM_TOKEN: ${{ secrets.PACKAGE_MAVEN_TOKEN }}
-          PATHS: ${{ inputs.paths }}
-          MAX_BYTES: ${{ inputs.max_bytes }}
+          INPUT_PATHS: ${{ inputs.paths }}
+          MAX_BYTES: ${{ inputs.max_bytes || '60000' }}
         run: |
           set -u
+          # Paths come from the dispatch input or, on push, from the committed list.
+          PATHS="${INPUT_PATHS:-$(grep -v '^#' .github/pm-probe-paths.txt | tr '\n' ' ')}"
           UA="mage-os-directory-eval (github.com/rhoerr/mage-os.directory; rhoerr@users.noreply.github.com)"
           for p in $PATHS; do
             url="https://package-maven.com${p}"
