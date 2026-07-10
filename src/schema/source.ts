@@ -43,10 +43,17 @@ export const sourcePackage = z.object({
    * into the matrix.
    */
   releases: z.array(sourceRelease).default([]),
-  qualityTier: qualityTier,
-  phpstanLevel: z.number().int().min(0).max(10).nullable().default(null),
+  /** Null means PM has not (yet) tested the package — distinct from any tier. */
+  qualityTier: qualityTier.nullable(),
+  /**
+   * Highest PHPStan level passing with zero errors (PM's scale: 0–9).
+   * -1 means the analysis fails even at level 0; null means untested.
+   */
+  phpstanLevel: z.number().int().min(-1).max(9).nullable().default(null),
   buildStatus: buildStatus.default('unknown'),
   installs: z.number().int().min(0).nullable().default(null),
+  /** GitHub stars as reported by PM; fallback when our own GitHub fetch is off. */
+  stars: z.number().int().min(0).nullable().default(null),
   /** Nice-to-have fields; null when PM's export doesn't carry them. */
   license: z.array(z.string()).nullable().default(null),
   abandoned: z.boolean().nullable().default(null),

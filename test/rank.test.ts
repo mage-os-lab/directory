@@ -122,6 +122,14 @@ describe('rankPackage', () => {
     expect(withNulls.score).toBeGreaterThan(scoreAllSignals * 0.5);
   });
 
+  it('omits the quality signal for untested packages (tier null) instead of zeroing it', () => {
+    const untested = rankPackage({ ...base, qualityTier: null }, config, context);
+    expect(untested.components).not.toHaveProperty('qualityTier');
+    // An untested package must score better than one that tested badly.
+    const needsHelp = rankPackage({ ...base, qualityTier: 'needs-help' }, config, context);
+    expect(untested.score).toBeGreaterThan(needsHelp.score);
+  });
+
   it('treats a degenerate corpus scale as signal-unavailable, not divide-by-zero', () => {
     const degenerate = buildRankingContext(
       [{ installs: null, githubStars: null }],

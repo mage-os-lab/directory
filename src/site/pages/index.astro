@@ -16,8 +16,8 @@ const categories = feed.categories
 
 // Hero counters (PM-style): visible modules by readiness.
 const visible = feed.packages.filter((p) => !p.trust.hidden);
-const readyCount = visible.filter((p) =>
-  ['strict-compliant', 'no-errors', 'ready-to-install'].includes(p.quality.tier),
+const readyCount = visible.filter(
+  (p) => p.quality.tier !== null && p.quality.tier !== 'needs-help',
 ).length;
 const needsHelpCount = visible.filter((p) => p.quality.tier === 'needs-help').length;
 const vendorCount = new Set(visible.map((p) => p.vendor)).size;
@@ -62,7 +62,9 @@ const vendorCount = new Set(visible.map((p) => p.vendor)).size;
               </p>
               <p class="description">{pkg.description}</p>
               <p class="meta">
-                <span class={`badge badge-${pkg.quality.tier}`}>{pkg.quality.tier}</span>
+                {pkg.quality.tier && (
+                  <span class={`badge badge-${pkg.quality.tier}`}>{pkg.quality.tier}</span>
+                )}
                 <span class="badge badge-pick">Editors&rsquo; pick</span>
                 {pkg.trust.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
               </p>

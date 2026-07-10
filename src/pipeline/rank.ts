@@ -5,7 +5,8 @@ export interface RankingInput {
   editorialPick: boolean;
   partnerTier: keyof RankingConfig['partnerTierValues'] | null;
   trustedVendor: boolean;
-  qualityTier: keyof RankingConfig['qualityTierValues'];
+  /** Null = PM hasn't tested the package; the quality signal is omitted. */
+  qualityTier: keyof RankingConfig['qualityTierValues'] | null;
   latestReleasedAt: string | null;
   installs: number | null;
   githubStars: number | null;
@@ -95,7 +96,10 @@ export function rankPackage(
       input.partnerTier === null ? 0 : (config.partnerTierValues[input.partnerTier] ?? 0),
     ],
     trustedVendor: [weights.trustedVendor, input.trustedVendor ? 1 : 0],
-    qualityTier: [weights.qualityTier, clamp01(config.qualityTierValues[input.qualityTier] ?? 0)],
+    qualityTier:
+      input.qualityTier === null
+        ? null
+        : [weights.qualityTier, clamp01(config.qualityTierValues[input.qualityTier] ?? 0)],
     freshness:
       input.latestReleasedAt === null
         ? null

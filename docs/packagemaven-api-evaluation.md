@@ -116,14 +116,26 @@ sort we don't need (our search is client-side over the feed).
   normalization into `packageMavenSnapshot` (`origin: 'live'`). The
   carry-forward-on-failure semantics already designed apply unchanged.
 
-## Suggested follow-ups (not done here)
+## Follow-ups
 
-1. Decide the untested-package representation (gap 3) — schema change vs mapping.
-2. Implement the paginated fetcher + normalizer behind the existing source interface;
-   widen `phpstanLevel` to `-1..9`, fall back `displayName` ← `composer_name`.
-3. Fill `data/categories.json` with PM's real category slugs.
-4. Confirm redistribution-with-attribution with Jiří (gap 6) and thank him — the API
-   exceeds what the contract asked for on every must-have field.
-5. Ask (no urgency, explicitly nice-to-have) about per-release/multi-Magento test
-   results and license/abandoned fields in a future API version.
-6. Remove `.github/workflows/pm-api-probe.yml` once the real fetcher integration lands.
+Done (2026-07-10):
+
+1. ~~Untested-package representation~~ — `quality.tier` is now nullable (`null` =
+   not yet tested); ranking omits the quality signal, the UI shows a "Not yet
+   tested" badge, and hero counters exclude untested packages.
+2. ~~Paginated fetcher + normalizer~~ — `src/pipeline/packagemaven.ts`, wired into
+   the live path of `run.ts` (`PACKAGE_MAVEN_TOKEN` + optional `PM_API_URL`;
+   `PM_EXPORT_URL` remains the manual-drop fallback). `phpstanLevel` widened to
+   `-1..9`; `displayName` falls back to `composer_name`; PM's reported stars fill
+   `popularity.githubStars` when our own GitHub fetch is off.
+3. ~~Categories~~ — `data/categories.json` maps PM's 20 live slugs; added `search`,
+   `content`, and `security` canonical categories. Two judgment calls for curators
+   to revisit: `checkout-payments` → `checkout` and `tax-pricing` → `payments`.
+
+Outstanding (awaiting PM / maintainers):
+
+4. Confirm redistribution-with-attribution with Jiří (gap 6).
+5. Ask (no urgency) about per-release/multi-Magento test results and
+   license/abandoned fields in a future API version.
+6. Remove `.github/workflows/pm-api-probe.yml` once a live pipeline run has
+   succeeded end to end.

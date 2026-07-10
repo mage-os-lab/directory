@@ -32,6 +32,8 @@ jobs:
           restore-keys: http-cache-
       - name: Run pipeline
         env:
+          PACKAGE_MAVEN_TOKEN: ${{ secrets.PACKAGE_MAVEN_TOKEN }}
+          PM_API_URL: ${{ vars.PM_API_URL }}
           PM_EXPORT_URL: ${{ vars.PM_EXPORT_URL }}
           PUBLISHED_BASE_URL: ${{ vars.PUBLISHED_BASE_URL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

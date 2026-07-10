@@ -7,6 +7,7 @@ import { loadCategories, loadRankingConfig, loadSnapshot, loadVendorFiles } from
 import { mergeToFeed } from './merge.js';
 import { emitArtifacts } from './emit.js';
 import { fetchGithubExtras } from './github.js';
+import { fetchPackageMavenSnapshot } from './packagemaven.js';
 import { packageMavenSnapshot, type PackageMavenSnapshot } from '../schema/source.js';
 
 interface PipelineOptions {
@@ -37,10 +38,10 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
   if (options.source === 'fixture') {
     snapshot = loadSnapshot(path.join(dataDir, 'fixtures', 'packagemaven-snapshot.json'));
   } else {
-    const live = await fetchLiveSnapshot();
+    const live = await fetchLiveSnapshot(options.now);
     snapshot = live.snapshot;
     snapshotStale = live.stale;
-    if (live.warning) warnings.push(live.warning);
+    warnings.push(...live.warnings);
   }
 
   const github = await fetchGithubExtras();
@@ -73,37 +74,52 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
 }
 
 /**
- * Live mode: fetch the PM export from PM_EXPORT_URL and normalize it. On
- * failure, carry forward the previously published raw snapshot
- * (PUBLISHED_BASE_URL/api/v1/sources/packagemaven.json) marked stale. If
- * neither is available (first-ever run), fail with an explicit message —
- * bootstrap via a fixture workflow_dispatch instead.
+ * Live mode: fetch from the PackageMaven API (PACKAGE_MAVEN_TOKEN, optional
+ * PM_API_URL override) or, failing that, a pre-normalized export file at
+ * PM_EXPORT_URL. On failure, carry forward the previously published raw
+ * snapshot (PUBLISHED_BASE_URL/api/v1/sources/packagemaven.json) marked
+ * stale. If nothing is available (first-ever run), fail with an explicit
+ * message — bootstrap via a fixture workflow_dispatch instead.
  */
-async function fetchLiveSnapshot(): Promise<{
+async function fetchLiveSnapshot(now: Date): Promise<{
   snapshot: PackageMavenSnapshot;
   stale: boolean;
-  warning?: string;
+  warnings: string[];
 }> {
+  const token = process.env.PACKAGE_MAVEN_TOKEN;
   const exportUrl = process.env.PM_EXPORT_URL;
   const publishedBase = process.env.PUBLISHED_BASE_URL;
+  const warnings: string[] = [];
 
   let fetchError: string | null = null;
-  if (exportUrl) {
+  if (token) {
+    try {
+      const result = await fetchPackageMavenSnapshot({
+        token,
+        now,
+        apiUrl: process.env.PM_API_URL,
+      });
+      for (const name of result.skipped) {
+        warnings.push(`PM API record for "${name}" failed normalization — skipped`);
+      }
+      return { snapshot: result.snapshot, stale: false, warnings };
+    } catch (error) {
+      fetchError = (error as Error).message;
+    }
+  } else if (exportUrl) {
     try {
       const response = await fetch(exportUrl, {
         headers: { 'user-agent': 'mage-os-extension-directory-pipeline' },
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      // The PM delivery format is normalized here once agreed; until then the
-      // pipeline accepts our own snapshot shape directly (manual drops are
-      // pre-normalized with tools/normalize-pm-export).
+      // Manual-drop path: a pre-normalized export in our own snapshot shape.
       const snapshot = packageMavenSnapshot.parse(await response.json());
-      return { snapshot, stale: false };
+      return { snapshot, stale: false, warnings };
     } catch (error) {
       fetchError = (error as Error).message;
     }
   } else {
-    fetchError = 'PM_EXPORT_URL is not set';
+    fetchError = 'neither PACKAGE_MAVEN_TOKEN nor PM_EXPORT_URL is set';
   }
 
   if (publishedBase) {
@@ -113,11 +129,10 @@ async function fetchLiveSnapshot(): Promise<{
       );
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const snapshot = packageMavenSnapshot.parse(await response.json());
-      return {
-        snapshot,
-        stale: true,
-        warning: `PM fetch failed (${fetchError}); carried forward published snapshot from ${snapshot.fetchedAt}`,
-      };
+      warnings.push(
+        `PM fetch failed (${fetchError}); carried forward published snapshot from ${snapshot.fetchedAt}`,
+      );
+      return { snapshot, stale: true, warnings };
     } catch (error) {
       throw new Error(
         `PM fetch failed (${fetchError}) and no published snapshot could be carried forward ` +

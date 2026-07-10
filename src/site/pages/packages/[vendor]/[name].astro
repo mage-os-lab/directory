@@ -103,8 +103,10 @@ const jsonLd = {
   </div>
 
   <div class="detail-badges">
-    <span class={`badge badge-${pkg.quality.tier}`}>{QUALITY_LABELS[pkg.quality.tier]}</span>
-    {pkg.quality.phpstanLevel !== null && (
+    <span class={`badge badge-${pkg.quality.tier ?? 'untested'}`}>
+      {pkg.quality.tier ? QUALITY_LABELS[pkg.quality.tier] : 'Not yet tested'}
+    </span>
+    {pkg.quality.phpstanLevel !== null && pkg.quality.phpstanLevel >= 0 && (
       <span class="badge">PHPStan level {pkg.quality.phpstanLevel}</span>
     )}
     <span class="badge">Build {pkg.quality.buildStatus}</span>

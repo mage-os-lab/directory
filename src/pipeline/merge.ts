@@ -160,7 +160,9 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         },
         popularity: {
           installs: source.installs,
-          githubStars: extras.stars,
+          // Live GitHub data wins; PM's reported star count fills the gap
+          // when our own GitHub fetch is disabled or fails.
+          githubStars: extras.stars ?? source.stars,
         },
       },
     };

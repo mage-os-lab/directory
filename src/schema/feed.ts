@@ -12,7 +12,8 @@ import { packageWarning } from './vendor-file.js';
 import { sourceStatus } from './source.js';
 
 export const packageQuality = z.object({
-  tier: qualityTier,
+  /** Null when PM has not (yet) tested the package. */
+  tier: qualityTier.nullable(),
   phpstanLevel: z.number().int().nullable(),
   buildStatus: buildStatus,
   /** True when quality data was carried forward from a previous snapshot. */
