@@ -21,6 +21,35 @@ on:
         default: '60000'
 
 jobs:
+  # End-to-end check of the real fetcher: run the pipeline in live mode
+  # against the PM API (no deploy) and summarize what it emitted.
+  pipeline-live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run pipeline against the live PM API
+        env:
+          PACKAGE_MAVEN_TOKEN: ${{ secrets.PACKAGE_MAVEN_TOKEN }}
+        run: npx tsx src/pipeline/run.ts --source live --out /tmp/pm-live-out
+      - name: Summarize emitted feed
+        run: |
+          python3 - <<'EOF'
+          import collections, json
+          feed = json.load(open('/tmp/pm-live-out/api/v1/feed.json'))
+          pkgs = feed['packages']
+          print(f"packages: {len(pkgs)}")
+          print('tiers:', dict(collections.Counter(str(p['quality']['tier']) for p in pkgs)))
+          cats = collections.Counter(c for p in pkgs for c in p['categories'])
+          print('categories:', dict(cats.most_common()))
+          print('with compatibility:', sum(1 for p in pkgs if p['compatibility']))
+          print('with stars:', sum(1 for p in pkgs if p['popularity']['githubStars'] is not None))
+          EOF
+
   probe:
     runs-on: ubuntu-latest
     steps:
