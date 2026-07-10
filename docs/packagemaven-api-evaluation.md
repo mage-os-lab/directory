@@ -124,10 +124,12 @@ Done (2026-07-10):
    not yet tested); ranking omits the quality signal, the UI shows a "Not yet
    tested" badge, and hero counters exclude untested packages.
 2. ~~Paginated fetcher + normalizer~~ — `src/pipeline/packagemaven.ts`, wired into
-   the live path of `run.ts` (`PACKAGE_MAVEN_TOKEN` + optional `PM_API_URL`;
-   `PM_EXPORT_URL` remains the manual-drop fallback). `phpstanLevel` widened to
-   `-1..9`; `displayName` falls back to `composer_name`; PM's reported stars fill
-   `popularity.githubStars` when our own GitHub fetch is off.
+   the live path of `run.ts` (`PACKAGE_MAVEN_TOKEN` + optional `PM_API_URL`; the
+   `PM_EXPORT_URL` manual-export path is gone — the API replaced it before it was
+   ever used). `phpstanLevel` widened to `-1..9`; `displayName` falls back to
+   `composer_name`; PM's reported stars fill `popularity.githubStars` when our own
+   GitHub fetch is off. Unmapped PM category labels raise pipeline warnings so
+   taxonomy drift is visible on scheduled runs.
 3. ~~Categories~~ — `data/categories.json` maps PM's 20 live slugs; added `search`,
    `content`, and `security` canonical categories. Two judgment calls for curators
    to revisit: `checkout-payments` → `checkout` and `tax-pricing` → `payments`.

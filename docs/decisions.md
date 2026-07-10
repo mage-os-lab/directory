@@ -141,6 +141,12 @@ basis rather than a compromise.
 single monolithic milestone; split into M4a/M4b when PM's positive-but-slow timeline
 made API-or-nothing gating needlessly expensive.
 
+**Amended 2026-07-10:** PM shipped a real API months early (see
+[packagemaven-api-evaluation.md](packagemaven-api-evaluation.md)), so M4a and M4b
+collapsed back into one milestone: the pipeline's live path fetches the API directly
+and the manual-export machinery was never needed. The principle stands — launch gates
+on real PM data in the feed — but the delivery mechanism question is settled.
+
 ## 10. Cloudflare Pages, deployed from GitHub Actions
 
 **Decision:** host on Cloudflare Pages, with the GitHub Actions pipeline doing a

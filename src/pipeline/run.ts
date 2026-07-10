@@ -46,7 +46,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
 
   const github = await fetchGithubExtras();
 
-  const { feed, details, danglingTrustEntries } = mergeToFeed({
+  const { feed, details, danglingTrustEntries, unmappedCategories } = mergeToFeed({
     snapshot,
     snapshotStale,
     vendorFiles,
@@ -63,6 +63,12 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
       `trust entry for "${name}" references a package absent from the PM snapshot — skipped`,
     );
   }
+  for (const label of unmappedCategories) {
+    warnings.push(
+      `PM category "${label}" has no mapping in data/categories.json — its packages ` +
+        `fall back to the "${categories.fallbackCategory}" category`,
+    );
+  }
 
   const result = emitArtifacts(options.outDir, feed, details, snapshot);
   return {
@@ -75,9 +81,8 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
 
 /**
  * Live mode: fetch from the PackageMaven API (PACKAGE_MAVEN_TOKEN, optional
- * PM_API_URL override) or, failing that, a pre-normalized export file at
- * PM_EXPORT_URL. On failure, carry forward the previously published raw
- * snapshot (PUBLISHED_BASE_URL/api/v1/sources/packagemaven.json) marked
+ * PM_API_URL override). On failure, carry forward the previously published
+ * raw snapshot (PUBLISHED_BASE_URL/api/v1/sources/packagemaven.json) marked
  * stale. If nothing is available (first-ever run), fail with an explicit
  * message — bootstrap via a fixture workflow_dispatch instead.
  */
@@ -87,7 +92,6 @@ async function fetchLiveSnapshot(now: Date): Promise<{
   warnings: string[];
 }> {
   const token = process.env.PACKAGE_MAVEN_TOKEN;
-  const exportUrl = process.env.PM_EXPORT_URL;
   const publishedBase = process.env.PUBLISHED_BASE_URL;
   const warnings: string[] = [];
 
@@ -106,20 +110,8 @@ async function fetchLiveSnapshot(now: Date): Promise<{
     } catch (error) {
       fetchError = (error as Error).message;
     }
-  } else if (exportUrl) {
-    try {
-      const response = await fetch(exportUrl, {
-        headers: { 'user-agent': 'mage-os-extension-directory-pipeline' },
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      // Manual-drop path: a pre-normalized export in our own snapshot shape.
-      const snapshot = packageMavenSnapshot.parse(await response.json());
-      return { snapshot, stale: false, warnings };
-    } catch (error) {
-      fetchError = (error as Error).message;
-    }
   } else {
-    fetchError = 'neither PACKAGE_MAVEN_TOKEN nor PM_EXPORT_URL is set';
+    fetchError = 'PACKAGE_MAVEN_TOKEN is not set';
   }
 
   if (publishedBase) {

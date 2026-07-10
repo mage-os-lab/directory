@@ -36,6 +36,26 @@ export interface MergeOutput {
   details: PackageDetail[];
   /** Trust entries referencing packages absent from the snapshot (warn + skip). */
   danglingTrustEntries: string[];
+  /** PM category labels with no mapping in data/categories.json (warn; the
+   * affected packages land in the fallback category). PM's taxonomy can move
+   * between our runs — this is how a scheduled build surfaces the drift. */
+  unmappedCategories: string[];
+}
+
+/** Distinct raw PM labels that data/categories.json doesn't map, sorted. */
+export function unmappedCategoryLabels(
+  rawLabels: Iterable<string>,
+  categories: CategoriesFile,
+): string[] {
+  const known = new Set(
+    categories.categories.flatMap((c) => c.packageMavenLabels.map((l) => l.toLowerCase())),
+  );
+  const unmapped = new Set<string>();
+  for (const raw of rawLabels) {
+    const label = raw.trim();
+    if (!known.has(label.toLowerCase())) unmapped.add(label);
+  }
+  return [...unmapped].sort();
 }
 
 /** Map PM's raw category labels to canonical slugs via data/categories.json. */
@@ -244,7 +264,15 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
     packages,
   };
 
-  return { feed, details, danglingTrustEntries: danglingTrustEntries.sort() };
+  return {
+    feed,
+    details,
+    danglingTrustEntries: danglingTrustEntries.sort(),
+    unmappedCategories: unmappedCategoryLabels(
+      snapshot.packages.flatMap((p) => p.rawCategories),
+      categories,
+    ),
+  };
 }
 
 function sortWarnings(warnings: PackageWarning[]): PackageWarning[] {

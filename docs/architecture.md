@@ -46,9 +46,8 @@ the expected timeline — see [packagemaven-api-evaluation.md](packagemaven-api-
 for the endpoint/field details and how it maps onto the contract. The pipeline's live
 path now fetches it directly (`src/pipeline/packagemaven.ts`: paginated
 `/packages` sweep, ~11 requests/run, `PACKAGE_MAVEN_TOKEN` secret), normalizing into
-the same internal snapshot shape (`origin: 'live' | 'manual' | 'fixture'`); a
-pre-normalized export file at `PM_EXPORT_URL` remains supported as a manual-drop
-fallback. One consequence of the API's shape: PM reports *untested* packages
+the same internal snapshot shape (`origin: 'live' | 'manual' | 'fixture'`). One
+consequence of the API's shape: PM reports *untested* packages
 (no quality flags yet), represented as `quality.tier: null` — ranking omits the
 quality signal for them rather than punishing them.
 

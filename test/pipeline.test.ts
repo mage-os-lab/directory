@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { runPipeline } from '../src/pipeline/run.js';
 import { feed as feedSchema, packageDetail } from '../src/schema/feed.js';
-import { mapCategories } from '../src/pipeline/merge.js';
+import { mapCategories, unmappedCategoryLabels } from '../src/pipeline/merge.js';
 import { loadCategories } from '../src/pipeline/load.js';
 
 const rootDir = path.resolve(__dirname, '..');
@@ -18,7 +18,12 @@ describe('pipeline on fixture data', () => {
     const first = await runPipeline({ source: 'fixture', rootDir, outDir, now });
     expect(first.packageCount).toBe(40);
     expect(first.stale).toBe(false);
-    expect(first.warnings).toEqual([]);
+    // The fixture deliberately carries one unmapped PM label to exercise the
+    // fallback path — taxonomy drift must surface as a warning, not silence.
+    expect(first.warnings).toEqual([
+      'PM category "Misc Utilities" has no mapping in data/categories.json — its packages ' +
+        'fall back to the "other" category',
+    ]);
 
     const feedRaw = fs.readFileSync(path.join(outDir, 'api/v1/feed.json'), 'utf8');
     const feed = feedSchema.parse(JSON.parse(feedRaw));
@@ -138,5 +143,21 @@ describe('category mapping', () => {
   it('routes unknown labels and empty lists to the fallback category', () => {
     expect(mapCategories(['Misc Utilities'], categories)).toEqual(['other']);
     expect(mapCategories([], categories)).toEqual(['other']);
+  });
+
+  it('reports unmapped labels so PM taxonomy drift surfaces as pipeline warnings', () => {
+    expect(
+      unmappedCategoryLabels(['payments', 'brand-new-pm-category', 'brand-new-pm-category'], categories),
+    ).toEqual(['brand-new-pm-category']);
+    // Every live PM slug (as of docs/packagemaven-openapi.json) is mapped.
+    const liveSlugs = [
+      'administration-backend', 'developer-tools', 'catalog-management',
+      'performance-optimization', 'seo-urls', 'checkout-payments',
+      'customer-authentication', 'email-communication', 'analytics-tracking',
+      'search', 'content-management', 'images-media', 'integration-third-party',
+      'security-compliance', 'order-shipping', 'tax-pricing',
+      'devops-infrastructure', 'import-export', 'ai-automation', 'miscellaneous',
+    ];
+    expect(unmappedCategoryLabels(liveSlugs, categories)).toEqual([]);
   });
 });
