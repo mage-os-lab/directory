@@ -1,7 +1,3 @@
 # URL paths (relative to https://package-maven.com) fetched by the
 # pm-api-probe workflow on push to the review branch. One per line.
-/api/docs
-/api/openapi.json
-/api/docs/openapi.json
-/api
-/api/v1
+/api/v1/openapi.json
