@@ -279,6 +279,7 @@ h3 {
 .badge-no-errors { background: #d0ebff; border-color: #74c0fc; color: #1971c2; }
 .badge-ready-to-install { background: #fff3bf; border-color: #ffd43b; color: #997404; }
 .badge-needs-help { background: #ffe3e3; border-color: #ffa8a8; color: #c92a2a; }
+.badge-untested { background: #f1f3f5; border-color: #ced4da; color: #495057; }
 .badge-pick { background: #fdf0e5; border-color: #f8c99b; color: #b34f00; }
 .badge-trusted { background: #e5f4ef; border-color: #9cd6bf; color: #14735c; }
 .badge-warning { background: #ffe3e3; border-color: #ffa8a8; color: #c92a2a; }
@@ -286,6 +287,9 @@ h3 {
 .badge-partner-gold,
 .badge-partner-silver,
 .badge-partner-bronze { background: #fff9db; border-color: #ffe066; color: #997404; }
+.badge-semver-ok { background: #e6fcf5; border-color: #63e6be; color: #087f5b; }
+.badge-semver-violations { background: #fff0f6; border-color: #faa2c1; color: #a61e4d; }
+.badge-abandoned { background: #495057; border-color: #343a40; color: #f8f9fa; }
 
 .stat {
   color: var(--fg-muted);

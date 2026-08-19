@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       source:
-        description: 'Data source (live requires PM_EXPORT_URL; fixture is the bootstrap path)'
+        description: 'Data source (live requires PACKAGE_MAVEN_TOKEN; fixture is the bootstrap path)'
         type: choice
         options: [live, fixture]
         default: live
@@ -32,7 +32,8 @@ jobs:
           restore-keys: http-cache-
       - name: Run pipeline
         env:
-          PM_EXPORT_URL: ${{ vars.PM_EXPORT_URL }}
+          PACKAGE_MAVEN_TOKEN: ${{ secrets.PACKAGE_MAVEN_TOKEN }}
+          PM_API_URL: ${{ vars.PM_API_URL }}
           PUBLISHED_BASE_URL: ${{ vars.PUBLISHED_BASE_URL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx tsx src/pipeline/run.ts --source "${{ inputs.source || 'live' }}" --out public

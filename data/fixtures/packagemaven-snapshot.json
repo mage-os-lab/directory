@@ -24,7 +24,8 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/brightloom/module-email-marketing"
     },
     {
       "name": "brightloom/module-seo-toolkit",
@@ -48,7 +49,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "semver": {
+        "status": "compliant",
+        "compliancePercent": 100
+      },
+      "pmUrl": "https://package-maven.com/brightloom/module-seo-toolkit"
     },
     {
       "name": "brightloom/module-social-share",
@@ -72,7 +78,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "semver": {
+        "status": "pending",
+        "compliancePercent": null
+      },
+      "pmUrl": "https://package-maven.com/brightloom/module-social-share"
     },
     {
       "name": "castlegate/module-checkout-suite",
@@ -95,7 +106,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "semver": {
+        "status": "violations",
+        "compliancePercent": 70
+      },
+      "pmUrl": "https://package-maven.com/castlegate/module-checkout-suite"
     },
     {
       "name": "castlegate/module-fraud-shield",
@@ -119,7 +135,8 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/castlegate/module-fraud-shield"
     },
     {
       "name": "castlegate/module-installments",
@@ -138,7 +155,9 @@
       "buildStatus": "failing",
       "installs": null,
       "license": null,
-      "abandoned": true
+      "abandoned": true,
+      "abandonedReplacement": "castlegate/module-payment-gateway",
+      "pmUrl": "https://package-maven.com/castlegate/module-installments"
     },
     {
       "name": "castlegate/module-payment-gateway",
@@ -186,7 +205,12 @@
             "2.4.5"
           ]
         }
-      ]
+      ],
+      "semver": {
+        "status": "compliant",
+        "compliancePercent": 100
+      },
+      "pmUrl": "https://package-maven.com/castlegate/module-payment-gateway"
     },
     {
       "name": "driftwood/module-customer-segments",
@@ -209,7 +233,8 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/driftwood/module-customer-segments"
     },
     {
       "name": "driftwood/module-loyalty-points",
@@ -233,7 +258,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "semver": {
+        "status": "violations",
+        "compliancePercent": 90
+      },
+      "pmUrl": "https://package-maven.com/driftwood/module-loyalty-points"
     },
     {
       "name": "driftwood/module-wishlist-plus",
@@ -256,7 +286,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/driftwood/module-wishlist-plus"
     },
     {
       "name": "ferrousbyte/module-api-logger",
@@ -279,7 +310,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": null
+      "abandoned": null,
+      "pmUrl": "https://package-maven.com/ferrousbyte/module-api-logger"
     },
     {
       "name": "ferrousbyte/module-erp-connector",
@@ -303,7 +335,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/ferrousbyte/module-erp-connector"
     },
     {
       "name": "ferrousbyte/module-graphql-extensions",
@@ -326,7 +359,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "semver": {
+        "status": "compliant",
+        "compliancePercent": 100
+      },
+      "pmUrl": "https://package-maven.com/ferrousbyte/module-graphql-extensions"
     },
     {
       "name": "ferrousbyte/module-webhook-dispatcher",
@@ -350,7 +388,8 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/ferrousbyte/module-webhook-dispatcher"
     },
     {
       "name": "ironclasp/module-address-validation",
@@ -374,7 +413,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/ironclasp/module-address-validation"
     },
     {
       "name": "ironclasp/module-carrier-freightline",
@@ -398,7 +438,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "semver": {
+        "status": "unknown",
+        "compliancePercent": null
+      },
+      "pmUrl": "https://package-maven.com/ironclasp/module-carrier-freightline"
     },
     {
       "name": "ironclasp/module-checkout-fields",
@@ -421,7 +466,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": null
+      "abandoned": null,
+      "pmUrl": "https://package-maven.com/ironclasp/module-checkout-fields"
     },
     {
       "name": "ironclasp/module-multi-carrier",
@@ -443,7 +489,8 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/ironclasp/module-multi-carrier"
     },
     {
       "name": "lumenpath/magento2-debug-bar",
@@ -462,7 +509,13 @@
       "buildStatus": "failing",
       "installs": null,
       "license": null,
-      "abandoned": true
+      "abandoned": true,
+      "semver": {
+        "status": "violations",
+        "compliancePercent": 0
+      },
+      "abandonedReplacement": null,
+      "pmUrl": "https://package-maven.com/lumenpath/magento2-debug-bar"
     },
     {
       "name": "lumenpath/module-cache-warmer",
@@ -486,7 +539,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/lumenpath/module-cache-warmer"
     },
     {
       "name": "lumenpath/module-cli-toolkit",
@@ -506,7 +560,8 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/lumenpath/module-cli-toolkit"
     },
     {
       "name": "northware/module-invoice-pdf",
@@ -529,7 +584,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": null
+      "abandoned": null,
+      "semver": {
+        "status": "violations",
+        "compliancePercent": 90
+      },
+      "pmUrl": "https://package-maven.com/northware/module-invoice-pdf"
     },
     {
       "name": "northware/module-order-export",
@@ -554,7 +614,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "semver": {
+        "status": "compliant",
+        "compliancePercent": 100
+      },
+      "pmUrl": "https://package-maven.com/northware/module-order-export"
     },
     {
       "name": "northware/module-order-sync",
@@ -577,7 +642,8 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/northware/module-order-sync"
     },
     {
       "name": "northware/module-returns-manager",
@@ -601,7 +667,8 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/northware/module-returns-manager"
     },
     {
       "name": "northware/module-shipping-rules",
@@ -625,7 +692,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/northware/module-shipping-rules"
     },
     {
       "name": "pixelforge/magento2-image-optimizer",
@@ -650,7 +718,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "semver": {
+        "status": "compliant",
+        "compliancePercent": 100
+      },
+      "pmUrl": "https://package-maven.com/pixelforge/magento2-image-optimizer"
     },
     {
       "name": "pixelforge/magento2-lazy-load",
@@ -673,7 +746,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/pixelforge/magento2-lazy-load"
     },
     {
       "name": "pixelforge/magento2-video-gallery",
@@ -695,7 +769,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/pixelforge/magento2-video-gallery"
     },
     {
       "name": "pixelforge/module-catalog-swatches",
@@ -736,7 +811,8 @@
             "2.4.4"
           ]
         }
-      ]
+      ],
+      "pmUrl": "https://package-maven.com/pixelforge/module-catalog-swatches"
     },
     {
       "name": "pixelforge/module-category-banners",
@@ -755,7 +831,8 @@
       "buildStatus": "failing",
       "installs": 95,
       "license": null,
-      "abandoned": null
+      "abandoned": null,
+      "pmUrl": "https://package-maven.com/pixelforge/module-category-banners"
     },
     {
       "name": "pixelforge/module-product-badges",
@@ -779,7 +856,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/pixelforge/module-product-badges"
     },
     {
       "name": "quillstack/module-admin-notes",
@@ -802,7 +880,8 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/quillstack/module-admin-notes"
     },
     {
       "name": "quillstack/module-audit-log",
@@ -827,7 +906,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "semver": {
+        "status": "compliant",
+        "compliancePercent": 100
+      },
+      "pmUrl": "https://package-maven.com/quillstack/module-audit-log"
     },
     {
       "name": "quillstack/module-dashboard-widgets",
@@ -846,7 +930,8 @@
       "buildStatus": "failing",
       "installs": null,
       "license": null,
-      "abandoned": null
+      "abandoned": null,
+      "pmUrl": "https://package-maven.com/quillstack/module-dashboard-widgets"
     },
     {
       "name": "quillstack/module-permission-manager",
@@ -868,7 +953,8 @@
       "license": [
         "MIT"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/quillstack/module-permission-manager"
     },
     {
       "name": "quillstack/module-sales-reports",
@@ -891,7 +977,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/quillstack/module-sales-reports"
     },
     {
       "name": "wrenfield/module-gift-registry",
@@ -909,7 +996,8 @@
       "buildStatus": "unknown",
       "installs": null,
       "license": null,
-      "abandoned": null
+      "abandoned": null,
+      "pmUrl": "https://package-maven.com/wrenfield/module-gift-registry"
     },
     {
       "name": "wrenfield/module-inventory-forecast",
@@ -932,7 +1020,8 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "pmUrl": "https://package-maven.com/wrenfield/module-inventory-forecast"
     },
     {
       "name": "wrenfield/module-marketplace-sync",
@@ -955,7 +1044,12 @@
       "license": [
         "OSL-3.0"
       ],
-      "abandoned": false
+      "abandoned": false,
+      "semver": {
+        "status": "violations",
+        "compliancePercent": 70
+      },
+      "pmUrl": "https://package-maven.com/wrenfield/module-marketplace-sync"
     }
   ]
 }

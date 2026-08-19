@@ -41,15 +41,15 @@ form on its site); a contributor-facing `how-to-get-listed` guide is part of mil
 The fields the pipeline needs from PM are specified in
 [packagemaven-data-contract.md](packagemaven-data-contract.md).
 
-**Status (2026-07):** PM's author responded positively to collaborating and asked for
-specifics; the data contract has been sent as the starting point. PM's timeline for a
-real API is **months out**, so the near-term ask is the cheapest thing that works: a
-manually regenerated JSON export (or even a one-off dump we normalize), refreshed at
-whatever cadence is convenient. The PM fetcher treats delivery mechanism as an
-implementation detail — stable URL, repo drop, or hand-shared file all normalize into
-the same internal snapshot shape (`origin: 'live' | 'manual' | 'fixture'`), so launch
-rides on *any* machine-readable delivery, not on PM's API timeline (see milestones
-M4a/M4b). Everything else is built and previewed against fixture data.
+**Status (2026-07, updated):** PM shipped a real bearer-token REST API months ahead of
+the expected timeline — see [packagemaven-api-evaluation.md](packagemaven-api-evaluation.md)
+for the endpoint/field details and how it maps onto the contract. The pipeline's live
+path now fetches it directly (`src/pipeline/packagemaven.ts`: paginated
+`/packages` sweep, ~11 requests/run, `PACKAGE_MAVEN_TOKEN` secret), normalizing into
+the same internal snapshot shape (`origin: 'live' | 'manual' | 'fixture'`). One
+consequence of the API's shape: PM reports *untested* packages
+(no quality flags yet), represented as `quality.tier: null` — ranking omits the
+quality signal for them rather than punishing them.
 
 When running on a manually refreshed export, staleness is a *steady state*, not a
 transient failure: the site shows a "quality data as of &lt;date&gt;" notice sourced from the
@@ -174,8 +174,9 @@ interface PackageSummary {
                                   // per-release data from PM.
   abandoned: boolean | null;      // null when PM's export doesn't carry the flag
   quality: {
-    tier: 'strict-compliant' | 'no-errors' | 'ready-to-install' | 'needs-help';
-    phpstanLevel: number | null;
+    tier: 'strict-compliant' | 'no-errors' | 'ready-to-install' | 'needs-help' | null;
+                                  // null = PM hasn't tested the package yet
+    phpstanLevel: number | null;  // PM scale 0–9; -1 = fails at level 0; null = untested
     buildStatus: 'passing' | 'failing' | 'unknown';
     stale: boolean;               // mirrors the packagemaven entry in Feed.sources:
   };                              // true when this run reused a carried-forward snapshot

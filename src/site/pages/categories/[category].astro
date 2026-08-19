@@ -43,7 +43,9 @@ const QUALITY_LABELS: Record<string, string> = {
             </p>
             <p class="description">{pkg.description}</p>
             <p class="meta">
-              <span class={`badge badge-${pkg.quality.tier}`}>{QUALITY_LABELS[pkg.quality.tier]}</span>
+              <span class={`badge badge-${pkg.quality.tier ?? 'untested'}`}>
+                {pkg.quality.tier ? QUALITY_LABELS[pkg.quality.tier] : 'Not yet tested'}
+              </span>
               {pkg.trust.editorialPick && <span class="badge badge-pick">Editors&rsquo; pick</span>}
               {pkg.trust.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
               {pkg.popularity.installs !== null && (

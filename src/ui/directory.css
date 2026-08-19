@@ -365,9 +365,11 @@
 .mosd-badge-no-errors { background: #d7e9fb; color: #135ba1; }
 .mosd-badge-ready-to-install { background: #fdf0c2; color: #7a5d00; }
 .mosd-badge-needs-help { background: #fadcdc; color: #a52626; }
+.mosd-badge-untested { background: #ececec; color: #5f5f5f; }
 .mosd-badge-pick { background: #fdeee4; color: #a34a00; }
 .mosd-badge-trusted { background: #ddf0e8; color: #0f5c48; }
 .mosd-badge-warning { background: #fadcdc; color: #a52626; }
+.mosd-badge-abandoned { background: #4d5359; color: #f4f5f6; }
 .mosd-badge-installed { background: #d5f2dc; color: #1e6b34; }
 .mosd-badge-update { background: #fdf0c2; color: #7a5d00; }
 .mosd-badge-compat-ok { background: #ddf0e8; color: #0f5c48; }

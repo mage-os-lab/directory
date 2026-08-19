@@ -40,6 +40,14 @@ same source interface — deliberately excluded from v1 for simplicity.
 parsing required, more failure modes); all of Packagist as the universe (unvetted
 packages would swamp quality signals).
 
+**Amended 2026-08-19:** the contingency above is moot — PM added `license` and
+`abandoned` (with suggested replacement) to the API at our request, plus an
+unrequested SemVer-compliance verdict, and wrote
+redistribution-with-attribution terms into the API spec itself (attribution to
+package-maven.com plus each package's Packagist page). See
+[packagemaven-api-evaluation.md](packagemaven-api-evaluation.md). The
+per-Packagist-lookup fallback stays rejected.
+
 ## 3. Curated universe with a PR-based trust overlay
 
 **Decision:** the directory lists exactly what PackageMaven indexes. Mage-OS trust data
@@ -140,6 +148,12 @@ basis rather than a compromise.
 **Amended after review:** originally "launch gated on M4 (live PM integration)" as a
 single monolithic milestone; split into M4a/M4b when PM's positive-but-slow timeline
 made API-or-nothing gating needlessly expensive.
+
+**Amended 2026-07-10:** PM shipped a real API months early (see
+[packagemaven-api-evaluation.md](packagemaven-api-evaluation.md)), so M4a and M4b
+collapsed back into one milestone: the pipeline's live path fetches the API directly
+and the manual-export machinery was never needed. The principle stands — launch gates
+on real PM data in the feed — but the delivery mechanism question is settled.
 
 ## 10. Cloudflare Pages, deployed from GitHub Actions
 

@@ -4,80 +4,110 @@
     {
       "slug": "payments",
       "name": "Payments",
-      "description": "Payment methods, gateways, and invoicing.",
-      "packageMavenLabels": ["Payments", "Payment"]
+      "description": "Payment methods, gateways, taxes, and invoicing.",
+      "packageMavenLabels": ["Payments", "Payment", "tax-pricing"]
     },
     {
       "slug": "shipping",
       "name": "Shipping",
       "description": "Carriers, rates, labels, and fulfillment.",
-      "packageMavenLabels": ["Shipping", "Delivery"]
+      "packageMavenLabels": ["Shipping", "Delivery", "order-shipping"]
     },
     {
       "slug": "checkout",
       "name": "Checkout",
       "description": "Checkout flow, cart, and conversion.",
-      "packageMavenLabels": ["Checkout", "Cart"]
+      "packageMavenLabels": ["Checkout", "Cart", "checkout-payments"]
     },
     {
       "slug": "catalog",
       "name": "Catalog",
       "description": "Products, categories, attributes, and pricing.",
-      "packageMavenLabels": ["Catalog", "Product", "Products"]
+      "packageMavenLabels": ["Catalog", "Product", "Products", "catalog-management"]
     },
     {
       "slug": "admin-tools",
       "name": "Admin Tools",
       "description": "Admin panel improvements and back-office workflow.",
-      "packageMavenLabels": ["Admin Tools", "Admin", "Backend"]
+      "packageMavenLabels": [
+        "Admin Tools",
+        "Admin",
+        "Backend",
+        "administration-backend",
+        "import-export"
+      ]
     },
     {
       "slug": "marketing",
       "name": "Marketing",
       "description": "Promotions, email, and campaign tooling.",
-      "packageMavenLabels": ["Marketing", "Promotions"]
+      "packageMavenLabels": ["Marketing", "Promotions", "email-communication"]
     },
     {
       "slug": "seo",
       "name": "SEO",
       "description": "Search engine optimization and structured data.",
-      "packageMavenLabels": ["SEO"]
+      "packageMavenLabels": ["SEO", "seo-urls"]
     },
     {
       "slug": "performance",
       "name": "Performance",
       "description": "Caching, indexing, and frontend speed.",
-      "packageMavenLabels": ["Performance", "Optimization"]
+      "packageMavenLabels": ["Performance", "Optimization", "performance-optimization"]
     },
     {
       "slug": "integration",
       "name": "Integrations",
       "description": "Connectors to external services and platforms.",
-      "packageMavenLabels": ["Integration", "Integrations", "API"]
+      "packageMavenLabels": ["Integration", "Integrations", "API", "integration-third-party"]
     },
     {
       "slug": "developer-tools",
       "name": "Developer Tools",
-      "description": "Debugging, tooling, and developer experience.",
-      "packageMavenLabels": ["Developer Tools", "Development", "Tools"]
+      "description": "Debugging, tooling, DevOps, and developer experience.",
+      "packageMavenLabels": [
+        "Developer Tools",
+        "Development",
+        "Tools",
+        "developer-tools",
+        "devops-infrastructure"
+      ]
     },
     {
       "slug": "customer",
       "name": "Customer",
       "description": "Accounts, login, and customer experience.",
-      "packageMavenLabels": ["Customer", "Customers", "Account"]
+      "packageMavenLabels": ["Customer", "Customers", "Account", "customer-authentication"]
     },
     {
       "slug": "reporting",
       "name": "Reporting",
       "description": "Analytics, reports, and business insight.",
-      "packageMavenLabels": ["Reporting", "Reports", "Analytics"]
+      "packageMavenLabels": ["Reporting", "Reports", "Analytics", "analytics-tracking"]
+    },
+    {
+      "slug": "search",
+      "name": "Search",
+      "description": "Site search engines and search enhancements.",
+      "packageMavenLabels": ["search"]
+    },
+    {
+      "slug": "content",
+      "name": "Content & Media",
+      "description": "CMS, page building, images, and media handling.",
+      "packageMavenLabels": ["content-management", "images-media", "CMS"]
+    },
+    {
+      "slug": "security",
+      "name": "Security & Compliance",
+      "description": "Security hardening, GDPR, cookies, and captcha.",
+      "packageMavenLabels": ["security-compliance", "Security"]
     },
     {
       "slug": "other",
       "name": "Other",
       "description": "Everything that doesn't fit a canonical category yet.",
-      "packageMavenLabels": []
+      "packageMavenLabels": ["miscellaneous", "ai-automation"]
     }
   ],
   "fallbackCategory": "other"

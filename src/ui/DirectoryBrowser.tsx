@@ -161,7 +161,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
       (p) =>
         (showHidden || !p.trust.hidden) &&
         (category === '' || p.categories.includes(category)) &&
-        (quality.size === 0 || quality.has(p.quality.tier)) &&
+        (quality.size === 0 || (p.quality.tier !== null && quality.has(p.quality.tier))) &&
         (installFilter === '' || installState(p) === installFilter) &&
         (!testedOnly || magentoSupport(p)?.state !== 'untested'),
     );
@@ -370,8 +370,8 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                 >
                   {pkg.displayName}
                 </a>
-                <span class={`mosd-badge mosd-badge-quality mosd-badge-${pkg.quality.tier}`}>
-                  {QUALITY_LABELS[pkg.quality.tier]}
+                <span class={`mosd-badge mosd-badge-quality mosd-badge-${pkg.quality.tier ?? 'untested'}`}>
+                  {pkg.quality.tier ? QUALITY_LABELS[pkg.quality.tier] : 'Not yet tested'}
                 </span>
               </div>
               <p class="mosd-card-name">
@@ -411,9 +411,14 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                   ⤓ <strong>{pkg.popularity.installs.toLocaleString()}</strong>
                 </span>
               )}
-              {pkg.quality.phpstanLevel !== null && (
+              {pkg.quality.phpstanLevel !== null && pkg.quality.phpstanLevel >= 0 && (
                 <span class="mosd-stat">
                   PHPStan <strong>L{pkg.quality.phpstanLevel}</strong>
+                </span>
+              )}
+              {pkg.quality.semver !== null && pkg.quality.semver.compliancePercent !== null && (
+                <span class="mosd-stat">
+                  SemVer <strong>{pkg.quality.semver.compliancePercent}%</strong>
                 </span>
               )}
               {pkg.latestVersion && (
@@ -437,6 +442,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                   {pkg.trust.warnings.length} warning{pkg.trust.warnings.length === 1 ? '' : 's'}
                 </span>
               )}
+              {pkg.abandoned && <span class="mosd-badge mosd-badge-abandoned">Abandoned</span>}
               {magentoBadge(pkg)}
               {installState(pkg) === 'installed' && (
                 <span class="mosd-badge mosd-badge-installed">

@@ -36,6 +36,26 @@ export interface MergeOutput {
   details: PackageDetail[];
   /** Trust entries referencing packages absent from the snapshot (warn + skip). */
   danglingTrustEntries: string[];
+  /** PM category labels with no mapping in data/categories.json (warn; the
+   * affected packages land in the fallback category). PM's taxonomy can move
+   * between our runs — this is how a scheduled build surfaces the drift. */
+  unmappedCategories: string[];
+}
+
+/** Distinct raw PM labels that data/categories.json doesn't map, sorted. */
+export function unmappedCategoryLabels(
+  rawLabels: Iterable<string>,
+  categories: CategoriesFile,
+): string[] {
+  const known = new Set(
+    categories.categories.flatMap((c) => c.packageMavenLabels.map((l) => l.toLowerCase())),
+  );
+  const unmapped = new Set<string>();
+  for (const raw of rawLabels) {
+    const label = raw.trim();
+    if (!known.has(label.toLowerCase())) unmapped.add(label);
+  }
+  return [...unmapped].sort();
 }
 
 /** Map PM's raw category labels to canonical slugs via data/categories.json. */
@@ -144,10 +164,12 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         supportedMagento: source.supportedMagento,
         compatibility: buildCompatibility(releases),
         abandoned: source.abandoned,
+        abandonedReplacement: source.abandonedReplacement,
         quality: {
           tier: source.qualityTier,
           phpstanLevel: source.phpstanLevel,
           buildStatus: source.buildStatus,
+          semver: source.semver,
           stale: input.snapshotStale,
         },
         trust: {
@@ -160,7 +182,9 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         },
         popularity: {
           installs: source.installs,
-          githubStars: extras.stars,
+          // Live GitHub data wins; PM's reported star count fills the gap
+          // when our own GitHub fetch is disabled or fails.
+          githubStars: extras.stars ?? source.stars,
         },
       },
     };
@@ -210,7 +234,9 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         license: a.source.license,
         links: {
           packagist: `https://packagist.org/packages/${a.source.name}`,
-          packagemaven: `https://package-maven.com/packages/${a.source.name}`,
+          // PM package pages live at package-maven.com/<vendor>/<package>;
+          // prefer the URL PM reports over deriving it.
+          packagemaven: a.source.pmUrl ?? `https://package-maven.com/${a.source.name}`,
           repository: a.source.repositoryUrl,
           issues: a.trustEntry?.issuesUrl ?? deriveIssuesUrl(a.source),
           docs: a.trustEntry?.docsUrl ?? null,
@@ -242,7 +268,15 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
     packages,
   };
 
-  return { feed, details, danglingTrustEntries: danglingTrustEntries.sort() };
+  return {
+    feed,
+    details,
+    danglingTrustEntries: danglingTrustEntries.sort(),
+    unmappedCategories: unmappedCategoryLabels(
+      snapshot.packages.flatMap((p) => p.rawCategories),
+      categories,
+    ),
+  };
 }
 
 function sortWarnings(warnings: PackageWarning[]): PackageWarning[] {

@@ -43,13 +43,37 @@ export const sourcePackage = z.object({
    * into the matrix.
    */
   releases: z.array(sourceRelease).default([]),
-  qualityTier: qualityTier,
-  phpstanLevel: z.number().int().min(0).max(10).nullable().default(null),
+  /** Null means PM has not (yet) tested the package — distinct from any tier. */
+  qualityTier: qualityTier.nullable(),
+  /**
+   * Highest PHPStan level passing with zero errors (PM's scale: 0–9).
+   * -1 means the analysis fails even at level 0; null means untested.
+   */
+  phpstanLevel: z.number().int().min(-1).max(9).nullable().default(null),
   buildStatus: buildStatus.default('unknown'),
   installs: z.number().int().min(0).nullable().default(null),
-  /** Nice-to-have fields; null when PM's export doesn't carry them. */
+  /** GitHub stars as reported by PM; fallback when our own GitHub fetch is off. */
+  stars: z.number().int().min(0).nullable().default(null),
+  /** SPDX license identifier(s) of the latest stable release; null when unknown. */
   license: z.array(z.string()).nullable().default(null),
+  /** Packagist abandonment flag; null when the source doesn't carry it. */
   abandoned: z.boolean().nullable().default(null),
+  /** Composer name of the maintainer-suggested replacement, when abandoned. */
+  abandonedReplacement: z.string().min(1).nullable().default(null),
+  /**
+   * Semantic-versioning compliance of released versions as measured by PM
+   * (semverdict). Null when the source doesn't carry it; `pending`/`unknown`
+   * statuses mean not-yet-checked / check-failed and carry a null percent.
+   */
+  semver: z
+    .object({
+      status: z.enum(['pending', 'compliant', 'violations', 'unknown']),
+      compliancePercent: z.number().int().min(0).max(100).nullable(),
+    })
+    .nullable()
+    .default(null),
+  /** The package's page on package-maven.com, as reported by PM itself. */
+  pmUrl: z.url().nullable().default(null),
 });
 export type SourcePackage = z.infer<typeof sourcePackage>;
 

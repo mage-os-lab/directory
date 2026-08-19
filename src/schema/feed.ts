@@ -12,9 +12,21 @@ import { packageWarning } from './vendor-file.js';
 import { sourceStatus } from './source.js';
 
 export const packageQuality = z.object({
-  tier: qualityTier,
+  /** Null when PM has not (yet) tested the package. */
+  tier: qualityTier.nullable(),
   phpstanLevel: z.number().int().nullable(),
   buildStatus: buildStatus,
+  /**
+   * Semantic-versioning compliance of released versions (PM's semverdict
+   * check). Null when the data source doesn't carry it; `pending`/`unknown`
+   * statuses mean not-yet-checked / check-failed and carry a null percent.
+   */
+  semver: z
+    .object({
+      status: z.enum(['pending', 'compliant', 'violations', 'unknown']),
+      compliancePercent: z.number().int().min(0).max(100).nullable(),
+    })
+    .nullable(),
   /** True when quality data was carried forward from a previous snapshot. */
   stale: z.boolean(),
 });
@@ -68,6 +80,8 @@ export const packageSummary = z.object({
    */
   compatibility: z.record(z.string(), z.string()),
   abandoned: z.boolean().nullable(),
+  /** Composer name of the maintainer-suggested replacement, when abandoned. */
+  abandonedReplacement: z.string().nullable(),
   quality: packageQuality,
   trust: packageTrust,
   popularity: packagePopularity,
