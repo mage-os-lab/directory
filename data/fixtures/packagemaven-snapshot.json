@@ -1,0 +1,919 @@
+{
+  "schemaVersion": 1,
+  "fetchedAt": "2026-07-01T06:00:00.000Z",
+  "origin": "fixture",
+  "packages": [
+    {
+      "name": "brightloom/module-email-marketing",
+      "displayName": "Email Marketing Automation",
+      "description": "Triggers abandoned-cart and post-purchase email sequences through a connected ESP.",
+      "rawCategories": [
+        "Marketing"
+      ],
+      "repositoryUrl": "https://github.com/brightloom/module-email-marketing",
+      "latestVersion": "1.5.0",
+      "latestReleasedAt": "2025-04-14T12:15:00.000Z",
+      "supportedMagento": [
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 2,
+      "buildStatus": "passing",
+      "installs": 430,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "brightloom/module-seo-toolkit",
+      "displayName": "SEO Toolkit",
+      "description": "Bulk-edits meta titles and descriptions, generates XML sitemaps, and audits broken canonical tags.",
+      "rawCategories": [
+        "SEO"
+      ],
+      "repositoryUrl": "https://github.com/brightloom/module-seo-toolkit",
+      "latestVersion": "3.2.1",
+      "latestReleasedAt": "2026-05-30T10:00:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 8,
+      "buildStatus": "passing",
+      "installs": 9800,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "brightloom/module-social-share",
+      "displayName": "Social Share Buttons",
+      "description": "Adds configurable social sharing and follow buttons to product and CMS pages.",
+      "rawCategories": [
+        "Marketing",
+        "SEO"
+      ],
+      "repositoryUrl": "https://gitlab.com/brightloom/module-social-share",
+      "latestVersion": "2.2.2",
+      "latestReleasedAt": "2025-10-08T09:40:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 6,
+      "buildStatus": "passing",
+      "installs": 3100,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "castlegate/module-checkout-suite",
+      "displayName": "Checkout Suite",
+      "description": "Replaces the default checkout with a single-page flow featuring address autocomplete and saved payment methods.",
+      "rawCategories": [
+        "Checkout"
+      ],
+      "repositoryUrl": "https://github.com/castlegate/module-checkout-suite",
+      "latestVersion": "3.0.4",
+      "latestReleasedAt": "2025-09-18T14:10:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 6,
+      "buildStatus": "unknown",
+      "installs": 5600,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "castlegate/module-fraud-shield",
+      "displayName": "Fraud Shield",
+      "description": "Scores incoming orders against configurable risk rules and flags suspicious transactions for manual review.",
+      "rawCategories": [
+        "Payments",
+        "Admin Tools"
+      ],
+      "repositoryUrl": "https://github.com/castlegate/module-fraud-shield",
+      "latestVersion": "1.6.2",
+      "latestReleasedAt": "2025-03-27T09:00:00.000Z",
+      "supportedMagento": [
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 3,
+      "buildStatus": "passing",
+      "installs": 1800,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "castlegate/module-installments",
+      "displayName": "Installments Plan Manager",
+      "description": "Offers configurable installment payment plans at checkout with automatic scheduled billing.",
+      "rawCategories": [
+        "Payments",
+        "Checkout"
+      ],
+      "repositoryUrl": null,
+      "latestVersion": null,
+      "latestReleasedAt": null,
+      "supportedMagento": [],
+      "qualityTier": "needs-help",
+      "phpstanLevel": null,
+      "buildStatus": "failing",
+      "installs": null,
+      "license": null,
+      "abandoned": true
+    },
+    {
+      "name": "castlegate/module-payment-gateway",
+      "displayName": "Payment Gateway Bridge",
+      "description": "Connects checkout to a hosted payment gateway with tokenized cards and 3-D Secure support.",
+      "rawCategories": [
+        "Payments"
+      ],
+      "repositoryUrl": "https://github.com/castlegate/module-payment-gateway",
+      "latestVersion": "5.1.0",
+      "latestReleasedAt": "2026-04-22T11:20:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "strict-compliant",
+      "phpstanLevel": 9,
+      "buildStatus": "passing",
+      "installs": 21000,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "driftwood/module-customer-segments",
+      "displayName": "Customer Segments",
+      "description": "Builds dynamic customer segments from purchase history for targeted pricing and promotions.",
+      "rawCategories": [
+        "Customer",
+        "Marketing"
+      ],
+      "repositoryUrl": "https://github.com/driftwood/module-customer-segments",
+      "latestVersion": "1.4.4",
+      "latestReleasedAt": "2024-10-07T12:00:00.000Z",
+      "supportedMagento": [
+        "2.4.6"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 4,
+      "buildStatus": "passing",
+      "installs": 620,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "driftwood/module-loyalty-points",
+      "displayName": "Loyalty Points Program",
+      "description": "Rewards purchases, reviews, and referrals with redeemable points shown in the customer account.",
+      "rawCategories": [
+        "Customer",
+        "Marketing"
+      ],
+      "repositoryUrl": "https://github.com/driftwood/module-loyalty-points",
+      "latestVersion": "2.5.3",
+      "latestReleasedAt": "2026-02-11T11:15:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 3,
+      "buildStatus": "passing",
+      "installs": 3900,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "driftwood/module-wishlist-plus",
+      "displayName": "Wishlist Plus",
+      "description": "Adds multiple named wishlists, sharing links, and back-in-stock alerts.",
+      "rawCategories": [
+        "Customer"
+      ],
+      "repositoryUrl": "https://github.com/driftwood/module-wishlist-plus",
+      "latestVersion": "1.8.0",
+      "latestReleasedAt": "2025-01-19T09:30:00.000Z",
+      "supportedMagento": [
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 5,
+      "buildStatus": "passing",
+      "installs": 1450,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "ferrousbyte/module-api-logger",
+      "displayName": "API Request Logger",
+      "description": "Logs and lets admins replay inbound REST and GraphQL requests for debugging integrations.",
+      "rawCategories": [
+        "Developer Tools"
+      ],
+      "repositoryUrl": "https://gitlab.com/ferrousbyte/module-api-logger",
+      "latestVersion": "2.6.1",
+      "latestReleasedAt": "2025-05-06T10:10:00.000Z",
+      "supportedMagento": [
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 5,
+      "buildStatus": "passing",
+      "installs": 2200,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": null
+    },
+    {
+      "name": "ferrousbyte/module-erp-connector",
+      "displayName": "ERP Connector",
+      "description": "Synchronizes products, prices, and stock levels bidirectionally with a back-office ERP system.",
+      "rawCategories": [
+        "Integration"
+      ],
+      "repositoryUrl": "https://github.com/ferrousbyte/module-erp-connector",
+      "latestVersion": "4.3.0",
+      "latestReleasedAt": "2026-03-17T11:00:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "strict-compliant",
+      "phpstanLevel": 9,
+      "buildStatus": "passing",
+      "installs": 12500,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "ferrousbyte/module-graphql-extensions",
+      "displayName": "GraphQL Extensions",
+      "description": "Exposes additional order, wishlist, and CMS block fields on the Magento GraphQL schema.",
+      "rawCategories": [
+        "Developer Tools",
+        "Integration"
+      ],
+      "repositoryUrl": "https://github.com/ferrousbyte/module-graphql-extensions",
+      "latestVersion": "1.0.9",
+      "latestReleasedAt": "2024-12-01T09:00:00.000Z",
+      "supportedMagento": [
+        "2.4.6"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 3,
+      "buildStatus": "passing",
+      "installs": 560,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "ferrousbyte/module-webhook-dispatcher",
+      "displayName": "Webhook Dispatcher",
+      "description": "Fires configurable outbound webhooks on order, customer, and catalog events with retry and signing.",
+      "rawCategories": [
+        "Integration",
+        "Developer Tools"
+      ],
+      "repositoryUrl": "https://github.com/ferrousbyte/module-webhook-dispatcher",
+      "latestVersion": "1.3.4",
+      "latestReleasedAt": "2025-08-25T14:20:00.000Z",
+      "supportedMagento": [
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 4,
+      "buildStatus": "passing",
+      "installs": 1650,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "ironclasp/module-address-validation",
+      "displayName": "Address Validation",
+      "description": "Validates and normalizes shipping addresses at checkout against a third-party address API.",
+      "rawCategories": [
+        "Shipping",
+        "Checkout"
+      ],
+      "repositoryUrl": "https://github.com/ironclasp/module-address-validation",
+      "latestVersion": "2.0.2",
+      "latestReleasedAt": "2025-09-01T10:00:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 6,
+      "buildStatus": "passing",
+      "installs": 2700,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "ironclasp/module-carrier-freightline",
+      "displayName": "Freightline Carrier Integration",
+      "description": "Adds live rates, label printing, and tracking for the Freightline LTL carrier network.",
+      "rawCategories": [
+        "Shipping"
+      ],
+      "repositoryUrl": "https://github.com/ironclasp/module-carrier-freightline",
+      "latestVersion": "3.6.0",
+      "latestReleasedAt": "2026-06-10T09:00:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "strict-compliant",
+      "phpstanLevel": 9,
+      "buildStatus": "passing",
+      "installs": 5100,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "ironclasp/module-checkout-fields",
+      "displayName": "Checkout Custom Fields",
+      "description": "Adds configurable custom fields to shipping, billing, and payment steps of checkout.",
+      "rawCategories": [
+        "Checkout"
+      ],
+      "repositoryUrl": "https://github.com/ironclasp/module-checkout-fields",
+      "latestVersion": "1.3.0",
+      "latestReleasedAt": "2025-02-23T09:45:00.000Z",
+      "supportedMagento": [
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 7,
+      "buildStatus": "unknown",
+      "installs": 1950,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": null
+    },
+    {
+      "name": "ironclasp/module-multi-carrier",
+      "displayName": "Multi-Carrier Shipping",
+      "description": "Aggregates live rates from several regional carriers into a single checkout shipping method list.",
+      "rawCategories": [
+        "Shipping"
+      ],
+      "repositoryUrl": "https://github.com/ironclasp/module-multi-carrier",
+      "latestVersion": "1.1.7",
+      "latestReleasedAt": "2024-07-16T08:15:00.000Z",
+      "supportedMagento": [
+        "2.4.6"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 2,
+      "buildStatus": "passing",
+      "installs": 340,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "lumenpath/magento2-debug-bar",
+      "displayName": "Debug Bar",
+      "description": "Overlays query counts, cache hits, and observer timings on storefront pages in developer mode.",
+      "rawCategories": [
+        "Developer Tools",
+        "Performance"
+      ],
+      "repositoryUrl": null,
+      "latestVersion": null,
+      "latestReleasedAt": null,
+      "supportedMagento": [],
+      "qualityTier": "needs-help",
+      "phpstanLevel": null,
+      "buildStatus": "failing",
+      "installs": null,
+      "license": null,
+      "abandoned": true
+    },
+    {
+      "name": "lumenpath/module-cache-warmer",
+      "displayName": "Cache Warmer",
+      "description": "Crawls and pre-warms the full-page cache for catalog and CMS URLs after deploys and reindexes.",
+      "rawCategories": [
+        "Performance"
+      ],
+      "repositoryUrl": "https://github.com/lumenpath/module-cache-warmer",
+      "latestVersion": "4.1.2",
+      "latestReleasedAt": "2026-05-05T10:20:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "strict-compliant",
+      "phpstanLevel": 8,
+      "buildStatus": "passing",
+      "installs": 8100,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "lumenpath/module-cli-toolkit",
+      "displayName": "CLI Toolkit",
+      "description": "Bundles bin/magento commands for bulk data fixes, config diffing, and environment snapshots.",
+      "rawCategories": [
+        "Developer Tools"
+      ],
+      "repositoryUrl": "https://github.com/lumenpath/module-cli-toolkit",
+      "latestVersion": "1.0.3",
+      "latestReleasedAt": "2023-11-08T09:00:00.000Z",
+      "supportedMagento": [],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 3,
+      "buildStatus": "passing",
+      "installs": 75,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "northware/module-invoice-pdf",
+      "displayName": "Invoice PDF Generator",
+      "description": "Generates branded PDF invoices with configurable templates and automatic email attachment.",
+      "rawCategories": [
+        "Admin Tools"
+      ],
+      "repositoryUrl": "https://github.com/northware/module-invoice-pdf",
+      "latestVersion": "1.2.3",
+      "latestReleasedAt": "2024-08-05T12:00:00.000Z",
+      "supportedMagento": [
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "needs-help",
+      "phpstanLevel": null,
+      "buildStatus": "failing",
+      "installs": 180,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": null
+    },
+    {
+      "name": "northware/module-order-export",
+      "displayName": "Order Export Suite",
+      "description": "Exports orders, invoices, and shipments to CSV, XML, or a configurable REST endpoint on a schedule.",
+      "rawCategories": [
+        "Reporting",
+        "Integration"
+      ],
+      "repositoryUrl": "https://github.com/northware/module-order-export",
+      "latestVersion": "3.4.2",
+      "latestReleasedAt": "2026-05-14T10:00:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 6,
+      "buildStatus": "passing",
+      "installs": 24800,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "northware/module-order-sync",
+      "displayName": "Order Sync Connector",
+      "description": "Keeps order status in sync between Magento and an external fulfillment system via a lightweight queue.",
+      "rawCategories": [
+        "Integration"
+      ],
+      "repositoryUrl": "https://github.com/northware/module-order-sync",
+      "latestVersion": "2.1.0",
+      "latestReleasedAt": "2025-11-02T08:30:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 3,
+      "buildStatus": "passing",
+      "installs": 1250,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "northware/module-returns-manager",
+      "displayName": "Returns Manager",
+      "description": "Lets customers request RMAs from their account and gives support staff a queue to approve and track returns.",
+      "rawCategories": [
+        "Customer",
+        "Shipping"
+      ],
+      "repositoryUrl": "https://github.com/northware/module-returns-manager",
+      "latestVersion": "2.3.1",
+      "latestReleasedAt": "2026-01-10T07:45:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 4,
+      "buildStatus": "passing",
+      "installs": 3400,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "northware/module-shipping-rules",
+      "displayName": "Shipping Rules Engine",
+      "description": "Adds conditional shipping method visibility rules based on cart weight, destination, and customer group.",
+      "rawCategories": [
+        "Shipping"
+      ],
+      "repositoryUrl": "https://github.com/northware/module-shipping-rules",
+      "latestVersion": "4.0.1",
+      "latestReleasedAt": "2026-06-20T09:15:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 7,
+      "buildStatus": "passing",
+      "installs": 8700,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "pixelforge/magento2-image-optimizer",
+      "displayName": "Image Optimizer",
+      "description": "Automatically compresses and converts product images to WebP on upload without visible quality loss.",
+      "rawCategories": [
+        "Performance",
+        "Catalog"
+      ],
+      "repositoryUrl": "https://github.com/pixelforge/magento2-image-optimizer",
+      "latestVersion": "2.8.0",
+      "latestReleasedAt": "2026-06-01T06:30:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "strict-compliant",
+      "phpstanLevel": 9,
+      "buildStatus": "passing",
+      "installs": 15200,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "pixelforge/magento2-lazy-load",
+      "displayName": "Lazy Load for Images",
+      "description": "Defers offscreen image loading to improve Largest Contentful Paint scores on catalog and CMS pages.",
+      "rawCategories": [
+        "Performance"
+      ],
+      "repositoryUrl": "https://github.com/pixelforge/magento2-lazy-load",
+      "latestVersion": "1.4.1",
+      "latestReleasedAt": "2025-12-15T13:00:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 4,
+      "buildStatus": "passing",
+      "installs": 6300,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "pixelforge/magento2-video-gallery",
+      "displayName": "Video Gallery",
+      "description": "Embeds a product video gallery alongside the standard image gallery with lazy-loaded thumbnails.",
+      "rawCategories": [
+        "Catalog"
+      ],
+      "repositoryUrl": "https://github.com/pixelforge/magento2-video-gallery",
+      "latestVersion": "1.1.0",
+      "latestReleasedAt": "2024-11-11T15:30:00.000Z",
+      "supportedMagento": [
+        "2.4.6"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 3,
+      "buildStatus": "passing",
+      "installs": 780,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "pixelforge/module-catalog-swatches",
+      "displayName": "Catalog Swatches Pro",
+      "description": "Adds image and texture swatches to layered navigation and product listing pages.",
+      "rawCategories": [
+        "Catalog"
+      ],
+      "repositoryUrl": "https://github.com/pixelforge/module-catalog-swatches",
+      "latestVersion": "2.0.6",
+      "latestReleasedAt": "2025-07-09T10:45:00.000Z",
+      "supportedMagento": [
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 5,
+      "buildStatus": "passing",
+      "installs": 940,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "pixelforge/module-category-banners",
+      "displayName": "Category Banners",
+      "description": "Lets merchandisers schedule rotating promotional banners per category from the admin grid.",
+      "rawCategories": [
+        "Marketing",
+        "Catalog"
+      ],
+      "repositoryUrl": "https://github.com/pixelforge/module-category-banners",
+      "latestVersion": "1.0.5",
+      "latestReleasedAt": "2023-06-19T09:00:00.000Z",
+      "supportedMagento": [],
+      "qualityTier": "needs-help",
+      "phpstanLevel": null,
+      "buildStatus": "failing",
+      "installs": 95,
+      "license": null,
+      "abandoned": null
+    },
+    {
+      "name": "pixelforge/module-product-badges",
+      "displayName": "Product Badges",
+      "description": "Overlays configurable sale, new-arrival, and custom badges on product images sitewide.",
+      "rawCategories": [
+        "Catalog",
+        "Marketing"
+      ],
+      "repositoryUrl": "https://github.com/pixelforge/module-product-badges",
+      "latestVersion": "1.9.3",
+      "latestReleasedAt": "2026-02-28T08:00:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 3,
+      "buildStatus": "passing",
+      "installs": 2100,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "quillstack/module-admin-notes",
+      "displayName": "Admin Notes",
+      "description": "Adds an internal notes panel with @mentions to order, customer, and product admin pages.",
+      "rawCategories": [
+        "Admin Tools"
+      ],
+      "repositoryUrl": "https://github.com/quillstack/module-admin-notes",
+      "latestVersion": "2.4.0",
+      "latestReleasedAt": "2026-01-29T08:50:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 7,
+      "buildStatus": "passing",
+      "installs": 4300,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "quillstack/module-audit-log",
+      "displayName": "Audit Log",
+      "description": "Records every admin user action with before/after diffs and a searchable audit trail.",
+      "rawCategories": [
+        "Admin Tools",
+        "Reporting"
+      ],
+      "repositoryUrl": "https://gitlab.com/quillstack/module-audit-log",
+      "latestVersion": "3.1.5",
+      "latestReleasedAt": "2026-04-02T10:30:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "strict-compliant",
+      "phpstanLevel": 8,
+      "buildStatus": "passing",
+      "installs": 7600,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "quillstack/module-dashboard-widgets",
+      "displayName": "Dashboard Widgets",
+      "description": "Adds drag-and-drop KPI widgets, including custom SQL-backed tiles, to the admin dashboard.",
+      "rawCategories": [
+        "Admin Tools",
+        "Misc Utilities"
+      ],
+      "repositoryUrl": "https://github.com/quillstack/module-dashboard-widgets",
+      "latestVersion": "1.0.1",
+      "latestReleasedAt": "2023-04-30T08:00:00.000Z",
+      "supportedMagento": [],
+      "qualityTier": "needs-help",
+      "phpstanLevel": null,
+      "buildStatus": "failing",
+      "installs": null,
+      "license": null,
+      "abandoned": null
+    },
+    {
+      "name": "quillstack/module-permission-manager",
+      "displayName": "Permission Manager",
+      "description": "Extends Magento ACL with per-attribute and per-website admin permission scoping.",
+      "rawCategories": [
+        "Admin Tools"
+      ],
+      "repositoryUrl": "https://github.com/quillstack/module-permission-manager",
+      "latestVersion": "1.2.0",
+      "latestReleasedAt": "2024-09-22T09:00:00.000Z",
+      "supportedMagento": [
+        "2.4.6"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 6,
+      "buildStatus": "passing",
+      "installs": 890,
+      "license": [
+        "MIT"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "quillstack/module-sales-reports",
+      "displayName": "Sales Reports Plus",
+      "description": "Adds cohort, RFM, and product-affinity reports beyond Magento core reporting.",
+      "rawCategories": [
+        "Reporting"
+      ],
+      "repositoryUrl": "https://github.com/quillstack/module-sales-reports",
+      "latestVersion": "1.7.2",
+      "latestReleasedAt": "2025-06-13T13:45:00.000Z",
+      "supportedMagento": [
+        "2.4.6",
+        "2.4.5"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 4,
+      "buildStatus": "passing",
+      "installs": 1100,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "wrenfield/module-gift-registry",
+      "displayName": "Gift Registry",
+      "description": "Adds a modern gift and wedding registry experience with shared links and purchase tracking.",
+      "rawCategories": [
+        "Misc Utilities"
+      ],
+      "repositoryUrl": null,
+      "latestVersion": "1.0.0",
+      "latestReleasedAt": "2023-05-15T08:00:00.000Z",
+      "supportedMagento": [],
+      "qualityTier": "needs-help",
+      "phpstanLevel": null,
+      "buildStatus": "unknown",
+      "installs": null,
+      "license": null,
+      "abandoned": null
+    },
+    {
+      "name": "wrenfield/module-inventory-forecast",
+      "displayName": "Inventory Forecast",
+      "description": "Projects stockout dates and suggests reorder quantities from historical sales velocity.",
+      "rawCategories": [
+        "Reporting",
+        "Catalog"
+      ],
+      "repositoryUrl": "https://github.com/wrenfield/module-inventory-forecast",
+      "latestVersion": "1.6.0",
+      "latestReleasedAt": "2024-06-04T09:00:00.000Z",
+      "supportedMagento": [
+        "2.4.6"
+      ],
+      "qualityTier": "no-errors",
+      "phpstanLevel": 6,
+      "buildStatus": "passing",
+      "installs": 4700,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    },
+    {
+      "name": "wrenfield/module-marketplace-sync",
+      "displayName": "Marketplace Sync",
+      "description": "Publishes catalog listings and syncs order status with major third-party online marketplaces.",
+      "rawCategories": [
+        "Integration"
+      ],
+      "repositoryUrl": "https://github.com/wrenfield/module-marketplace-sync",
+      "latestVersion": "2.1.8",
+      "latestReleasedAt": "2025-12-30T13:10:00.000Z",
+      "supportedMagento": [
+        "2.4.7",
+        "2.4.6"
+      ],
+      "qualityTier": "ready-to-install",
+      "phpstanLevel": 4,
+      "buildStatus": "passing",
+      "installs": 1300,
+      "license": [
+        "OSL-3.0"
+      ],
+      "abandoned": false
+    }
+  ]
+}

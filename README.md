@@ -46,14 +46,18 @@ The browse/search UI is also built as a standalone embeddable bundle
 - **[Architecture](docs/architecture.md)** — data flow, pipeline, feed schema, vendor
   trust file format, ranking model, site/UI design, milestones, risks.
 - **[Decision log](docs/decisions.md)** — what was chosen, why, and what was rejected.
+- **[Trust policy](docs/trust-policy.md)** — who gets badges, how warnings work, how
+  disputes and malicious-package reports are handled.
 - **[PackageMaven data contract](docs/packagemaven-data-contract.md)** — the data-access
-  proposal for PackageMaven's author.
+  proposal shared with PackageMaven's author.
 - [Initial scoping notes](docs/initial-scope.md) — historical; superseded by the above.
 - Original discussion: [mage-os-lab discussion #3](https://github.com/orgs/mage-os-lab/discussions/3)
 
 ## Status
 
-**Design phase.** The architecture is decided and documented; implementation has not
-started. The first implementation milestones run against fixture data — securing
-PackageMaven data access is the launch gate (see
-[milestones](docs/architecture.md#milestones)).
+**In implementation.** The architecture is decided, documented, and has been through
+adversarial review. PackageMaven's author has responded positively to collaborating —
+the data contract is with him now; his API timeline is months out, so launch rides on
+a manually refreshed export (milestone M4a) with automated integration following
+later (M4b). Implementation milestones run against fixture data until the first real
+export lands (see [milestones](docs/architecture.md#milestones)).

@@ -1,0 +1,146 @@
+{
+  "title": "Mage-OS Directory ranking config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "weights": {
+      "type": "object",
+      "properties": {
+        "editorialPick": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "partnerTier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "trustedVendor": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "qualityTier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "freshness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "installs": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "stars": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "editorialPick",
+        "partnerTier",
+        "trustedVendor",
+        "qualityTier",
+        "freshness",
+        "installs",
+        "stars"
+      ]
+    },
+    "qualityTierValues": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "strict-compliant",
+          "no-errors",
+          "ready-to-install",
+          "needs-help"
+        ]
+      },
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "required": [
+        "strict-compliant",
+        "no-errors",
+        "ready-to-install",
+        "needs-help"
+      ]
+    },
+    "partnerTierValues": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "platinum",
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      },
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "required": [
+        "platinum",
+        "gold",
+        "silver",
+        "bronze"
+      ]
+    },
+    "freshnessHalfLifeDays": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "popularityPercentile": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1
+    },
+    "penalties": {
+      "type": "object",
+      "properties": {
+        "deranked": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "abandoned": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "deranked",
+        "abandoned"
+      ]
+    }
+  },
+  "required": [
+    "version",
+    "weights",
+    "qualityTierValues",
+    "partnerTierValues",
+    "freshnessHalfLifeDays",
+    "popularityPercentile",
+    "penalties"
+  ]
+}

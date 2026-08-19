@@ -1,0 +1,65 @@
+---
+import '../styles/site.css';
+import { loadFeed, staleNotice } from '../lib/data.js';
+
+export interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'A trustworthy, quality-tested catalog of open-source Magento and Mage-OS modules, powered by PackageMaven data.',
+} = Astro.props;
+
+const feed = loadFeed();
+const dataAsOf = staleNotice(feed);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · Mage-OS Extension Directory</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="site-logo" href="/">Mage-OS Extension Directory</a>
+        <nav class="site-nav">
+          <a href="/">Home</a>
+          <a href="/how-to-get-listed/">How to get listed</a>
+        </nav>
+      </div>
+    </header>
+    {
+      dataAsOf && (
+        <p class="stale-banner" role="status">
+          Quality data as of {dataAsOf.slice(0, 10)} — the live PackageMaven source was
+          unavailable at the last update.
+        </p>
+      )
+    }
+    <main class="site-main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <p class="pm-attribution">
+          Quality and compatibility data by <a href="https://package-maven.com/" rel="noopener">PackageMaven</a>.
+        </p>
+        <p>
+          <a href="/how-to-get-listed/">What do these badges mean?</a> — trusted vendor, partner
+          tier, and editorial pick, explained.
+        </p>
+        <p class="trademark-disclaimer">
+          Magento is a registered trademark of Adobe Inc. Mage-OS is not affiliated with Adobe;
+          no endorsement implied.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

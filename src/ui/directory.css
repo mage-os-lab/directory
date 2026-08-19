@@ -1,0 +1,170 @@
+/* Embeddable directory UI. Every class is .mosd-* prefixed; theme via the
+ * custom properties below (they pierce the Shadow DOM boundary). */
+.mosd-browser {
+  --mosd-accent: var(--mosd-theme-accent, #e8590c);
+  --mosd-fg: var(--mosd-theme-fg, #1f2430);
+  --mosd-fg-muted: var(--mosd-theme-fg-muted, #5c6470);
+  --mosd-bg: var(--mosd-theme-bg, #ffffff);
+  --mosd-bg-soft: var(--mosd-theme-bg-soft, #f4f5f7);
+  --mosd-border: var(--mosd-theme-border, #d9dde3);
+  --mosd-radius: var(--mosd-theme-radius, 6px);
+
+  color: var(--mosd-fg);
+  background: var(--mosd-bg);
+  font: 14px/1.5 system-ui, sans-serif;
+}
+
+.mosd-stale-notice {
+  background: #fff3cd;
+  border: 1px solid #ffe08a;
+  border-radius: var(--mosd-radius);
+  color: #664d03;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+}
+
+.mosd-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mosd-search {
+  flex: 1 1 220px;
+}
+
+.mosd-search,
+.mosd-category,
+.mosd-sort {
+  background: var(--mosd-bg);
+  border: 1px solid var(--mosd-border);
+  border-radius: var(--mosd-radius);
+  color: var(--mosd-fg);
+  font: inherit;
+  padding: 6px 10px;
+}
+
+.mosd-quality-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-bottom: 4px;
+}
+
+.mosd-quality-toggle,
+.mosd-show-hidden {
+  color: var(--mosd-fg-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.mosd-count {
+  color: var(--mosd-fg-muted);
+  margin: 4px 0 12px;
+}
+
+.mosd-results {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mosd-card {
+  border: 1px solid var(--mosd-border);
+  border-radius: var(--mosd-radius);
+  padding: 12px 14px;
+}
+
+.mosd-card-head {
+  align-items: baseline;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.mosd-card-title {
+  color: var(--mosd-accent);
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mosd-card-title:hover,
+.mosd-card-title:focus {
+  text-decoration: underline;
+}
+
+.mosd-card-name {
+  color: var(--mosd-fg-muted);
+  margin: 2px 0;
+}
+
+.mosd-card-name code {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.mosd-card-description {
+  margin: 4px 0;
+}
+
+.mosd-card-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 0;
+}
+
+.mosd-badge {
+  background: var(--mosd-bg-soft);
+  border: 1px solid var(--mosd-border);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1px 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mosd-badge-strict-compliant { background: #d3f9d8; border-color: #8ce99a; color: #2b8a3e; }
+.mosd-badge-no-errors { background: #d0ebff; border-color: #74c0fc; color: #1971c2; }
+.mosd-badge-ready-to-install { background: #fff3bf; border-color: #ffd43b; color: #997404; }
+.mosd-badge-needs-help { background: #ffe3e3; border-color: #ffa8a8; color: #c92a2a; }
+.mosd-badge-pick { background: #fdf0e5; border-color: #f8c99b; color: #b34f00; }
+.mosd-badge-trusted { background: #e5f4ef; border-color: #9cd6bf; color: #14735c; }
+.mosd-badge-warning { background: #ffe3e3; border-color: #ffa8a8; color: #c92a2a; }
+
+.mosd-stat {
+  color: var(--mosd-fg-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.mosd-empty {
+  color: var(--mosd-fg-muted);
+  padding: 24px 0;
+  text-align: center;
+}
+
+.mosd-loading,
+.mosd-error {
+  color: var(--mosd-fg-muted);
+  padding: 24px 0;
+  text-align: center;
+}
+
+.mosd-error button {
+  background: var(--mosd-accent);
+  border: 0;
+  border-radius: var(--mosd-radius);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  margin-left: 8px;
+  padding: 4px 12px;
+}

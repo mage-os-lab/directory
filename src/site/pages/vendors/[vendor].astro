@@ -1,0 +1,63 @@
+---
+import Base from '../../layouts/Base.astro';
+import { loadFeed, packageHref, packagesForVendor } from '../../lib/data.js';
+
+export function getStaticPaths() {
+  const feed = loadFeed();
+  return feed.vendors.map((vendor) => ({
+    params: { vendor: vendor.slug },
+    props: { vendor },
+  }));
+}
+
+const { vendor } = Astro.props;
+const feed = loadFeed();
+const packages = packagesForVendor(feed, vendor.slug);
+
+const QUALITY_LABELS: Record<string, string> = {
+  'strict-compliant': 'Strict compliant',
+  'no-errors': 'No errors',
+  'ready-to-install': 'Ready to install',
+  'needs-help': 'Needs help',
+};
+---
+
+<Base title={vendor.name} description={`Modules published by ${vendor.name} in the Mage-OS Extension Directory.`}>
+  <div class="vendor-header">
+    <h1>{vendor.name}</h1>
+    {vendor.url && <p><a href={vendor.url} rel="noopener">{vendor.url}</a></p>}
+    <div class="vendor-badges">
+      {vendor.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
+      {vendor.partnerTier && (
+        <span class={`badge badge-partner-${vendor.partnerTier}`}>{vendor.partnerTier} partner</span>
+      )}
+    </div>
+  </div>
+
+  {
+    packages.length === 0 ? (
+      <p>No visible packages from this vendor right now.</p>
+    ) : (
+      <ul class="package-grid">
+        {packages.map((pkg) => (
+          <li class="package-card">
+            <h3>
+              <a href={packageHref(pkg)}>{pkg.displayName}</a>
+            </h3>
+            <p class="package-name">
+              <code>{pkg.name}</code>
+            </p>
+            <p class="description">{pkg.description}</p>
+            <p class="meta">
+              <span class={`badge badge-${pkg.quality.tier}`}>{QUALITY_LABELS[pkg.quality.tier]}</span>
+              {pkg.trust.editorialPick && <span class="badge badge-pick">Editors&rsquo; pick</span>}
+              {pkg.popularity.installs !== null && (
+                <span class="stat">{pkg.popularity.installs.toLocaleString()} installs</span>
+              )}
+            </p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Base>

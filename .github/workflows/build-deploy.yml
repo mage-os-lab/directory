@@ -1,0 +1,46 @@
+name: Build & deploy
+
+on:
+  schedule:
+    - cron: '23 5 * * *' # daily
+  push:
+    branches: [main]
+    paths: ['data/**']
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Data source (live requires PM_EXPORT_URL; fixture is the bootstrap path)'
+        type: choice
+        options: [live, fixture]
+        default: live
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Restore HTTP cache (ETags persist across ephemeral runners)
+        uses: actions/cache@v4
+        with:
+          path: .cache/http
+          key: http-cache-${{ github.run_id }}
+          restore-keys: http-cache-
+      - name: Run pipeline
+        env:
+          PM_EXPORT_URL: ${{ vars.PM_EXPORT_URL }}
+          PUBLISHED_BASE_URL: ${{ vars.PUBLISHED_BASE_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx tsx src/pipeline/run.ts --source "${{ inputs.source || 'live' }}" --out public
+      - name: Build site
+        run: npx astro build
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=mage-os-directory

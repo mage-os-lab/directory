@@ -1,0 +1,80 @@
+---
+import Base from '../layouts/Base.astro';
+import SearchIsland from '../components/SearchIsland.js';
+import {
+  categoryHref,
+  editorialPicks,
+  loadFeed,
+  packageHref,
+} from '../lib/data.js';
+
+const feed = loadFeed();
+const picks = editorialPicks(feed, 6);
+const categories = feed.categories
+  .filter((c) => c.packageCount > 0)
+  .sort((a, b) => b.packageCount - a.packageCount);
+---
+
+<Base
+  title="Home"
+  description="A trustworthy, quality-tested catalog of open-source Magento and Mage-OS modules, powered by PackageMaven data."
+>
+  <section class="hero">
+    <h1>Find Magento &amp; Mage-OS modules you can trust</h1>
+    <p>
+      The Mage-OS Extension Directory is a quality-tested catalog of open-source Magento 2 and
+      Mage-OS modules. Every listing is backed by <a href="https://package-maven.com/" rel="noopener">PackageMaven</a>'s
+      real compatibility testing against actual Magento versions — not just parsed Composer
+      constraints — plus a human-curated trust layer for vendor track record and editorial picks.
+    </p>
+  </section>
+
+  {
+    picks.length > 0 && (
+      <section class="section" id="editorial-picks">
+        <h2>Editors&rsquo; picks</h2>
+        <p class="section-intro">
+          Maintainer-selected modules, independent of any partner relationship — see{' '}
+          <a href="/how-to-get-listed/">how badges work</a>.
+        </p>
+        <ul class="pick-grid">
+          {picks.map((pkg) => (
+            <li class="package-card">
+              <h3>
+                <a href={packageHref(pkg)}>{pkg.displayName}</a>
+              </h3>
+              <p class="package-name">
+                <code>{pkg.name}</code>
+              </p>
+              <p class="description">{pkg.description}</p>
+              <p class="meta">
+                <span class={`badge badge-${pkg.quality.tier}`}>{pkg.quality.tier}</span>
+                <span class="badge badge-pick">Editors&rsquo; pick</span>
+                {pkg.trust.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  <section class="section" id="categories">
+    <h2>Browse by category</h2>
+    <ul class="category-grid">
+      {categories.map((c) => (
+        <li>
+          <a class="category-card" href={categoryHref(c.slug)}>
+            <span class="category-name">{c.name}</span>{' '}
+            <span class="category-count">({c.packageCount})</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="section" id="search">
+    <h2>Search &amp; browse all modules</h2>
+    <SearchIsland client:load />
+  </section>
+</Base>

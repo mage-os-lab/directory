@@ -1,0 +1,118 @@
+<!doctype html>
+<!--
+  Embeddable-bundle demo page.
+
+  How to use:
+    1. npm run build:ui      # builds dist-ui/directory-ui.iife.js (+ .css)
+    2. npm run dev            # serves the Astro site (incl. /api/v1/feed.json)
+                               # at http://localhost:4321
+    3. Open this file directly in a browser (e.g. `open examples/embed-demo.html`
+       or drag it into a tab) while `npm run dev` is running in another terminal.
+
+  This page is a stand-in for a third-party host page (e.g. the future Magento
+  admin module) embedding the directory via the standalone IIFE bundle. It
+  loads ../dist-ui/directory-ui.iife.js, calls
+  `MageOSDirectory.mountDirectory(el, { feedUrl, linkMode: 'event' })`, and
+  logs every `mosd:select` / `mosd:error` CustomEvent to both the browser
+  console and the visible <pre> log below — that event contract (bubbling,
+  composed, detail: {name, vendor, packageUrl} / {message}) is what the admin
+  module is expected to depend on. `shadow` defaults to true in
+  mountDirectory, so this page intentionally does *not* pass its own styles
+  in — the component's CSS is self-contained inside the shadow root.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mage-OS Extension Directory — embed demo</title>
+    <style>
+      body {
+        background: #f4f5f7;
+        color: #1f2430;
+        font: 15px/1.5 system-ui, sans-serif;
+        margin: 0;
+        padding: 24px;
+      }
+      .wrap {
+        margin: 0 auto;
+        max-width: 900px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      p.note {
+        color: #5c6470;
+      }
+      #host {
+        background: #fff;
+        border: 1px solid #d9dde3;
+        border-radius: 6px;
+        padding: 16px;
+      }
+      #log-wrap {
+        margin-top: 20px;
+      }
+      #log {
+        background: #1f2430;
+        border-radius: 6px;
+        color: #d3f9d8;
+        font: 12px/1.5 ui-monospace, monospace;
+        height: 200px;
+        margin: 0;
+        overflow: auto;
+        padding: 12px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Mage-OS Extension Directory — embeddable bundle demo</h1>
+      <p class="note">
+        This is a bare host page, standing in for a third-party embedder (e.g. a Magento admin
+        module). It loads the standalone IIFE bundle and mounts the directory in
+        <code>linkMode: 'event'</code> — clicking a module dispatches <code>mosd:select</code>
+        instead of navigating, which is logged below rather than followed.
+      </p>
+
+      <div id="host"></div>
+
+      <div id="log-wrap">
+        <h2>Event log (<code>mosd:select</code> / <code>mosd:error</code>)</h2>
+        <pre id="log">Waiting for events…</pre>
+      </div>
+    </div>
+
+    <script src="../dist-ui/directory-ui.iife.js"></script>
+    <script>
+      const host = document.getElementById('host');
+      const log = document.getElementById('log');
+
+      function appendLog(line) {
+        const timestamp = new Date().toISOString().slice(11, 19);
+        log.textContent =
+          log.textContent === 'Waiting for events…'
+            ? `[${timestamp}] ${line}`
+            : `${log.textContent}\n[${timestamp}] ${line}`;
+        log.scrollTop = log.scrollHeight;
+      }
+
+      host.addEventListener('mosd:select', (event) => {
+        console.log('mosd:select', event.detail);
+        appendLog(`mosd:select ${JSON.stringify(event.detail)}`);
+      });
+
+      host.addEventListener('mosd:error', (event) => {
+        console.error('mosd:error', event.detail);
+        appendLog(`mosd:error ${JSON.stringify(event.detail)}`);
+      });
+
+      // MageOSDirectory is the global exposed by the IIFE build
+      // (vite.ui.config.ts: build.lib.name = "MageOSDirectory").
+      MageOSDirectory.mountDirectory(host, {
+        feedUrl: 'http://localhost:4321/api/v1/feed.json',
+        linkMode: 'event',
+      });
+    </script>
+  </body>
+</html>

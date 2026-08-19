@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Tests
+        run: npm test
+      - name: Validate data files (schema + cross-checks + dangling trust refs)
+        run: npm run validate:data
+      - name: Trust-file format check
+        run: npm run format:vendors -- --check
+      - name: Generated JSON Schemas are up to date
+        run: |
+          npm run generate:schemas
+          git diff --exit-code data/*.schema.json || {
+            echo '::error::data/*.schema.json is out of date — run: npm run generate:schemas'
+            exit 1
+          }
+      - name: Build smoke (pipeline on fixture + site)
+        run: npm run build

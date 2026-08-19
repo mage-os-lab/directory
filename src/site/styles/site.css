@@ -1,0 +1,443 @@
+/* Mage-OS Extension Directory — site chrome styles. Plain CSS, no framework.
+ * Palette matches src/ui/directory.css so the embedded island doesn't feel
+ * like a foreign object dropped on the page. */
+:root {
+  --accent: #e8590c;
+  --accent-dark: #b34f00;
+  --fg: #1f2430;
+  --fg-muted: #5c6470;
+  --bg: #ffffff;
+  --bg-soft: #f4f5f7;
+  --border: #d9dde3;
+  --radius: 6px;
+  --max-width: 1040px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+}
+
+a {
+  color: var(--accent-dark);
+}
+
+a:hover,
+a:focus {
+  color: var(--accent);
+}
+
+code,
+pre {
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+}
+
+.site-header {
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header-inner,
+.site-footer-inner,
+.site-main {
+  margin: 0 auto;
+  max-width: var(--max-width);
+  padding: 0 20px;
+}
+
+.site-header-inner {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  justify-content: space-between;
+  padding-block: 16px;
+}
+
+.site-logo {
+  color: var(--fg);
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-nav {
+  display: flex;
+  gap: 18px;
+}
+
+.site-nav a {
+  color: var(--fg-muted);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.site-nav a:hover,
+.site-nav a:focus {
+  color: var(--accent);
+}
+
+.stale-banner {
+  background: #fff3cd;
+  border-bottom: 1px solid #ffe08a;
+  color: #664d03;
+  font-size: 14px;
+  margin: 0;
+  padding: 8px 20px;
+  text-align: center;
+}
+
+.withdrawn-banner {
+  background: #ffe3e3;
+  border: 1px solid #ffa8a8;
+  border-radius: var(--radius);
+  color: #862e2e;
+  margin: 20px 0;
+  padding: 14px 18px;
+}
+
+.withdrawn-banner h2 {
+  color: #862e2e;
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+
+.withdrawn-banner ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.site-main {
+  min-height: 60vh;
+  padding-block: 32px 64px;
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  color: var(--fg-muted);
+  font-size: 13px;
+  margin-top: 40px;
+}
+
+.site-footer-inner {
+  display: grid;
+  gap: 6px;
+  padding-block: 24px;
+}
+
+.site-footer a {
+  color: var(--fg-muted);
+}
+
+.trademark-disclaimer {
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+/* Hero */
+.hero {
+  padding-block: 8px 24px;
+}
+
+.hero h1 {
+  font-size: 34px;
+  margin: 0 0 10px;
+}
+
+.hero p {
+  color: var(--fg-muted);
+  font-size: 17px;
+  margin: 0;
+  max-width: 68ch;
+}
+
+.hero .attribution {
+  margin-top: 10px;
+}
+
+/* Section headings shared across the homepage */
+.section {
+  margin-block: 40px;
+}
+
+.section h2 {
+  font-size: 22px;
+  margin: 0 0 14px;
+}
+
+.section-intro {
+  color: var(--fg-muted);
+  margin: -8px 0 16px;
+}
+
+/* Editorial picks / package card grid used on home + category + vendor pages */
+.pick-grid,
+.package-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.package-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.package-card h3 {
+  font-size: 16px;
+  margin: 0 0 4px;
+}
+
+.package-card h3 a {
+  color: var(--accent-dark);
+  text-decoration: none;
+}
+
+.package-card h3 a:hover,
+.package-card h3 a:focus {
+  text-decoration: underline;
+}
+
+.package-card .package-name {
+  color: var(--fg-muted);
+  font-size: 12px;
+  margin: 0 0 6px;
+}
+
+.package-card p.description {
+  margin: 0 0 8px;
+}
+
+.package-card .meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Badges — shared visual language with the island's .mosd-badge-* set */
+.badge {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1px 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge-strict-compliant { background: #d3f9d8; border-color: #8ce99a; color: #2b8a3e; }
+.badge-no-errors { background: #d0ebff; border-color: #74c0fc; color: #1971c2; }
+.badge-ready-to-install { background: #fff3bf; border-color: #ffd43b; color: #997404; }
+.badge-needs-help { background: #ffe3e3; border-color: #ffa8a8; color: #c92a2a; }
+.badge-pick { background: #fdf0e5; border-color: #f8c99b; color: #b34f00; }
+.badge-trusted { background: #e5f4ef; border-color: #9cd6bf; color: #14735c; }
+.badge-warning { background: #ffe3e3; border-color: #ffa8a8; color: #c92a2a; }
+.badge-partner-platinum,
+.badge-partner-gold,
+.badge-partner-silver,
+.badge-partner-bronze { background: #fff9db; border-color: #ffe066; color: #997404; }
+
+.stat {
+  color: var(--fg-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Category grid */
+.category-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.category-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: block;
+  padding: 12px 14px;
+  text-decoration: none;
+}
+
+.category-card:hover,
+.category-card:focus {
+  border-color: var(--accent);
+}
+
+.category-card .category-name {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.category-card .category-count {
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+
+/* Package detail page */
+.detail-header {
+  margin-bottom: 8px;
+}
+
+.detail-header h1 {
+  font-size: 28px;
+  margin: 0 0 4px;
+}
+
+.detail-header .package-name {
+  color: var(--fg-muted);
+  font-size: 14px;
+}
+
+.detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.detail-stats {
+  color: var(--fg-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 14px;
+  gap: 6px 16px;
+  margin: 12px 0;
+}
+
+.install-block {
+  align-items: center;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin: 20px 0;
+  padding: 10px 14px;
+}
+
+.install-block code {
+  font-size: 14px;
+}
+
+.install-block button {
+  background: var(--accent);
+  border: 0;
+  border-radius: var(--radius);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  font: inherit;
+  padding: 6px 14px;
+}
+
+.install-block button:hover {
+  background: var(--accent-dark);
+}
+
+.readme {
+  border-top: 1px solid var(--border);
+  margin-top: 28px;
+  padding-top: 20px;
+}
+
+.readme img {
+  max-width: 100%;
+}
+
+.links-section {
+  border-top: 1px solid var(--border);
+  margin-top: 28px;
+  padding-top: 20px;
+}
+
+.links-section ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.links-section li {
+  margin-bottom: 4px;
+}
+
+.pm-attribution {
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.vendor-link {
+  display: inline-block;
+  margin-top: 18px;
+}
+
+/* Vendor page */
+.vendor-header h1 {
+  font-size: 28px;
+  margin: 0 0 6px;
+}
+
+.vendor-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 24px;
+}
+
+/* How-to-get-listed / 404 */
+.prose {
+  max-width: 70ch;
+}
+
+.prose h1 {
+  font-size: 30px;
+}
+
+.prose h2 {
+  font-size: 20px;
+  margin-top: 28px;
+}
+
+.prose ol,
+.prose ul {
+  padding-left: 22px;
+}
+
+.prose li {
+  margin-bottom: 8px;
+}
+
+.not-found {
+  padding-block: 40px;
+  text-align: center;
+}
+
+.not-found h1 {
+  font-size: 64px;
+  margin: 0;
+}

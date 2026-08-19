@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-ui/
+public/api/
+.astro/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+.cache/
+coverage/

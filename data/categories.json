@@ -1,0 +1,84 @@
+{
+  "$schema": "./categories.schema.json",
+  "categories": [
+    {
+      "slug": "payments",
+      "name": "Payments",
+      "description": "Payment methods, gateways, and invoicing.",
+      "packageMavenLabels": ["Payments", "Payment"]
+    },
+    {
+      "slug": "shipping",
+      "name": "Shipping",
+      "description": "Carriers, rates, labels, and fulfillment.",
+      "packageMavenLabels": ["Shipping", "Delivery"]
+    },
+    {
+      "slug": "checkout",
+      "name": "Checkout",
+      "description": "Checkout flow, cart, and conversion.",
+      "packageMavenLabels": ["Checkout", "Cart"]
+    },
+    {
+      "slug": "catalog",
+      "name": "Catalog",
+      "description": "Products, categories, attributes, and pricing.",
+      "packageMavenLabels": ["Catalog", "Product", "Products"]
+    },
+    {
+      "slug": "admin-tools",
+      "name": "Admin Tools",
+      "description": "Admin panel improvements and back-office workflow.",
+      "packageMavenLabels": ["Admin Tools", "Admin", "Backend"]
+    },
+    {
+      "slug": "marketing",
+      "name": "Marketing",
+      "description": "Promotions, email, and campaign tooling.",
+      "packageMavenLabels": ["Marketing", "Promotions"]
+    },
+    {
+      "slug": "seo",
+      "name": "SEO",
+      "description": "Search engine optimization and structured data.",
+      "packageMavenLabels": ["SEO"]
+    },
+    {
+      "slug": "performance",
+      "name": "Performance",
+      "description": "Caching, indexing, and frontend speed.",
+      "packageMavenLabels": ["Performance", "Optimization"]
+    },
+    {
+      "slug": "integration",
+      "name": "Integrations",
+      "description": "Connectors to external services and platforms.",
+      "packageMavenLabels": ["Integration", "Integrations", "API"]
+    },
+    {
+      "slug": "developer-tools",
+      "name": "Developer Tools",
+      "description": "Debugging, tooling, and developer experience.",
+      "packageMavenLabels": ["Developer Tools", "Development", "Tools"]
+    },
+    {
+      "slug": "customer",
+      "name": "Customer",
+      "description": "Accounts, login, and customer experience.",
+      "packageMavenLabels": ["Customer", "Customers", "Account"]
+    },
+    {
+      "slug": "reporting",
+      "name": "Reporting",
+      "description": "Analytics, reports, and business insight.",
+      "packageMavenLabels": ["Reporting", "Reports", "Analytics"]
+    },
+    {
+      "slug": "other",
+      "name": "Other",
+      "description": "Everything that doesn't fit a canonical category yet.",
+      "packageMavenLabels": []
+    }
+  ],
+  "fallbackCategory": "other"
+}

@@ -1,0 +1,58 @@
+---
+import Base from '../../layouts/Base.astro';
+import { loadFeed, packageHref, packagesForCategory } from '../../lib/data.js';
+
+export function getStaticPaths() {
+  const feed = loadFeed();
+  return feed.categories.map((category) => ({
+    params: { category: category.slug },
+    props: { category },
+  }));
+}
+
+const { category } = Astro.props;
+const feed = loadFeed();
+const packages = packagesForCategory(feed, category.slug);
+
+const QUALITY_LABELS: Record<string, string> = {
+  'strict-compliant': 'Strict compliant',
+  'no-errors': 'No errors',
+  'ready-to-install': 'Ready to install',
+  'needs-help': 'Needs help',
+};
+---
+
+<Base title={category.name} description={`${category.name} modules in the Mage-OS Extension Directory.`}>
+  <h1>{category.name}</h1>
+  <p>
+    <a href={`/?category=${category.slug}`}>Search within this category →</a>
+  </p>
+
+  {
+    packages.length === 0 ? (
+      <p>No visible packages in this category right now.</p>
+    ) : (
+      <ul class="package-grid">
+        {packages.map((pkg) => (
+          <li class="package-card">
+            <h3>
+              <a href={packageHref(pkg)}>{pkg.displayName}</a>
+            </h3>
+            <p class="package-name">
+              <code>{pkg.name}</code>
+            </p>
+            <p class="description">{pkg.description}</p>
+            <p class="meta">
+              <span class={`badge badge-${pkg.quality.tier}`}>{QUALITY_LABELS[pkg.quality.tier]}</span>
+              {pkg.trust.editorialPick && <span class="badge badge-pick">Editors&rsquo; pick</span>}
+              {pkg.trust.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
+              {pkg.popularity.installs !== null && (
+                <span class="stat">{pkg.popularity.installs.toLocaleString()} installs</span>
+              )}
+            </p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Base>
