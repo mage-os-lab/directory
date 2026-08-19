@@ -7,7 +7,9 @@ name: PackageMaven API probe
 
 on:
   push:
-    branches: ['claude/package-maven-api-review-m9993e']
+    branches:
+      - 'claude/package-maven-api-review-m9993e'
+      - 'claude/mage-os-directory-integration-plerc2'
     paths: ['.github/pm-probe-paths.txt', '.github/workflows/pm-api-probe.yml']
   workflow_dispatch:
     inputs:

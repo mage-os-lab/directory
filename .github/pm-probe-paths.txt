@@ -1,5 +1,7 @@
 # URL paths (relative to https://package-maven.com) fetched by the
 # pm-api-probe workflow on push to the review branch. One per line.
-/api/v1/categories
-/api/v1/packages?per_page=3
-/api/v1/packages?per_page=1&page=250
+# 2026-08-19: refetch after PM added license, abandoned, and SemVer fields.
+/api/v1/openapi.json
+/api/v1/packages?per_page=5
+/api/v1/packages?per_page=5&page=100
+/api/v1/packages?per_page=5&sort=-installs
