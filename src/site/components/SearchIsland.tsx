@@ -3,7 +3,8 @@
  * Fetches /api/v1/feed.json client-side (the Astro pages only touch the
  * feed at build time via node:fs; the browser always gets it fresh),
  * shows loading/error states, and mounts DirectoryBrowser with
- * linkMode 'href' + baseUrl '' since the site owns full-page navigation.
+ * linkMode 'href' + the site's own base path (usually '', but fallback
+ * hosts can serve from a subpath) since the site owns full-page navigation.
  *
  * Reads ?category= and ?q= from the current URL as initial filters so
  * links like /?category=payments (from a category page's "search within
@@ -12,6 +13,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { DirectoryBrowser } from '../../ui/DirectoryBrowser.js';
 import type { DirectoryFilters, Feed } from '../../ui/types.js';
+import { withBase } from '../lib/base.js';
 import '../../ui/directory.css';
 
 function initialFiltersFromLocation(): DirectoryFilters | undefined {
@@ -35,7 +37,7 @@ export function SearchIsland() {
   useEffect(() => {
     let cancelled = false;
     setError(null);
-    fetch('/api/v1/feed.json')
+    fetch(withBase('/api/v1/feed.json'))
       .then(async (response) => {
         if (!response.ok) throw new Error(`feed fetch failed: HTTP ${response.status}`);
         return (await response.json()) as Feed;
@@ -73,7 +75,12 @@ export function SearchIsland() {
   }
 
   return (
-    <DirectoryBrowser feed={feed} linkMode="href" baseUrl="" initialFilters={initialFilters} />
+    <DirectoryBrowser
+      feed={feed}
+      linkMode="href"
+      baseUrl={withBase('')}
+      initialFilters={initialFilters}
+    />
   );
 }
 

@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import SearchIsland from '../components/SearchIsland.js';
+import { withBase } from '../lib/base.js';
 import {
   categoryHref,
   editorialPicks,
@@ -49,7 +50,7 @@ const vendorCount = new Set(visible.map((p) => p.vendor)).size;
         <h2>Editors&rsquo; picks</h2>
         <p class="section-intro">
           Maintainer-selected modules, independent of any partner relationship — see{' '}
-          <a href="/how-to-get-listed/">how badges work</a>.
+          <a href={withBase('/how-to-get-listed/')}>how badges work</a>.
         </p>
         <ul class="pick-grid">
           {picks.map((pkg) => (

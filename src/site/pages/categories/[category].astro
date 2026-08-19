@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import { withBase } from '../../lib/base.js';
 import { loadFeed, packageHref, packagesForCategory } from '../../lib/data.js';
 
 export function getStaticPaths() {
@@ -25,7 +26,7 @@ const QUALITY_LABELS: Record<string, string> = {
 <Base title={category.name} description={`${category.name} modules in the Mage-OS Extension Directory.`}>
   <h1>{category.name}</h1>
   <p>
-    <a href={`/?category=${category.slug}`}>Search within this category →</a>
+    <a href={withBase(`/?category=${category.slug}`)}>Search within this category →</a>
   </p>
 
   {

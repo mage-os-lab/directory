@@ -1,5 +1,6 @@
 ---
 import '../styles/site.css';
+import { withBase } from '../lib/base.js';
 import { loadFeed, staleNotice } from '../lib/data.js';
 
 export interface Props {
@@ -28,10 +29,10 @@ const dataAsOf = staleNotice(feed);
   <body>
     <header class="site-header">
       <div class="site-header-inner">
-        <a class="site-logo" href="/">Mage-OS Extension Directory</a>
+        <a class="site-logo" href={withBase('/')}>Mage-OS Extension Directory</a>
         <nav class="site-nav">
-          <a href="/">Home</a>
-          <a href="/how-to-get-listed/">How to get listed</a>
+          <a href={withBase('/')}>Home</a>
+          <a href={withBase('/how-to-get-listed/')}>How to get listed</a>
         </nav>
       </div>
     </header>
@@ -52,7 +53,7 @@ const dataAsOf = staleNotice(feed);
           Quality and compatibility data by <a href="https://package-maven.com/" rel="noopener">PackageMaven</a>.
         </p>
         <p>
-          <a href="/how-to-get-listed/">What do these badges mean?</a> — trusted vendor, partner
+          <a href={withBase('/how-to-get-listed/')}>What do these badges mean?</a> — trusted vendor, partner
           tier, and editorial pick, explained.
         </p>
         <p class="trademark-disclaimer">

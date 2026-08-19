@@ -17,6 +17,15 @@ on:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+    # pages/id-token are only exercised on the GitHub Pages fallback path.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    env:
+      # Cloudflare Pages is the canonical host; until its secrets exist,
+      # fall back to GitHub Pages (a project site, served from /<repo>/).
+      HAS_CLOUDFLARE: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,10 +49,28 @@ jobs:
       - name: Build embeddable bundle (published at /embed/*)
         run: npm run build:ui
       - name: Build site
+        env:
+          SITE_URL: ${{ env.HAS_CLOUDFLARE == 'true' && 'https://mage-os-directory.pages.dev' || format('https://{0}.github.io', github.repository_owner) }}
+          BASE_PATH: ${{ env.HAS_CLOUDFLARE == 'true' && '/' || format('/{0}', github.event.repository.name) }}
         run: npx astro build
       - name: Deploy to Cloudflare Pages
+        if: env.HAS_CLOUDFLARE == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=mage-os-directory
+      - name: Configure GitHub Pages (fallback)
+        if: env.HAS_CLOUDFLARE != 'true'
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Upload GitHub Pages artifact (fallback)
+        if: env.HAS_CLOUDFLARE != 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Deploy to GitHub Pages (fallback)
+        if: env.HAS_CLOUDFLARE != 'true'
+        id: gh-pages-deploy
+        uses: actions/deploy-pages@v4
