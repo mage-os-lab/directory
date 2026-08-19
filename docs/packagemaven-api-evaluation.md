@@ -1,5 +1,12 @@
 # PackageMaven API — evaluation against the data contract
 
+**Status (2026-08-19):** Jiří extended the API with the fields we asked for on
+2026-07-09 — `license`, `abandoned` (including the suggested replacement), and a
+new `semver` compliance verdict — and the spec now carries explicit
+redistribution-with-attribution terms. All of them are integrated into the
+pipeline. The original evaluation below is updated in place; superseded gaps are
+struck through.
+
 **Status (2026-07-10):** PM shipped a real read-only API — months ahead of the timeline
 assumed in [decisions.md](decisions.md#9-launch-gated-on-packagemaven-data-not-packagemavens-api)
 — and issued us a bearer token (stored as the `PACKAGE_MAVEN_TOKEN` repo secret).
@@ -10,9 +17,10 @@ internal snapshot shape (`src/schema/source.ts`).
 **How this was verified:** the temporary `pm-api-probe` workflow (`.github/workflows/pm-api-probe.yml`)
 fetched the OpenAPI spec and live responses from an Actions runner using the token.
 A copy of the spec is committed at [packagemaven-openapi.json](packagemaven-openapi.json)
-(as fetched 2026-07-10; the auth snippet in `info.description` is reconstructed where
-GitHub's log masking redacted it). The token authenticates successfully; the responses
-match the spec.
+(`info` + `components.schemas` as refetched 2026-08-19, endpoint/parameter
+definitions as fetched 2026-07-10; the auth snippet in `info.description` is
+reconstructed where GitHub's log masking redacted it). The token authenticates
+successfully; the responses match the spec.
 
 ## What PM shipped
 
@@ -52,15 +60,35 @@ Operational facts (verified live):
 | Build status | derive: `build_works` → passing, `needs_help` → failing, else unknown | ✅ |
 | Supported Magento versions | `test_results.magento_version` — **a single version** (currently `2.4.9` across the samples) | ⚠️ partial: contract asked for a list; API reports one tested version per package |
 | Install count | `stats.installs` (nullable) | ✅ |
-| License (nice-to-have) | — | ❌ absent |
-| Abandoned flag (nice-to-have) | — | ❌ absent (our schema already tolerates `null`) |
+| License (nice-to-have) | `license` — SPDX id(s), comma-separated when dual-licensed, nullable | ✅ **added 2026-08-19**; fetcher splits into our `license: string[]` |
+| Abandoned flag (nice-to-have) | `abandoned.{is_abandoned, replacement}` | ✅ **added 2026-08-19**, richer than asked — the maintainer-suggested replacement comes too |
 | Per-release test matrix (nice-to-have) | — | ❌ absent: `test_results` covers one `(package_version, magento_version)` pair |
 | `schemaVersion` | none in payloads; versioning via `/api/v1` path + spec `info.version` | ➖ acceptable |
 
 **Beyond the contract, PM also provides:** `stats.stars` and `stats.open_issues`
 (GitHub-derived), `links.web` (the PM package page — exactly what our attribution
-links need), `created_at`/`updated_at` per package, and server-side `search`/filter/
-sort we don't need (our search is client-side over the feed).
+links need; note pages live at `package-maven.com/<vendor>/<package>`, no
+`/packages/` segment), `created_at`/`updated_at` per package, and server-side
+`search`/filter/sort we don't need (our search is client-side over the feed).
+
+**Added 2026-08-19 beyond the contract:**
+
+- **`semver.{status, compliance_percent}`** — semantic-versioning compliance of
+  released versions, checked with semverdict. `status` ∈ `pending` (not yet
+  checked) / `compliant` / `violations` / `unknown` (check failed);
+  `compliance_percent` (0–100, null until checked) is the share of checked
+  release pairs without violations. Published verbatim as `quality.semver` in
+  the feed; detail pages badge it, cards show the percent. Jiří plans to present
+  this data at MMCZ as evidence of the ecosystem's SemVer reliability gap.
+  Ranking deliberately ignores it for now — whether/how it should contribute is
+  a curator decision (see follow-ups).
+- **`test_results` raw step outcomes** — `composer_install`, `di_compile`,
+  `template_compile`, `phpcs_passed`, `phpcs_no_errors`. Not consumed: the
+  quality tier already encodes them (the flags are derived from these steps);
+  available if we ever want a per-step breakdown on detail pages.
+- **`links.packagist`** — the package's original Packagist page, which the new
+  spec terms ask us to attribute when displaying a package (we already link it
+  on every detail page and in the feed's `links.packagist`).
 
 ## Gaps and their impact
 
@@ -87,12 +115,18 @@ sort we don't need (our search is client-side over the feed).
    else `no_errors` → `no-errors`, else `build_works` → `ready-to-install`, else
    `needs_help` → `needs-help`, else *untested* (gap 3). The API's `quality` filter
    values (`top`/`noerrors`/`works`/`help`) confirm the flags are tiered, not independent.
-5. **No license / abandoned flag** — the contract's contingency stands: live without
-   them or backfill from Packagist later (decision 2's fallback). Not launch-blocking.
-6. **Redistribution terms are not part of the API.** The token grants access; it does
-   not settle the redistribution-with-attribution agreement described in the contract.
-   That still needs an explicit yes from Jiří before `/api/v1/feed.json` republishes
-   PM-derived fields.
+5. ~~**No license / abandoned flag**~~ — **closed 2026-08-19:** both shipped (see the
+   field-mapping table); the Packagist-backfill contingency was never needed.
+6. ~~**Redistribution terms are not part of the API.**~~ — **largely closed
+   2026-08-19:** the spec's `info.description` now carries a "Data ownership,
+   attribution & disclaimer" section: any use, redistribution, or display of the
+   data must attribute package-maven.com as the source and, when displaying a
+   package, the package's original Packagist page (`links.packagist`). Our feed
+   and UI already satisfy both (attribution block in the feed, "quality data by
+   PackageMaven" linkbacks, Packagist link on every detail page). Worth one
+   confirming sentence to Jiří that these written terms cover our open
+   `/api/v1/feed.json` republication — the 2026-07-09 email question is
+   otherwise answered by the spec itself.
 
 ## Impact on the plan
 
@@ -134,10 +168,25 @@ Done (2026-07-10):
    `content`, and `security` canonical categories. Two judgment calls for curators
    to revisit: `checkout-payments` → `checkout` and `tax-pricing` → `payments`.
 
+Done (2026-08-19):
+
+4. ~~License / abandoned fields~~ — shipped by PM and consumed end to end
+   (`license`, `abandoned` + replacement); the new `semver` verdict is consumed
+   too (`quality.semver` in the feed).
+5. ~~Redistribution terms~~ — now written into the API spec (attribution to
+   package-maven.com + per-package Packagist links; see gap 6). A one-line
+   confirmation to Jiří that this covers the open feed remains polite-but-likely-formality.
+6. ~~PM package-page URL~~ — merge derived `package-maven.com/packages/<name>`,
+   but real pages live at `package-maven.com/<vendor>/<package>`; attribution
+   links now use PM's reported `links.web`.
+
 Outstanding (awaiting PM / maintainers):
 
-4. Confirm redistribution-with-attribution with Jiří (gap 6).
-5. Ask (no urgency) about per-release/multi-Magento test results and
-   license/abandoned fields in a future API version.
-6. Remove `.github/workflows/pm-api-probe.yml` once a live pipeline run has
-   succeeded end to end.
+7. Ask (no urgency) about per-release/multi-Magento test results (gap 1) — the
+   remaining nice-to-have; the 2026-07-09 email question about a version matrix
+   is still open.
+8. Decide whether `semver` should feed ranking (a curator/ranking-config
+   decision; it is display-only today).
+9. Remove `.github/workflows/pm-api-probe.yml` once a scheduled live pipeline
+   run has succeeded end to end (the probe's `pipeline-live` job passed against
+   the updated API on 2026-08-19).

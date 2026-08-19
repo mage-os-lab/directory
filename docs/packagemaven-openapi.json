@@ -3,7 +3,7 @@
   "info": {
     "title": "Package Maven API",
     "version": "1.0.0",
-    "description": "REST API exposing Package Maven's catalogue of Magento 2 packages, including build/quality test results and categories.\n\n## Authentication\nAll endpoints (except this spec) require a bearer token issued by the Package Maven team:\n\n```\nAuthorization: Bearer <token>\n```\n\nTo request access, contact the Package Maven team.\n\n## Rate limiting\nRequests are rate-limited per client (default 60 requests/minute). Every response carries `X-RateLimit-Limit` and `X-RateLimit-Remaining`; exceeding the limit yields `429` with a `Retry-After` header.\n\n## Caching\nResponses include an `ETag` and `Cache-Control: private, max-age=60`. If you send `If-None-Match` and the content is unchanged, you get an empty `304 Not Modified` instead of the full body — this saves transfer size on your side only; the request is still processed normally on the server and counts toward your rate limit.",
+    "description": "REST API exposing Package Maven's catalogue of Magento 2 packages, including build/quality test results and categories.\n\n## Authentication\nAll endpoints (except this spec) require a bearer token issued by the Package Maven team:\n\n```\nAuthorization: Bearer <token>\n```\n\nTo request access, contact the Package Maven team.\n\n## Rate limiting\nRequests are rate-limited per client (default 60 requests/minute). Every response carries `X-RateLimit-Limit` and `X-RateLimit-Remaining`; exceeding the limit yields `429` with a `Retry-After` header.\n\n## Caching\nResponses include an `ETag` and `Cache-Control: private, max-age=60`. If you send `If-None-Match` and the content is unchanged, you get an empty `304 Not Modified` instead of the full body — this saves transfer size on your side only; the request is still processed normally on the server and counts toward your rate limit.\n\n## Data ownership, attribution & disclaimer\nAll data referenced through this API is sourced from package-maven.com, operated by Tribound Creative s.r.o. This service aggregates publicly available metadata from GitHub and Packagist, combined with proprietary compatibility and quality testing data generated on our own infrastructure. All third-party package content remains subject to its own original licence as listed on the website, and Tribound Creative s.r.o. claims no ownership over it.\n\nAny use, redistribution, or display of this data — whether via the website or the API — must include clear attribution to package-maven.com as the source, and, when displaying a package, attribution to the package's original Packagist page (provided per package as `links.packagist`).\n\nThe data is provided \"as is\" and \"as available\", without warranty of accuracy, completeness, availability, or fitness for a particular purpose.",
     "contact": {
       "name": "Package Maven",
       "url": "https://package-maven.com"
@@ -350,6 +350,34 @@
             ],
             "description": "Source repository URL."
           },
+          "license": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SPDX license identifier(s) of the latest stable release, comma-separated when dual-licensed (e.g. `OSL-3.0, AFL-3.0`)."
+          },
+          "abandoned": {
+            "type": "object",
+            "description": "Packagist abandonment state.",
+            "properties": {
+              "is_abandoned": {
+                "type": "boolean",
+                "description": "True when the package is marked abandoned on Packagist."
+              },
+              "replacement": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Composer name of the suggested replacement package, when the maintainer named one."
+              }
+            },
+            "required": [
+              "is_abandoned",
+              "replacement"
+            ]
+          },
           "latest_release": {
             "type": "object",
             "properties": {
@@ -497,6 +525,35 @@
               "phpstan_level"
             ]
           },
+          "semver": {
+            "type": "object",
+            "description": "Semantic-versioning compliance of released versions (checked with semverdict).",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "compliant",
+                  "violations",
+                  "unknown"
+                ],
+                "description": "`pending` = not yet checked, `unknown` = check failed."
+              },
+              "compliance_percent": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Share of checked release pairs without semver violations. `null` until checked."
+              }
+            },
+            "required": [
+              "status",
+              "compliance_percent"
+            ]
+          },
           "categories": {
             "type": "array",
             "items": {
@@ -509,10 +566,15 @@
               "web": {
                 "type": "string",
                 "description": "Package page on package-maven.com."
+              },
+              "packagist": {
+                "type": "string",
+                "description": "The package's original page on packagist.org — link to it when attributing upstream package metadata."
               }
             },
             "required": [
-              "web"
+              "web",
+              "packagist"
             ]
           },
           "created_at": {
@@ -535,10 +597,13 @@
           "name",
           "description",
           "repository_url",
+          "license",
+          "abandoned",
           "latest_release",
           "stats",
           "quality",
           "test_results",
+          "semver",
           "categories",
           "links",
           "created_at",

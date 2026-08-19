@@ -1,6 +1,7 @@
 # URL paths (relative to https://package-maven.com) fetched by the
 # pm-api-probe workflow on push to the review branch. One per line.
-# 2026-08-19: refetch after PM added license, abandoned, and SemVer fields.
+# 2026-08-19: refetch after PM added license, abandoned, and SemVer fields;
+# the push carrying the updated fetcher re-runs pipeline-live end to end.
 /api/v1/openapi.json
 /api/v1/packages?per_page=3
 /api/v1/packages?per_page=3&page=150

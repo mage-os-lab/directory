@@ -5,6 +5,12 @@ The working document for data access with [PackageMaven](https://package-maven.c
 rather than duplicate them — PM is the structural data source for the whole directory
 (see [decisions.md](decisions.md#2-packagemaven-as-the-sole-structural-data-source)).
 
+**Status (2026-08-19, superseded):** PM delivered option 3 — a real read-only API —
+on 2026-07-06, then added the requested `license`/`abandoned` fields (plus a SemVer
+verdict) on 2026-08-19. This document is kept as the historical proposal;
+[packagemaven-api-evaluation.md](packagemaven-api-evaluation.md) tracks the shipped
+API against it.
+
 **Status (2026-07):** sent to Jiří as a starting point after his positive response; he
 asked for specifics, which the sections below now provide (example payload, accepted
 formats, delivery options). His timeline for a real API is months out — which is fine;

@@ -40,6 +40,14 @@ same source interface — deliberately excluded from v1 for simplicity.
 parsing required, more failure modes); all of Packagist as the universe (unvetted
 packages would swamp quality signals).
 
+**Amended 2026-08-19:** the contingency above is moot — PM added `license` and
+`abandoned` (with suggested replacement) to the API at our request, plus an
+unrequested SemVer-compliance verdict, and wrote
+redistribution-with-attribution terms into the API spec itself (attribution to
+package-maven.com plus each package's Packagist page). See
+[packagemaven-api-evaluation.md](packagemaven-api-evaluation.md). The
+per-Packagist-lookup fallback stays rejected.
+
 ## 3. Curated universe with a PR-based trust overlay
 
 **Decision:** the directory lists exactly what PackageMaven indexes. Mage-OS trust data
