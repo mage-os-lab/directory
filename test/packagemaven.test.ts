@@ -265,6 +265,20 @@ describe('fetchPackageMavenSnapshot', () => {
     expect(result.snapshot.packages).toHaveLength(1);
   });
 
+  it('falls back to the default API URL when the override is empty or blank', async () => {
+    // CI sets PM_API_URL from a repo variable; an undefined variable arrives
+    // as the empty string, which must not become the base URL.
+    for (const apiUrl of ['', '  ']) {
+      const calls: string[] = [];
+      const fetchImpl = (async (url: string | URL | Request) => {
+        calls.push(String(url));
+        return page([apiPackage()], 1, 1, 1);
+      }) as typeof fetch;
+      await fetchPackageMavenSnapshot({ apiUrl, token: 'test-token', now, fetchImpl });
+      expect(calls).toEqual(['https://package-maven.com/api/v1/packages?per_page=100&page=1']);
+    }
+  });
+
   it('throws on HTTP errors so the caller can carry a stale snapshot forward', async () => {
     const fetchImpl = (async () =>
       new Response('{"message":"nope"}', { status: 401 })) as typeof fetch;
