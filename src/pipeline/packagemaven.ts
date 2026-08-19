@@ -24,6 +24,13 @@ export const pmApiPackage = z.object({
   name: z.string().nullable(),
   description: z.string().nullable(),
   repository_url: z.string().nullable(),
+  /** SPDX id(s), comma-separated when dual-licensed (e.g. "OSL-3.0, AFL-3.0"). */
+  license: z.string().nullable(),
+  /** Packagist abandonment state. */
+  abandoned: z.object({
+    is_abandoned: z.boolean(),
+    replacement: z.string().nullable(),
+  }),
   latest_release: z.object({
     version: z.string().nullable(),
     date: z.string().nullable(),
@@ -44,7 +51,13 @@ export const pmApiPackage = z.object({
     package_version: z.string().nullable(),
     phpstan_level: z.number().int().min(-1).max(9).nullable(),
   }),
+  /** SemVer compliance of released versions (PM's semverdict check). */
+  semver: z.object({
+    status: z.enum(['pending', 'compliant', 'violations', 'unknown']),
+    compliance_percent: z.number().int().min(0).max(100).nullable(),
+  }),
   categories: z.array(z.object({ slug: z.string() })),
+  links: z.object({ web: z.string() }),
 });
 export type PmApiPackage = z.infer<typeof pmApiPackage>;
 
@@ -71,6 +84,16 @@ function toIso(date: string | null): string | null {
 function validUrl(url: string | null): string | null {
   if (!url) return null;
   return z.url().safeParse(url).success ? url : null;
+}
+
+/** Split PM's comma-separated SPDX string ("OSL-3.0, AFL-3.0") into a list. */
+export function parseLicense(license: string | null): string[] | null {
+  if (!license) return null;
+  const parts = license
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+  return parts.length > 0 ? parts : null;
 }
 
 /**
@@ -122,8 +145,14 @@ export function normalizePmApiPackage(raw: unknown): SourcePackage | null {
         : ('unknown' as const),
     installs: pkg.stats.installs,
     stars: pkg.stats.stars,
-    license: null,
-    abandoned: null,
+    license: parseLicense(pkg.license),
+    abandoned: pkg.abandoned.is_abandoned,
+    abandonedReplacement: pkg.abandoned.replacement?.trim() || null,
+    semver: {
+      status: pkg.semver.status,
+      compliancePercent: pkg.semver.compliance_percent,
+    },
+    pmUrl: validUrl(pkg.links.web),
   };
 
   const validated = sourcePackage.safeParse(candidate);

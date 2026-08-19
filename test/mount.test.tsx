@@ -35,7 +35,14 @@ const feed: Feed = {
       supportedMagento: ['2.4.7'],
       compatibility: { '2.4.7': '1.0.0', '2.4.6': '0.9.0' },
       abandoned: null,
-      quality: { tier: 'no-errors', phpstanLevel: 5, buildStatus: 'passing', stale: false },
+      abandonedReplacement: null,
+      quality: {
+        tier: 'no-errors',
+        phpstanLevel: 5,
+        buildStatus: 'passing',
+        semver: { status: 'compliant', compliancePercent: 100 },
+        stale: false,
+      },
       trust: {
         trustedVendor: true,
         partnerTier: null,
@@ -59,7 +66,14 @@ const feed: Feed = {
       supportedMagento: ['2.4.7'],
       compatibility: { '2.4.7': '2.1.0' },
       abandoned: null,
-      quality: { tier: 'no-errors', phpstanLevel: 5, buildStatus: 'passing', stale: false },
+      abandonedReplacement: null,
+      quality: {
+        tier: 'no-errors',
+        phpstanLevel: 5,
+        buildStatus: 'passing',
+        semver: null,
+        stale: false,
+      },
       trust: {
         trustedVendor: true,
         partnerTier: null,

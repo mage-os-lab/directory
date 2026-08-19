@@ -16,6 +16,8 @@ function apiPackage(overrides: Partial<PmApiPackage> = {}): PmApiPackage {
     name: 'Acme Widget Manager',
     description: 'Adds a widget management grid.',
     repository_url: 'https://github.com/acme/module-widget',
+    license: 'MIT',
+    abandoned: { is_abandoned: false, replacement: null },
     latest_release: { version: '2.3.1', date: '2026-05-14T09:30:00+00:00' },
     stats: { stars: 42, open_issues: 3, installs: 1834 },
     quality: { strict_compliant: false, no_errors: true, build_works: true, needs_help: false },
@@ -24,7 +26,9 @@ function apiPackage(overrides: Partial<PmApiPackage> = {}): PmApiPackage {
       package_version: '2.3.1',
       phpstan_level: 6,
     },
+    semver: { status: 'compliant', compliance_percent: 100 },
     categories: [{ slug: 'developer-tools' }, { slug: 'admin-tools' }],
+    links: { web: 'https://package-maven.com/acme/module-widget' },
     ...overrides,
   };
 }
@@ -65,8 +69,11 @@ describe('normalizePmApiPackage', () => {
       buildStatus: 'passing',
       installs: 1834,
       stars: 42,
-      license: null,
-      abandoned: null,
+      license: ['MIT'],
+      abandoned: false,
+      abandonedReplacement: null,
+      semver: { status: 'compliant', compliancePercent: 100 },
+      pmUrl: 'https://package-maven.com/acme/module-widget',
     });
     // The tested pair is a matrix row carrying the latest release's date.
     expect(source?.releases).toEqual([
@@ -138,6 +145,45 @@ describe('normalizePmApiPackage', () => {
     expect(source?.phpstanLevel).toBe(-1);
     expect(source?.buildStatus).toBe('failing');
     expect(source?.qualityTier).toBe('needs-help');
+  });
+
+  it('splits comma-separated dual licenses and nulls empty ones', () => {
+    expect(normalizePmApiPackage(apiPackage({ license: 'OSL-3.0, AFL-3.0' }))?.license).toEqual([
+      'OSL-3.0',
+      'AFL-3.0',
+    ]);
+    expect(normalizePmApiPackage(apiPackage({ license: null }))?.license).toBeNull();
+    expect(normalizePmApiPackage(apiPackage({ license: ' , ' }))?.license).toBeNull();
+  });
+
+  it('maps the abandonment state including the suggested replacement', () => {
+    const source = normalizePmApiPackage(
+      apiPackage({ abandoned: { is_abandoned: true, replacement: 'acme/module-widget-next' } }),
+    );
+    expect(source?.abandoned).toBe(true);
+    expect(source?.abandonedReplacement).toBe('acme/module-widget-next');
+    // Abandoned without a named replacement.
+    expect(
+      normalizePmApiPackage(apiPackage({ abandoned: { is_abandoned: true, replacement: '' } })),
+    ).toMatchObject({ abandoned: true, abandonedReplacement: null });
+  });
+
+  it('carries the semver verdict through verbatim', () => {
+    expect(
+      normalizePmApiPackage(apiPackage({ semver: { status: 'violations', compliance_percent: 70 } }))
+        ?.semver,
+    ).toEqual({ status: 'violations', compliancePercent: 70 });
+    expect(
+      normalizePmApiPackage(apiPackage({ semver: { status: 'pending', compliance_percent: null } }))
+        ?.semver,
+    ).toEqual({ status: 'pending', compliancePercent: null });
+  });
+
+  it("uses PM's own package page URL", () => {
+    expect(normalizePmApiPackage(apiPackage())?.pmUrl).toBe(
+      'https://package-maven.com/acme/module-widget',
+    );
+    expect(normalizePmApiPackage(apiPackage({ links: { web: 'not a url' } }))?.pmUrl).toBeNull();
   });
 
   it('nulls out an invalid repository URL and drops unparseable records', () => {

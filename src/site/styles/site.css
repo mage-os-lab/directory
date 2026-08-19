@@ -287,6 +287,9 @@ h3 {
 .badge-partner-gold,
 .badge-partner-silver,
 .badge-partner-bronze { background: #fff9db; border-color: #ffe066; color: #997404; }
+.badge-semver-ok { background: #e6fcf5; border-color: #63e6be; color: #087f5b; }
+.badge-semver-violations { background: #fff0f6; border-color: #faa2c1; color: #a61e4d; }
+.badge-abandoned { background: #495057; border-color: #343a40; color: #f8f9fa; }
 
 .stat {
   color: var(--fg-muted);

@@ -114,6 +114,17 @@ const jsonLd = {
     {pkg.trust.partnerTier && (
       <span class={`badge badge-partner-${pkg.trust.partnerTier}`}>{pkg.trust.partnerTier} partner</span>
     )}
+    {pkg.quality.semver?.status === 'compliant' && (
+      <span class="badge badge-semver-ok">SemVer compliant</span>
+    )}
+    {pkg.quality.semver?.status === 'violations' && (
+      <span class="badge badge-semver-violations">
+        SemVer violations{pkg.quality.semver.compliancePercent !== null
+          ? ` (${pkg.quality.semver.compliancePercent}% compliant)`
+          : ''}
+      </span>
+    )}
+    {pkg.abandoned && <span class="badge badge-abandoned">Abandoned</span>}
     {pkg.trust.editorialPick && <span class="badge badge-pick">Editors&rsquo; pick</span>}
     {!pkg.trust.hidden && pkg.trust.warnings.length > 0 && (
       <span class="badge badge-warning">
@@ -121,6 +132,29 @@ const jsonLd = {
       </span>
     )}
   </div>
+
+  {
+    pkg.abandoned && (
+      <div class="withdrawn-banner">
+        <h2>This package is marked abandoned</h2>
+        <p>
+          The maintainer has marked {pkg.displayName} as abandoned on Packagist.
+          {pkg.abandonedReplacement ? (
+            <>
+              {' '}
+              The suggested replacement is{' '}
+              <a href={`https://packagist.org/packages/${pkg.abandonedReplacement}`} rel="noopener">
+                <code>{pkg.abandonedReplacement}</code>
+              </a>
+              .
+            </>
+          ) : (
+            ' No replacement has been suggested.'
+          )}
+        </p>
+      </div>
+    )
+  }
 
   {
     !pkg.trust.hidden && pkg.trust.warnings.length > 0 && (
@@ -189,6 +223,7 @@ const jsonLd = {
     {pkg.popularity.githubStars !== null && <span>★ {pkg.popularity.githubStars.toLocaleString()} stars</span>}
     {pkg.latestVersion && <span>Latest: v{pkg.latestVersion}</span>}
     {pkg.latestReleasedAt && <span>Released {pkg.latestReleasedAt.slice(0, 10)}</span>}
+    {pkg.license && pkg.license.length > 0 && <span>License: {pkg.license.join(', ')}</span>}
   </p>
 
   <div class="install-block">

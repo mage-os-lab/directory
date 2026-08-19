@@ -164,10 +164,12 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         supportedMagento: source.supportedMagento,
         compatibility: buildCompatibility(releases),
         abandoned: source.abandoned,
+        abandonedReplacement: source.abandonedReplacement,
         quality: {
           tier: source.qualityTier,
           phpstanLevel: source.phpstanLevel,
           buildStatus: source.buildStatus,
+          semver: source.semver,
           stale: input.snapshotStale,
         },
         trust: {
@@ -232,7 +234,9 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         license: a.source.license,
         links: {
           packagist: `https://packagist.org/packages/${a.source.name}`,
-          packagemaven: `https://package-maven.com/packages/${a.source.name}`,
+          // PM package pages live at package-maven.com/<vendor>/<package>;
+          // prefer the URL PM reports over deriving it.
+          packagemaven: a.source.pmUrl ?? `https://package-maven.com/${a.source.name}`,
           repository: a.source.repositoryUrl,
           issues: a.trustEntry?.issuesUrl ?? deriveIssuesUrl(a.source),
           docs: a.trustEntry?.docsUrl ?? null,

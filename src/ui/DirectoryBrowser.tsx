@@ -416,6 +416,11 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                   PHPStan <strong>L{pkg.quality.phpstanLevel}</strong>
                 </span>
               )}
+              {pkg.quality.semver !== null && pkg.quality.semver.compliancePercent !== null && (
+                <span class="mosd-stat">
+                  SemVer <strong>{pkg.quality.semver.compliancePercent}%</strong>
+                </span>
+              )}
               {pkg.latestVersion && (
                 <span class="mosd-stat">
                   <strong>v{pkg.latestVersion}</strong>
@@ -437,6 +442,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                   {pkg.trust.warnings.length} warning{pkg.trust.warnings.length === 1 ? '' : 's'}
                 </span>
               )}
+              {pkg.abandoned && <span class="mosd-badge mosd-badge-abandoned">Abandoned</span>}
               {magentoBadge(pkg)}
               {installState(pkg) === 'installed' && (
                 <span class="mosd-badge mosd-badge-installed">
