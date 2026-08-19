@@ -3,15 +3,16 @@
   Embeddable-bundle demo page.
 
   How to use:
-    1. npm run build:ui      # builds dist-ui/directory-ui.iife.js (+ .css)
-    2. npm run dev            # serves the Astro site (incl. /api/v1/feed.json)
-                               # at http://localhost:4321
+    1. npm run build:ui      # builds public/embed/directory-ui.iife.js (+ .js, .css)
+    2. npm run dev            # serves the Astro site (incl. /api/v1/feed.json
+                               # and /embed/*) at http://localhost:4321
     3. Open this file directly in a browser (e.g. `open examples/embed-demo.html`
        or drag it into a tab) while `npm run dev` is running in another terminal.
 
   This page is a stand-in for a third-party host page (e.g. the future Magento
   admin module) embedding the directory via the standalone IIFE bundle. It
-  loads ../dist-ui/directory-ui.iife.js, calls
+  loads the bundle from the directory's own origin — in production that is
+  https://<directory-host>/embed/directory-ui.iife.js — calls
   `MageOSDirectory.mountDirectory(el, { feedUrl, linkMode: 'event' })`, and
   logs every `mosd:select` / `mosd:error` CustomEvent to both the browser
   console and the visible <pre> log below — that event contract (bubbling,
@@ -78,12 +79,12 @@
       <div id="host"></div>
 
       <div id="log-wrap">
-        <h2>Event log (<code>mosd:select</code> / <code>mosd:error</code>)</h2>
+        <h2>Event log (<code>mosd:select</code> / <code>mosd:selection</code> / <code>mosd:error</code>)</h2>
         <pre id="log">Waiting for events…</pre>
       </div>
     </div>
 
-    <script src="../dist-ui/directory-ui.iife.js"></script>
+    <script src="http://localhost:4321/embed/directory-ui.iife.js"></script>
     <script>
       const host = document.getElementById('host');
       const log = document.getElementById('log');
@@ -107,11 +108,32 @@
         appendLog(`mosd:error ${JSON.stringify(event.detail)}`);
       });
 
+      host.addEventListener('mosd:selection', (event) => {
+        console.log('mosd:selection', event.detail);
+        appendLog(`mosd:selection ${JSON.stringify(event.detail)}`);
+      });
+
+      // Stand-in for what the Magento admin module would read out of the
+      // shop's composer.lock: name → installed version. One current, one
+      // outdated, so both badge states show.
+      const installed = {
+        'brightloom/module-seo-toolkit': '3.2.1',
+        'castlegate/module-payment-gateway': '4.8.0',
+      };
+
       // MageOSDirectory is the global exposed by the IIFE build
       // (vite.ui.config.ts: build.lib.name = "MageOSDirectory").
+      // magentoVersion is the shop's own version (also from composer.lock):
+      // cards get tested-with badges from PM's test matrix and the install
+      // list pins the newest release verified against it — e.g. the
+      // payment-gateway update below targets v5.0.0 (last release tested on
+      // 2.4.6), not the 2.4.7-only v5.1.0.
       MageOSDirectory.mountDirectory(host, {
         feedUrl: 'http://localhost:4321/api/v1/feed.json',
         linkMode: 'event',
+        installed,
+        selectable: true,
+        magentoVersion: '2.4.6',
       });
     </script>
   </body>

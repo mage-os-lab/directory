@@ -13,6 +13,14 @@ const picks = editorialPicks(feed, 6);
 const categories = feed.categories
   .filter((c) => c.packageCount > 0)
   .sort((a, b) => b.packageCount - a.packageCount);
+
+// Hero counters (PM-style): visible modules by readiness.
+const visible = feed.packages.filter((p) => !p.trust.hidden);
+const readyCount = visible.filter((p) =>
+  ['strict-compliant', 'no-errors', 'ready-to-install'].includes(p.quality.tier),
+).length;
+const needsHelpCount = visible.filter((p) => p.quality.tier === 'needs-help').length;
+const vendorCount = new Set(visible.map((p) => p.vendor)).size;
 ---
 
 <Base
@@ -26,6 +34,12 @@ const categories = feed.categories
       Mage-OS modules. Every listing is backed by <a href="https://package-maven.com/" rel="noopener">PackageMaven</a>'s
       real compatibility testing against actual Magento versions — not just parsed Composer
       constraints — plus a human-curated trust layer for vendor track record and editorial picks.
+    </p>
+    <p class="hero-stats">
+      <span class="hero-stat"><strong>{visible.length}</strong> modules</span>
+      <span class="hero-stat hero-stat-ready"><strong>{readyCount}</strong> ready to install</span>
+      <span class="hero-stat hero-stat-help"><strong>{needsHelpCount}</strong> need help</span>
+      <span class="hero-stat"><strong>{vendorCount}</strong> vendors</span>
     </p>
   </section>
 

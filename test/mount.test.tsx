@@ -33,6 +33,7 @@ const feed: Feed = {
       latestVersion: '1.0.0',
       latestReleasedAt: '2026-06-01T00:00:00.000Z',
       supportedMagento: ['2.4.7'],
+      compatibility: { '2.4.7': '1.0.0', '2.4.6': '0.9.0' },
       abandoned: null,
       quality: { tier: 'no-errors', phpstanLevel: 5, buildStatus: 'passing', stale: false },
       trust: {
@@ -45,6 +46,30 @@ const feed: Feed = {
       },
       popularity: { installs: 100, githubStars: null },
       ranking: { score: 0.7, components: { qualityTier: 0.8 } },
+    },
+    {
+      name: 'acme/module-search',
+      vendor: 'acme',
+      displayName: 'Acme Search',
+      description: 'A search engine.',
+      categories: ['payments'],
+      repositoryUrl: null,
+      latestVersion: '2.1.0',
+      latestReleasedAt: '2026-05-01T00:00:00.000Z',
+      supportedMagento: ['2.4.7'],
+      compatibility: { '2.4.7': '2.1.0' },
+      abandoned: null,
+      quality: { tier: 'no-errors', phpstanLevel: 5, buildStatus: 'passing', stale: false },
+      trust: {
+        trustedVendor: true,
+        partnerTier: null,
+        editorialPick: false,
+        warnings: [],
+        deranked: false,
+        hidden: false,
+      },
+      popularity: { installs: 20, githubStars: null },
+      ranking: { score: 0.3, components: { qualityTier: 0.4 } },
     },
   ],
 };
@@ -124,6 +149,137 @@ describe('mountDirectory', () => {
     retry.click();
     await flush();
     expect(el.textContent).toContain('Acme Pay');
+  });
+
+  it('shows installed and update-available badges from the installed map', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      installed: { 'acme/module-pay': '1.0.0', 'acme/module-search': '2.0.0' },
+    });
+    await flush();
+
+    const badges = [...el.querySelectorAll('.mosd-badge-installed, .mosd-badge-update')].map(
+      (b) => b.textContent,
+    );
+    expect(badges).toContain('Installed v1.0.0');
+    expect(badges).toContain('Installed v2.0.0 → v2.1.0');
+    // Up-to-date packages get no mark button even when selectable.
+    expect(el.querySelector('select.mosd-install-filter')).not.toBeNull();
+  });
+
+  it('builds the composer command and dispatches mosd:selection when marking', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const selections: unknown[] = [];
+    el.addEventListener('mosd:selection', (event) =>
+      selections.push((event as CustomEvent).detail),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, selectable: true });
+    await flush();
+
+    const buttons = [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')];
+    expect(buttons).toHaveLength(2);
+    buttons[0].click();
+    await flush();
+    [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')]
+      .filter((b) => !b.classList.contains('mosd-marked'))[0]
+      .click();
+    await flush();
+
+    expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(
+      'composer require acme/module-pay:^1.0.0 acme/module-search:^2.1.0',
+    );
+    expect(selections).toEqual([
+      {
+        packages: [{ name: 'acme/module-pay', version: '1.0.0' }],
+        command: 'composer require acme/module-pay:^1.0.0',
+      },
+      {
+        packages: [
+          { name: 'acme/module-pay', version: '1.0.0' },
+          { name: 'acme/module-search', version: '2.1.0' },
+        ],
+        command: 'composer require acme/module-pay:^1.0.0 acme/module-search:^2.1.0',
+      },
+    ]);
+
+    // Clear empties the list and announces it.
+    (el.querySelector('.mosd-tray .mosd-btn:not(.mosd-btn-primary)') as HTMLButtonElement).click();
+    await flush();
+    expect(el.querySelector('.mosd-tray')).toBeNull();
+    expect(selections[2]).toEqual({ packages: [], command: '' });
+  });
+
+  it('shows tested-with badges for the host Magento version', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, magentoVersion: '2.4.6' });
+    await flush();
+
+    const badges = [
+      ...el.querySelectorAll(
+        '.mosd-badge-compat-ok, .mosd-badge-compat-older, .mosd-badge-compat-untested',
+      ),
+    ].map((b) => b.textContent!.trim());
+    // module-pay: latest not verified on 2.4.6, but 0.9.0 is; module-search: nothing is.
+    expect(badges).toContain('v0.9.0 tested with 2.4.6');
+    expect(badges).toContain('Not tested with 2.4.6');
+
+    // The tested-only toggle hides the untested package.
+    const toggle = el.querySelector<HTMLInputElement>('.mosd-tested-toggle input')!;
+    toggle.click();
+    await flush();
+    expect(el.textContent).toContain('Acme Pay');
+    expect(el.textContent).not.toContain('Acme Search');
+  });
+
+  it('pins the newest release verified for the host Magento in the install list', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const selections: unknown[] = [];
+    el.addEventListener('mosd:selection', (event) =>
+      selections.push((event as CustomEvent).detail),
+    );
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      selectable: true,
+      magentoVersion: '2.4.6',
+      // Installed 0.8.0 < the 2.4.6-verified 0.9.0 → update targeting 0.9.0,
+      // NOT the 2.4.7-only 1.0.0.
+      installed: { 'acme/module-pay': '0.8.0' },
+    });
+    await flush();
+
+    expect(el.querySelector('.mosd-badge-update')!.textContent).toBe(
+      'Installed v0.8.0 → v0.9.0',
+    );
+    const updateButton = [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')].find((b) =>
+      b.textContent!.includes('update'),
+    )!;
+    updateButton.click();
+    await flush();
+
+    expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(
+      'composer require acme/module-pay:^0.9.0',
+    );
+    expect(selections).toEqual([
+      {
+        packages: [{ name: 'acme/module-pay', version: '0.9.0' }],
+        command: 'composer require acme/module-pay:^0.9.0',
+      },
+    ]);
   });
 
   it('unmount cleans the tree', async () => {

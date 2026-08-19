@@ -164,7 +164,14 @@ interface PackageSummary {
   repositoryUrl: string | null;
   latestVersion: string | null;
   latestReleasedAt: string | null;
-  supportedMagento: string[];     // Magento versions PM verified, e.g. ["2.4.7", "2.4.6"]
+  supportedMagento: string[];     // Magento versions PM verified the *latest* release
+                                  // against, e.g. ["2.4.7", "2.4.6"]
+  compatibility: Record<string, string>;
+                                  // Magento version → newest release verified against it,
+                                  // derived from PM's per-release test matrix; lets a
+                                  // client on 2.4.6 pin the newest release known to work
+                                  // there when the latest is 2.4.7-only. Empty without
+                                  // per-release data from PM.
   abandoned: boolean | null;      // null when PM's export doesn't carry the flag
   quality: {
     tier: 'strict-compliant' | 'no-errors' | 'ready-to-install' | 'needs-help';
@@ -196,6 +203,11 @@ interface PackageDetail extends PackageSummary {
   schemaVersion: 1;
   generatedAt: string;
   readmeHtml: string | null;      // sanitized at build time
+  releases: Array<{               // PM's per-release test matrix, newest first
+    version: string;              // (latest release folded in); empty when PM
+    releasedAt: string | null;    // supplies no per-release data
+    supportedMagento: string[];
+  }>;
   license: string[] | null;
   links: { packagist: string; packagemaven: string;
            repository: string | null; issues: string | null; docs: string | null };
@@ -318,6 +330,7 @@ experience as a Preact island using MiniSearch for client-side search over the f
 | `/categories/<category>/` | Prerendered category list, island preset to that filter |
 | `/how-to-get-listed/` | Rendered from docs |
 | `/api/v1/**` | The pipeline's static JSON output |
+| `/embed/*` | The embeddable bundle (`directory-ui.iife.js`, `directory-ui.js`, `directory-ui.css`), served CORS-open from the directory's own origin |
 
 Per-package and vendor pages are prerendered for SEO; search and filtering happen
 client-side against `feed.json`.
@@ -329,7 +342,11 @@ and the standalone library entry below. This boundary is what makes the dual bui
 mechanical rather than clever.
 
 **Embeddable bundle:** the component is also built standalone (Vite library mode) as
-`directory-ui.js` + `directory-ui.css`, exposing:
+`directory-ui.js` (ES) / `directory-ui.iife.js` (classic script, global
+`MageOSDirectory`) + `directory-ui.css` (only needed for `shadow: false` embedders —
+shadow mounts inline the styles). The build lands in `public/embed/`, so every deploy
+publishes it at `/embed/*` on the directory's own origin — that URL is what the future
+admin module loads. It exposes:
 
 ```ts
 mountDirectory(el: HTMLElement, options: {
@@ -339,6 +356,15 @@ mountDirectory(el: HTMLElement, options: {
   initialFilters?: { category?: string; quality?: string[]; query?: string };
   baseUrl?: string;                // href prefix for linkMode 'href'; default ""
   shadow?: boolean;                // default true: render inside an open Shadow DOM
+  installed?: Record<string, string>; // composer name → installed version, read by the
+                                   // host from composer.lock; adds Installed /
+                                   // "update available" badges + an installed-state filter
+  selectable?: boolean;            // default false: mark-for-install toggles + a tray
+                                   // with the copyable composer require command
+  magentoVersion?: string;         // the host shop's Magento/Mage-OS version; adds
+                                   // tested-with badges + a tested-only filter, and the
+                                   // install list pins the newest release verified
+                                   // against it (via PackageSummary.compatibility)
 }): () => void;                    // returns unmount
 ```
 
@@ -350,6 +376,20 @@ Contract details the admin module depends on:
 - Feed fetch failure renders a retryable error state inside the component and
   dispatches `CustomEvent('mosd:error', { detail: { message } })`; it never throws out
   of `mountDirectory`.
+- With `selectable: true`, every change to the install list dispatches a bubbling,
+  composed `CustomEvent('mosd:selection', { detail: { packages: [{ name, version }],
+  command } })` — `command` is the ready-to-paste
+  `composer require vendor/a:^1.2 vendor/b` string (empty when the list is empty). The
+  directory never installs anything itself: version detection stays client-side
+  (`installed` comes from the host reading composer.lock) and the output is a command
+  the merchant runs manually — consistent with the copy-the-command model on detail
+  pages.
+- With `magentoVersion`, compatibility is a lookup, never a solver: the badge states
+  are "tested with X" (latest release verified), "vN tested with X" (only an older
+  release verified — the install list pins `^N`), and "not tested with X". Because
+  this is PM's *empirical* test matrix, absence of a test result is never presented
+  as incompatibility, and full conflict resolution is deliberately left to
+  `composer require --dry-run` on the merchant's machine.
 - Class prefixes (`.mosd-*`) keep our styles from leaking out, but only Shadow DOM
   keeps host-page styles (like the Magento admin's global element resets) from leaking
   *in* — hence `shadow: true` by default for embeds. Theming still works because CSS
@@ -360,8 +400,10 @@ Contract details the admin module depends on:
 sort (installs, stars, recency), default "recommended" sort by ranking score, stats on
 cards, README on detail pages, vendor pages. When the feed reports a stale or manually
 refreshed source, the UI shows a visible "quality data as of &lt;date&gt;" notice — stale
-data must never present as live. A Magento-version compatibility *filter* is deferred;
-supported versions are displayed as a field. Also deferred, cheap to add later: a
+data must never present as live. A Magento-version compatibility filter exists where
+the shop version is known — embeds passing `magentoVersion` (the public site can't
+know a visitor's version, so it displays supported versions as a field and the detail
+pages show the per-release test matrix). Also deferred, cheap to add later: a
 "recently added" page / RSS feed diffed from consecutive snapshots.
 
 **Analytics:** Cloudflare Web Analytics (free, privacy-respecting, no cookies) on the

@@ -15,7 +15,7 @@
   "scripts": {
     "pipeline": "tsx src/pipeline/run.ts --out public",
     "pipeline:fixture": "tsx src/pipeline/run.ts --source fixture --out public",
-    "build": "npm run pipeline:fixture && astro build",
+    "build": "npm run pipeline:fixture && npm run build:ui && astro build",
     "build:ui": "vite build --config vite.ui.config.ts",
     "dev": "npm run pipeline:fixture && astro dev",
     "test": "vitest run",
@@ -33,6 +33,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
     "@preact/preset-vite": "^2.10.5",
     "@types/node": "^26.1.0",
     "happy-dom": "^20.10.6",

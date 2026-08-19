@@ -57,7 +57,16 @@ export const packageSummary = z.object({
   repositoryUrl: z.url().nullable(),
   latestVersion: z.string().nullable(),
   latestReleasedAt: isoDateTime.nullable(),
+  /** Magento versions the latest release was verified against (PM test data). */
   supportedMagento: z.array(z.string()),
+  /**
+   * Magento version → newest package release verified against it, derived
+   * from PM's per-release test matrix (latest release included). Lets a
+   * client on Magento 2.4.6 pin the newest release known to work there even
+   * when the latest release is only verified on 2.4.7. Empty when PM
+   * supplied no compatibility data. Keys sorted newest Magento first.
+   */
+  compatibility: z.record(z.string(), z.string()),
   abandoned: z.boolean().nullable(),
   quality: packageQuality,
   trust: packageTrust,
@@ -94,12 +103,23 @@ export const feed = z.object({
 });
 export type Feed = z.infer<typeof feed>;
 
+/** One row of the published per-release test matrix. */
+export const packageRelease = z.object({
+  version: z.string(),
+  releasedAt: isoDateTime.nullable(),
+  supportedMagento: z.array(z.string()),
+});
+export type PackageRelease = z.infer<typeof packageRelease>;
+
 /** /api/v1/packages/<vendor>/<name>.json — full per-package detail. */
 export const packageDetail = packageSummary.extend({
   schemaVersion: z.literal(1),
   generatedAt: isoDateTime,
   /** Sanitized at build time; null when the README is unavailable. */
   readmeHtml: z.string().nullable(),
+  /** PM's per-release test matrix, newest release first (latest included).
+   * Empty when PM supplied no per-release data. */
+  releases: z.array(packageRelease),
   license: z.array(z.string()).nullable(),
   links: z.object({
     packagist: z.url(),
