@@ -77,7 +77,18 @@ jobs:
               -H "User-Agent: $UA" \
               "$url" -o /tmp/body.bin || echo "(curl failed)"
             cat /tmp/h.txt
-            echo "-- body (first $MAX_BYTES bytes) --"
-            head -c "$MAX_BYTES" /tmp/body.bin; echo
+            # The OpenAPI spec is too large for the job-log window; print only
+            # the parts the integration needs (info, endpoints, schemas).
+            case "$p" in
+              *openapi.json*)
+                echo "-- body (jq: info, path list, component schemas) --"
+                jq '{info: .info, paths: (.paths | keys), schemas: .components.schemas}' /tmp/body.bin \
+                  || head -c 4000 /tmp/body.bin
+                ;;
+              *)
+                echo "-- body (first $MAX_BYTES bytes) --"
+                head -c "$MAX_BYTES" /tmp/body.bin; echo
+                ;;
+            esac
             echo
           done
