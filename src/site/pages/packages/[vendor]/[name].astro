@@ -52,7 +52,7 @@ const jsonLd = {
   softwareVersion: pkg.latestVersion ?? undefined,
   datePublished: pkg.latestReleasedAt ?? undefined,
   license: pkg.license?.[0] ?? undefined,
-  url: `https://mage-os-directory.pages.dev/packages/${pkg.name}/`,
+  url: new URL(packageHref(pkg), Astro.site).href,
   ...(pkg.repositoryUrl ? { codeRepository: pkg.repositoryUrl } : {}),
   ...(pkg.popularity.installs !== null
     ? {

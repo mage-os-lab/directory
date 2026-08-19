@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { withBase } from '../lib/base.js';
 ---
 
 <Base title="Page not found" description="This page could not be found.">
@@ -12,6 +13,6 @@ import Base from '../layouts/Base.astro';
       directory rebuilds daily from PackageMaven's data, and packages that drop out of that index
       drop out of this directory too.
     </p>
-    <p><a href="/">← Back to the directory</a></p>
+    <p><a href={withBase('/')}>← Back to the directory</a></p>
   </div>
 </Base>

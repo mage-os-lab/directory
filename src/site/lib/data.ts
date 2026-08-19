@@ -11,6 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Feed, PackageDetail, PackageSummary } from '../../schema/feed.js';
+import { withBase } from './base.js';
 
 const API_DIR = path.join(process.cwd(), 'public', 'api', 'v1');
 
@@ -68,15 +69,15 @@ export function packageNameSegment(pkg: PackageSummary): string {
 }
 
 export function packageHref(pkg: PackageSummary): string {
-  return `/packages/${pkg.name}/`;
+  return withBase(`/packages/${pkg.name}/`);
 }
 
 export function vendorHref(vendorSlug: string): string {
-  return `/vendors/${vendorSlug}/`;
+  return withBase(`/vendors/${vendorSlug}/`);
 }
 
 export function categoryHref(slug: string): string {
-  return `/categories/${slug}/`;
+  return withBase(`/categories/${slug}/`);
 }
 
 /** The packagemaven source's fetchedAt when it's marked stale, or null —
