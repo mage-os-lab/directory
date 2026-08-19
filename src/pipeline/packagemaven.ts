@@ -206,7 +206,9 @@ async function getPage(
  * carry-forward-a-stale-snapshot fallback.
  */
 export async function fetchPackageMavenSnapshot(options: PmFetchOptions): Promise<PmFetchResult> {
-  const apiUrl = (options.apiUrl ?? DEFAULT_PM_API_URL).replace(/\/$/, '');
+  // `||` (not `??`): CI passes PM_API_URL as the empty string when the repo
+  // variable is undefined, and that must mean "use the default" too.
+  const apiUrl = (options.apiUrl?.trim() || DEFAULT_PM_API_URL).replace(/\/$/, '');
   const fetchImpl = options.fetchImpl ?? fetch;
   const sleep = options.sleep ?? defaultSleep;
 
