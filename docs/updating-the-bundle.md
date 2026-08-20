@@ -1,48 +1,42 @@
 # Updating the vendored UI bundle
 
-`view/adminhtml/web/js/directory-ui.iife.js` is a **built artifact**, vendored from the
-[mage-os.directory](https://github.com/rhoerr/mage-os.directory) repository per the
-integration recommendation in its admin-module handoff (§6: proxied + vendored). Do not
-edit it by hand.
+`src/view/adminhtml/web/js/directory-ui.iife.js` is a **built artifact**: the embeddable
+browse/search UI compiled from `service/src/ui/` by Vite (`service/vite.ui.config.ts`).
+The module ships this copy so its Proxy mode works fully same-origin — restricted
+networks, no CSP surprises. Do not edit it by hand.
 
-## Current provenance
-
-| | |
-|---|---|
-| Source repo | `rhoerr/mage-os.directory` |
-| Commit | `77d2974` (branch `claude/magento-admin-extension-ui-m4h03l`; adds the `--mosd-theme-band`/`--mosd-theme-band-2`/`--mosd-theme-font` theming hooks this module relies on) |
-| Built with | `npm run build:ui` (Vite library mode, `vite.ui.config.ts`) |
-| Size | 49,835 bytes (≈16.7 KB gzipped) |
-| Data contract | `schemaVersion: 1` |
-| Global | `MageOSDirectory` (plain IIFE — no AMD/UMD wrapper, coexists with the admin's RequireJS) |
-
-The bundle is data-independent: the same file is produced regardless of which data
-source (live or fixture) the directory pipeline ran with. Styles are inlined into the
-shadow root at mount time, so `directory-ui.css` is deliberately **not** vendored
-(only `shadow: false` embedders need it, and this module keeps the default
-`shadow: true`).
+Since the module and the bundle source live in this repository, keeping them in sync is
+a build step, not a cross-repo ritual — and CI enforces it: the **Module CI /
+bundle-sync** job rebuilds the bundle and fails on any byte difference.
 
 ## Refresh procedure
 
+After any change under `service/src/ui/` or `service/src/shared/`:
+
 ```sh
-git clone https://github.com/rhoerr/mage-os.directory && cd mage-os.directory
-npm ci
-npm run build:ui        # emits public/embed/directory-ui.iife.js
-npm test                # 8 tests in test/mount.test.tsx are the embed contract
-cp public/embed/directory-ui.iife.js \
-   ../module-extension-directory/view/adminhtml/web/js/directory-ui.iife.js
+cd service
+npm ci                  # first time only
+npm test                # the embed contract lives in service/test/mount.test.tsx
+npm run build:ui        # emits service/public/embed/directory-ui.iife.js
+cp public/embed/directory-ui.iife.js ../src/view/adminhtml/web/js/directory-ui.iife.js
 ```
 
-Then update the provenance table above (commit, size) and check:
+Commit the rebuilt file together with the source change — one atomic commit, which is
+the point of the monorepo ([decision 12](decisions.md#12-one-repository-for-the-service-and-the-admin-module)).
 
-1. `schemaVersion` is still `1` — a bump is a breaking change (handoff §10.6).
+## Checks that still need a human
+
+1. `schemaVersion` is still `1` — a bump is a breaking change
+   ([handoff §10.6](magento-admin-module-handoff.md)).
 2. The `mountDirectory` options and `mosd:select` / `mosd:selection` / `mosd:error`
-   event contract are unchanged (`src/ui/mount.tsx`, `test/mount.test.tsx`).
-3. Whether the bundle now renders the PackageMaven attribution itself (tracked
-   upstream). Until it does, the attribution block in
-   `view/adminhtml/templates/directory.phtml` is **required** — do not remove it
-   without verifying the bundle took over that obligation.
+   event contract are unchanged (`service/src/ui/mount.tsx`,
+   `service/test/mount.test.tsx`), or the module's template/tests are updated in the
+   same commit.
+3. Whether the bundle now renders the PackageMaven/Packagist attribution itself. Until
+   it does, the attribution block in `src/view/adminhtml/templates/directory.phtml` is
+   **required** — do not remove it without verifying the bundle took over that
+   obligation.
 
-After copying, remember that deployed shops only pick up the new file after
-`bin/magento setup:static-content:deploy` (production mode) and a browser-cache-busting
-static content version bump.
+Notes: `directory-ui.css` is deliberately not vendored — the module keeps the default
+`shadow: true`, and shadow mounts inline their styles. Deployed shops pick up the new
+file only after `bin/magento setup:static-content:deploy` (production mode).

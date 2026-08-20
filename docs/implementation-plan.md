@@ -2,8 +2,16 @@
 
 Magento 2 / Mage-OS admin module rendering the Mage-OS Extension Directory inside the
 admin panel. Built against the directory service's handoff document
-(`docs/magento-admin-module-handoff.md` in [mage-os.directory](https://github.com/rhoerr/mage-os.directory)),
-validated 2026-08-20 against `schemaVersion: 1`.
+([magento-admin-module-handoff.md](magento-admin-module-handoff.md)), validated
+2026-08-20 against `schemaVersion: 1`.
+
+> **Historical note.** This plan predates two later changes: the module was merged into
+> the service's repository (module at `src/`, service at `service/` —
+> [decision 12](decisions.md#12-one-repository-for-the-service-and-the-admin-module)),
+> and the configuration was collapsed to a single Direct/Proxy mode defaulting to
+> Direct, with the base URL, TTL, and timeout becoming constants. Package details now
+> open in an admin modal showing the directory site's detail page. The contract
+> validation record and the service-side findings below still stand.
 
 ## Validation performed before this plan
 

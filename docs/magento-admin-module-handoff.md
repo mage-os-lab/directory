@@ -1,7 +1,13 @@
 # Mage-OS admin module — implementation handoff
 
-**Status:** the directory service is built, deployed, and serving live data. The Magento
-module is **not started** — this document is everything needed to build it.
+**Status:** the directory service is built, deployed, and serving live data.
+
+> **Update 2026-08-20:** the module described here has been **built and lives in this
+> repository** at `src/` (see [decision 12](decisions.md#12-one-repository-for-the-service-and-the-admin-module)
+> and [implementation-plan.md](implementation-plan.md)). The service moved under
+> `service/`, so repo paths below (`src/ui/…`, `data/…`, `public/…`, `examples/…`,
+> `test/…`) now carry a `service/` prefix. This document remains the contract
+> reference for the feed, the embed API, and the attribution obligations.
 
 **Audience:** whoever builds `mage-os/module-extension-directory` (Magento 2 / Mage-OS
 admin module). No prior context with this repo assumed.
