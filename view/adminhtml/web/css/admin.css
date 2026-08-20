@@ -1,0 +1,48 @@
+/*
+ * The custom properties below are the supported theming hook for the directory bundle: it
+ * renders into an open shadow root, and custom properties are what pierces that boundary.
+ * The values map the bundle's defaults onto the Magento admin palette.
+ */
+.mageos-extension-directory {
+    --mosd-theme-accent: #eb5202;
+    --mosd-theme-accent-soft: #fdf0e8;
+    --mosd-theme-fg: #303030;
+    --mosd-theme-fg-muted: #666666;
+    --mosd-theme-bg: #ffffff;
+    --mosd-theme-bg-soft: #f8f8f8;
+    --mosd-theme-border: #cccccc;
+    --mosd-theme-radius: 4px;
+
+    display: block;
+    min-height: 240px;
+}
+
+.mageos-extension-directory-page {
+    margin: 0 0 30px;
+}
+
+.mageos-extension-directory-intro {
+    color: #303030;
+    margin: 0 0 12px;
+    max-width: 76em;
+}
+
+.mageos-extension-directory-freshness {
+    color: #666666;
+    font-size: 1.2rem;
+    margin: 0 0 12px;
+}
+
+.mageos-extension-directory-attribution {
+    border-top: 1px solid #e3e3e3;
+    color: #666666;
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin: 20px 0 0;
+    max-width: 76em;
+    padding: 12px 0 0;
+}
+
+.mageos-extension-directory-attribution a {
+    color: #007bdb;
+}

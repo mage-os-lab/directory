@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="MageOS_ExtensionDirectory::directory"
+             title="Mage-OS Extension Directory"
+             translate="title"
+             module="MageOS_ExtensionDirectory"
+             parent="Magento_Backend::system"
+             sortOrder="45"
+             action="mageos_directory/directory/index"
+             resource="MageOS_ExtensionDirectory::directory"/>
+    </menu>
+</config>
