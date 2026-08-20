@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Cache/etc/cache.xsd">
+    <type name="mageos_extension_directory"
+          translate="label,description"
+          instance="MageOS\ExtensionDirectory\Model\Cache\Type">
+        <label>Mage-OS Extension Directory</label>
+        <description>Cached catalog feed and composer.lock snapshot for the Mage-OS Extension Directory admin page.</description>
+    </type>
+</config>
