@@ -74,11 +74,13 @@ JS;
     </p>
 
     <?php if ($dataAsOf !== null): ?>
-    <p class="mageos-extension-directory-freshness">
-        <?= $escaper->escapeHtml(
-            __('Catalog data cached from %1 — the directory host could not be reached recently.', $dataAsOf)
-        ) ?>
-    </p>
+    <div class="messages">
+        <div class="message message-warning warning">
+            <?= $escaper->escapeHtml(
+                __('Catalog data cached from %1 — the directory host could not be reached recently.', $dataAsOf)
+            ) ?>
+        </div>
+    </div>
     <?php endif; ?>
 
     <div id="mageos-extension-directory" class="mageos-extension-directory"></div>
@@ -102,7 +104,7 @@ JS;
      * the target and rel attributes these links need.
      */
     ?>
-    <p class="mageos-extension-directory-attribution">
+    <p class="admin__field-note mageos-extension-directory-attribution">
         <?= $escaper->escapeHtml(__('Quality and compatibility data by')) ?>
         <a href="<?= $escaper->escapeUrl($packageMavenUrl) ?>"
            target="_blank"

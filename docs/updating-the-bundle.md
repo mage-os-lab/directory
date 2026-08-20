@@ -10,9 +10,9 @@ edit it by hand.
 | | |
 |---|---|
 | Source repo | `rhoerr/mage-os.directory` |
-| Commit | `37b6ec4` |
+| Commit | `77d2974` (branch `claude/magento-admin-extension-ui-m4h03l`; adds the `--mosd-theme-band`/`--mosd-theme-band-2`/`--mosd-theme-font` theming hooks this module relies on) |
 | Built with | `npm run build:ui` (Vite library mode, `vite.ui.config.ts`) |
-| Size | 49,634 bytes (≈16.7 KB gzipped) |
+| Size | 49,835 bytes (≈16.7 KB gzipped) |
 | Data contract | `schemaVersion: 1` |
 | Global | `MageOSDirectory` (plain IIFE — no AMD/UMD wrapper, coexists with the admin's RequireJS) |
 
