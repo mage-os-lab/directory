@@ -34,7 +34,7 @@ require $autoloader;
 spl_autoload_register(static function (string $class) use ($repositoryRoot): void {
     $prefixes = [
         'MageOS\\ExtensionDirectory\\Test\\Unit\\' => __DIR__ . '/Test/',
-        'MageOS\\ExtensionDirectory\\' => $repositoryRoot . '/',
+        'MageOS\\ExtensionDirectory\\' => $repositoryRoot . '/src/',
     ];
 
     foreach ($prefixes as $prefix => $baseDirectory) {

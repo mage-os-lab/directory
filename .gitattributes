@@ -1,0 +1,12 @@
+# The Composer package for mage-os/module-extension-directory is this repository's
+# root (composer.json, LICENSE, README.md, src/). Everything else — the directory
+# service, docs, tests, CI — is stripped from dist archives; module CI verifies the
+# archive against an allowlist so a new path cannot leak in unnoticed.
+/service export-ignore
+/docs export-ignore
+/dev export-ignore
+/examples export-ignore
+/.github export-ignore
+/CONTRIBUTING.md export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore

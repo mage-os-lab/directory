@@ -14,10 +14,10 @@
     },
     "autoload": {
         "files": [
-            "registration.php"
+            "src/registration.php"
         ],
         "psr-4": {
-            "MageOS\\ExtensionDirectory\\": ""
+            "MageOS\\ExtensionDirectory\\": "src/"
         }
     },
     "autoload-dev": {

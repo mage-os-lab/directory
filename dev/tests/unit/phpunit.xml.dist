@@ -20,9 +20,9 @@
     </testsuites>
     <source>
         <include>
-            <directory suffix=".php">../../../Controller</directory>
-            <directory suffix=".php">../../../Model</directory>
-            <directory suffix=".php">../../../ViewModel</directory>
+            <directory suffix=".php">../../../src/Controller</directory>
+            <directory suffix=".php">../../../src/Model</directory>
+            <directory suffix=".php">../../../src/ViewModel</directory>
         </include>
     </source>
 </phpunit>
