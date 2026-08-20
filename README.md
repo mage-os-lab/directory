@@ -90,13 +90,15 @@ warranted to work.
 ## Development
 
 ```sh
-composer install
-vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist
+composer install --working-dir=dev/tests/unit   # installs only PHPUnit, no Magento credentials needed
+composer test                                    # = vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist
 ```
 
 The unit suite is hermetic: it runs against committed interface stubs
 (`dev/tests/unit/stubs/`, `class_exists`-guarded so a real Magento installation's
-classes always win) and needs no Magento credentials.
+classes always win). The nested toolchain manifest exists because the module's own
+requirements (`magento/framework`) resolve from repo.magento.com / repo.mage-os.org,
+not Packagist; a credentialed root `composer install` works too.
 
 - Architecture and contract validation: [docs/implementation-plan.md](docs/implementation-plan.md)
 - Refreshing the vendored UI bundle: [docs/updating-the-bundle.md](docs/updating-the-bundle.md)
