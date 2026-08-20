@@ -54,7 +54,7 @@
 }
 
 .mosd-search:hover {
-  background: #edeaf1;
+  background: color-mix(in srgb, var(--mosd-bg-soft), var(--mosd-fg) 4%);
 }
 
 .mosd-search:focus {
