@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 
 final class DirectoryConfigTest extends TestCase
 {
-    private const BASE_URL = 'https://directory.example.com';
+    private const BASE_URL = Config::BASE_URL;
     private const BUNDLE_ASSET_ID = 'MageOS_ExtensionDirectory::js/directory-ui.iife.js';
     private const PROXY_ROUTE = 'mageos_directory/feed/index';
 
@@ -41,22 +41,17 @@ final class DirectoryConfigTest extends TestCase
         self::assertInstanceOf(ArgumentInterface::class, $this->viewModel([]));
     }
 
-    public function testEnabledMirrorsTheConfiguredFlag(): void
+    public function testTheDirectoryBaseUrlIsHandedToTheTemplateWithoutATrailingSlash(): void
     {
-        self::assertTrue($this->viewModel([Config::XML_PATH_ENABLED => '1'])->isEnabled());
-        self::assertFalse($this->viewModel([Config::XML_PATH_ENABLED => '0'])->isEnabled());
-    }
+        $baseUrl = $this->viewModel([])->getDirectoryBaseUrl();
 
-    public function testTheDirectoryBaseUrlIsHandedToTheTemplateWithoutItsTrailingSlash(): void
-    {
-        $viewModel = $this->viewModel([Config::XML_PATH_BASE_URL => self::BASE_URL . '/']);
-
-        self::assertSame(self::BASE_URL, $viewModel->getDirectoryBaseUrl());
+        self::assertSame(self::BASE_URL, $baseUrl);
+        self::assertSame(rtrim($baseUrl, '/'), $baseUrl);
     }
 
     public function testProxyModePointsTheBundleAtTheKeyedAdminRoute(): void
     {
-        $viewModel = $this->viewModel([Config::XML_PATH_FEED_MODE => Config::FEED_MODE_PROXY]);
+        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_PROXY]);
 
         $mount = $this->decode($viewModel->getMountConfigJson());
 
@@ -69,10 +64,7 @@ final class DirectoryConfigTest extends TestCase
 
     public function testDirectModePointsTheBundleAtTheDirectoryOrigin(): void
     {
-        $viewModel = $this->viewModel([
-            Config::XML_PATH_FEED_MODE => Config::FEED_MODE_DIRECT,
-            Config::XML_PATH_BASE_URL => self::BASE_URL,
-        ]);
+        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_DIRECT]);
 
         $mount = $this->decode($viewModel->getMountConfigJson());
 
@@ -80,9 +72,17 @@ final class DirectoryConfigTest extends TestCase
         self::assertSame([], $this->backendUrl->getRequestedRoutes(), 'Direct mode needs no admin route.');
     }
 
-    public function testTheBundledSourceResolvesThroughTheAssetRepository(): void
+    public function testTheShippedDefaultIsDirect(): void
     {
-        $viewModel = $this->viewModel([Config::XML_PATH_BUNDLE_SOURCE => Config::BUNDLE_SOURCE_BUNDLED]);
+        $viewModel = $this->viewModel([]);
+
+        self::assertSame(self::BASE_URL . '/api/v1/feed.json', $this->decode($viewModel->getMountConfigJson())['feedUrl']);
+        self::assertSame(self::BASE_URL . '/embed/directory-ui.iife.js', $viewModel->getBundleUrl());
+    }
+
+    public function testProxyModeResolvesTheBundleThroughTheAssetRepository(): void
+    {
+        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_PROXY]);
 
         self::assertSame(
             FakeAssetRepository::STATIC_BASE . 'MageOS_ExtensionDirectory/js/directory-ui.iife.js',
@@ -91,12 +91,9 @@ final class DirectoryConfigTest extends TestCase
         self::assertSame([self::BUNDLE_ASSET_ID], $this->assetRepository->getRequestedAssetIds());
     }
 
-    public function testTheRemoteSourceResolvesAgainstTheDirectoryOrigin(): void
+    public function testDirectModeResolvesTheBundleAgainstTheDirectoryOrigin(): void
     {
-        $viewModel = $this->viewModel([
-            Config::XML_PATH_BUNDLE_SOURCE => Config::BUNDLE_SOURCE_REMOTE,
-            Config::XML_PATH_BASE_URL => self::BASE_URL . '/',
-        ]);
+        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_DIRECT]);
 
         self::assertSame(self::BASE_URL . '/embed/directory-ui.iife.js', $viewModel->getBundleUrl());
         self::assertSame([], $this->assetRepository->getRequestedAssetIds());
@@ -104,11 +101,7 @@ final class DirectoryConfigTest extends TestCase
 
     public function testTheMountConfigCarriesTheHandoffContract(): void
     {
-        $viewModel = $this->viewModel(
-            [Config::XML_PATH_BASE_URL => self::BASE_URL],
-            [],
-            new FakeProductMetadata('2.4.7-p3')
-        );
+        $viewModel = $this->viewModel([], [], new FakeProductMetadata('2.4.7-p3'));
 
         $mount = $this->decode($viewModel->getMountConfigJson());
 
@@ -154,7 +147,7 @@ final class DirectoryConfigTest extends TestCase
 
     public function testTheDataAsOfNoticeIsSilentInDirectMode(): void
     {
-        $viewModel = $this->viewModel([Config::XML_PATH_FEED_MODE => Config::FEED_MODE_DIRECT]);
+        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_DIRECT]);
         $this->feedProvider->withMetadata(time() - 10 * self::DAY);
 
         self::assertNull($viewModel->getDataAsOf());
@@ -163,7 +156,7 @@ final class DirectoryConfigTest extends TestCase
 
     public function testTheDataAsOfNoticeIsSilentWithNothingCached(): void
     {
-        $viewModel = $this->viewModel([Config::XML_PATH_FEED_MODE => Config::FEED_MODE_PROXY]);
+        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_PROXY]);
         $this->feedProvider->withoutMetadata();
 
         self::assertNull($viewModel->getDataAsOf());
@@ -172,7 +165,7 @@ final class DirectoryConfigTest extends TestCase
 
     public function testTheDataAsOfNoticeIsSilentForARecentCopy(): void
     {
-        $viewModel = $this->viewModel([Config::XML_PATH_FEED_MODE => Config::FEED_MODE_PROXY]);
+        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_PROXY]);
         $this->feedProvider->withMetadata(time() - 3600);
 
         self::assertNull($viewModel->getDataAsOf());
@@ -180,7 +173,7 @@ final class DirectoryConfigTest extends TestCase
 
     public function testTheDataAsOfNoticeIsSilentForAMeaninglessTimestamp(): void
     {
-        $viewModel = $this->viewModel([Config::XML_PATH_FEED_MODE => Config::FEED_MODE_PROXY]);
+        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_PROXY]);
         $this->feedProvider->withMetadata(0);
 
         self::assertNull($viewModel->getDataAsOf());
@@ -189,7 +182,7 @@ final class DirectoryConfigTest extends TestCase
     public function testACopyOlderThanARebuildCycleIsReportedAsAnIsoTimestamp(): void
     {
         $fetchedAt = time() - 3 * self::DAY;
-        $viewModel = $this->viewModel([Config::XML_PATH_FEED_MODE => Config::FEED_MODE_PROXY]);
+        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_PROXY]);
         $this->feedProvider->withMetadata($fetchedAt);
 
         $dataAsOf = $viewModel->getDataAsOf();
@@ -200,7 +193,7 @@ final class DirectoryConfigTest extends TestCase
 
     public function testAMisbehavingCacheDoesNotStopThePageFromRendering(): void
     {
-        $viewModel = $this->viewModel([Config::XML_PATH_FEED_MODE => Config::FEED_MODE_PROXY]);
+        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_PROXY]);
         $this->feedProvider->failPeekWith(new \RuntimeException('the cache backend is down'));
 
         self::assertNull($viewModel->getDataAsOf());

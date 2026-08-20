@@ -6,7 +6,7 @@ namespace MageOS\ExtensionDirectory\Model\Config\Source;
 use MageOS\ExtensionDirectory\Model\Config;
 use Magento\Framework\Data\OptionSourceInterface;
 
-class FeedMode implements OptionSourceInterface
+class Mode implements OptionSourceInterface
 {
     /**
      * @inheritDoc
@@ -15,12 +15,12 @@ class FeedMode implements OptionSourceInterface
     {
         return [
             [
-                'value' => Config::FEED_MODE_PROXY,
-                'label' => __('Server-side proxy (recommended)'),
+                'value' => Config::MODE_DIRECT,
+                'label' => __('Direct — load from the directory host (default)'),
             ],
             [
-                'value' => Config::FEED_MODE_DIRECT,
-                'label' => __('Browser fetches the directory host directly'),
+                'value' => Config::MODE_PROXY,
+                'label' => __('Proxy — serve through this store'),
             ],
         ];
     }

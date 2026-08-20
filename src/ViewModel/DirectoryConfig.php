@@ -39,18 +39,13 @@ class DirectoryConfig implements ArgumentInterface
     ) {
     }
 
-    public function isEnabled(): bool
-    {
-        return $this->config->isEnabled();
-    }
-
     public function getBundleUrl(): string
     {
-        if ($this->config->getBundleSource() === Config::BUNDLE_SOURCE_REMOTE) {
-            return $this->config->getBaseUrl() . self::REMOTE_BUNDLE_PATH;
+        if ($this->config->isProxy()) {
+            return $this->assetRepository->getUrl(self::BUNDLE_ASSET_ID);
         }
 
-        return $this->assetRepository->getUrl(self::BUNDLE_ASSET_ID);
+        return $this->config->getBaseUrl() . self::REMOTE_BUNDLE_PATH;
     }
 
     /**
@@ -92,7 +87,7 @@ class DirectoryConfig implements ArgumentInterface
      */
     public function getDataAsOf(): ?string
     {
-        if ($this->config->getFeedMode() !== Config::FEED_MODE_PROXY) {
+        if (!$this->config->isProxy()) {
             return null;
         }
 
@@ -117,10 +112,10 @@ class DirectoryConfig implements ArgumentInterface
 
     private function getFeedUrl(): string
     {
-        if ($this->config->getFeedMode() === Config::FEED_MODE_DIRECT) {
-            return $this->config->getBaseUrl() . self::REMOTE_FEED_PATH;
+        if ($this->config->isProxy()) {
+            return $this->backendUrl->getUrl(self::PROXY_FEED_ROUTE);
         }
 
-        return $this->backendUrl->getUrl(self::PROXY_FEED_ROUTE);
+        return $this->config->getBaseUrl() . self::REMOTE_FEED_PATH;
     }
 }

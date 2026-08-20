@@ -10,123 +10,74 @@ use PHPUnit\Framework\TestCase;
 
 final class ConfigTest extends TestCase
 {
-    public function testEnabledReflectsTheStoredFlag(): void
+    #[DataProvider('modeProvider')]
+    public function testModeFallsBackToDirectForAnythingUnrecognised(mixed $stored, string $expected): void
     {
-        self::assertTrue($this->config([Config::XML_PATH_ENABLED => '1'])->isEnabled());
-        self::assertFalse($this->config([Config::XML_PATH_ENABLED => '0'])->isEnabled());
-        self::assertFalse($this->config([])->isEnabled());
+        self::assertSame($expected, $this->config([Config::XML_PATH_MODE => $stored])->getMode());
     }
 
-    #[DataProvider('baseUrlProvider')]
-    public function testBaseUrlIsTrimmedOfWhitespaceAndTrailingSlashes(mixed $stored, string $expected): void
-    {
-        self::assertSame($expected, $this->config([Config::XML_PATH_BASE_URL => $stored])->getBaseUrl());
-    }
-
-    public static function baseUrlProvider(): array
+    public static function modeProvider(): array
     {
         return [
-            'plain' => ['https://rhoerr.github.io/mage-os.directory', 'https://rhoerr.github.io/mage-os.directory'],
-            'trailing slash' => ['https://example.com/directory/', 'https://example.com/directory'],
-            'several trailing slashes' => ['https://example.com/directory///', 'https://example.com/directory'],
-            'surrounding whitespace' => ['  https://example.com/directory  ', 'https://example.com/directory'],
-            'whitespace after the slash' => ["https://example.com/directory/\n", 'https://example.com/directory'],
-            'unset' => [null, ''],
-            'empty' => ['', ''],
+            'direct' => ['direct', Config::MODE_DIRECT],
+            'proxy' => ['proxy', Config::MODE_PROXY],
+            'junk' => ['sideways', Config::MODE_DIRECT],
+            'wrong case' => ['Proxy', Config::MODE_DIRECT],
+            'unset' => [null, Config::MODE_DIRECT],
+            'empty' => ['', Config::MODE_DIRECT],
         ];
     }
 
-    #[DataProvider('feedModeProvider')]
-    public function testFeedModeFallsBackToProxyForAnythingUnrecognised(mixed $stored, string $expected): void
+    public function testIsProxyIsTrueOnlyForTheProxyMode(): void
     {
-        self::assertSame($expected, $this->config([Config::XML_PATH_FEED_MODE => $stored])->getFeedMode());
+        self::assertTrue($this->config([Config::XML_PATH_MODE => 'proxy'])->isProxy());
+        self::assertFalse($this->config([Config::XML_PATH_MODE => 'direct'])->isProxy());
+        self::assertFalse($this->config([Config::XML_PATH_MODE => 'sideways'])->isProxy());
+        self::assertFalse($this->config([])->isProxy(), 'Direct is the shipped default.');
     }
 
-    public static function feedModeProvider(): array
+    public function testTheModeIsReadFromItsDocumentedConfigPath(): void
     {
-        return [
-            'direct' => ['direct', Config::FEED_MODE_DIRECT],
-            'proxy' => ['proxy', Config::FEED_MODE_PROXY],
-            'junk' => ['sideways', Config::FEED_MODE_PROXY],
-            'wrong case' => ['Direct', Config::FEED_MODE_PROXY],
-            'unset' => [null, Config::FEED_MODE_PROXY],
-            'empty' => ['', Config::FEED_MODE_PROXY],
-        ];
+        $config = $this->config(['mageos_extension_directory/general/mode' => 'proxy']);
+
+        self::assertSame(Config::MODE_PROXY, $config->getMode());
+        self::assertTrue($config->isProxy());
     }
 
-    #[DataProvider('bundleSourceProvider')]
-    public function testBundleSourceFallsBackToBundledForAnythingUnrecognised(mixed $stored, string $expected): void
+    public function testTheBaseUrlIsTheShippedConstantWithoutATrailingSlash(): void
     {
-        self::assertSame($expected, $this->config([Config::XML_PATH_BUNDLE_SOURCE => $stored])->getBundleSource());
+        $baseUrl = $this->config([])->getBaseUrl();
+
+        self::assertSame(Config::BASE_URL, $baseUrl);
+        self::assertSame('https://rhoerr.github.io/mage-os.directory', $baseUrl);
+        self::assertSame(rtrim($baseUrl, '/'), $baseUrl);
     }
 
-    public static function bundleSourceProvider(): array
+    public function testTheProxyTimingsAreTheShippedConstants(): void
     {
-        return [
-            'remote' => ['remote', Config::BUNDLE_SOURCE_REMOTE],
-            'bundled' => ['bundled', Config::BUNDLE_SOURCE_BUNDLED],
-            'junk' => ['cdn', Config::BUNDLE_SOURCE_BUNDLED],
-            'wrong case' => ['Remote', Config::BUNDLE_SOURCE_BUNDLED],
-            'unset' => [null, Config::BUNDLE_SOURCE_BUNDLED],
-            'empty' => ['', Config::BUNDLE_SOURCE_BUNDLED],
-        ];
+        $config = $this->config([]);
+
+        self::assertSame(3600, $config->getCacheTtl());
+        self::assertSame(Config::CACHE_TTL, $config->getCacheTtl());
+        self::assertSame(10, $config->getHttpTimeout());
+        self::assertSame(Config::HTTP_TIMEOUT, $config->getHttpTimeout());
     }
 
-    #[DataProvider('cacheTtlProvider')]
-    public function testCacheTtlDefaultsAndFloor(mixed $stored, int $expected): void
-    {
-        self::assertSame($expected, $this->config([Config::XML_PATH_CACHE_TTL => $stored])->getCacheTtl());
-    }
-
-    public static function cacheTtlProvider(): array
-    {
-        return [
-            'configured' => ['7200', 7200],
-            'non numeric' => ['abc', 3600],
-            'zero' => ['0', 3600],
-            'negative' => ['-5', 3600],
-            'unset' => [null, 3600],
-            'below the floor' => ['30', 60],
-            'exactly the floor' => ['60', 60],
-            'the default itself' => ['3600', 3600],
-        ];
-    }
-
-    #[DataProvider('httpTimeoutProvider')]
-    public function testHttpTimeoutDefaultsAndFloor(mixed $stored, int $expected): void
-    {
-        self::assertSame($expected, $this->config([Config::XML_PATH_HTTP_TIMEOUT => $stored])->getHttpTimeout());
-    }
-
-    public static function httpTimeoutProvider(): array
-    {
-        return [
-            'configured' => ['30', 30],
-            'non numeric' => ['abc', 10],
-            'zero' => ['0', 10],
-            'negative' => ['-3', 10],
-            'unset' => [null, 10],
-            'the floor' => ['1', 1],
-        ];
-    }
-
-    public function testEveryValueIsReadFromItsDocumentedConfigPath(): void
+    /**
+     * The constants are deliberately not settings, so a leftover row from an older release
+     * must not change what the module does.
+     */
+    public function testStoredValuesFromAnEarlierReleaseCannotOverrideTheConstants(): void
     {
         $config = $this->config([
-            'mageos_extension_directory/general/enabled' => '1',
-            'mageos_extension_directory/general/base_url' => 'https://example.com/directory/',
-            'mageos_extension_directory/general/feed_mode' => 'direct',
-            'mageos_extension_directory/general/bundle_source' => 'remote',
+            'mageos_extension_directory/general/base_url' => 'https://leftover.example.com/',
             'mageos_extension_directory/general/cache_ttl' => '900',
             'mageos_extension_directory/general/http_timeout' => '5',
         ]);
 
-        self::assertTrue($config->isEnabled());
-        self::assertSame('https://example.com/directory', $config->getBaseUrl());
-        self::assertSame(Config::FEED_MODE_DIRECT, $config->getFeedMode());
-        self::assertSame(Config::BUNDLE_SOURCE_REMOTE, $config->getBundleSource());
-        self::assertSame(900, $config->getCacheTtl());
-        self::assertSame(5, $config->getHttpTimeout());
+        self::assertSame(Config::BASE_URL, $config->getBaseUrl());
+        self::assertSame(Config::CACHE_TTL, $config->getCacheTtl());
+        self::assertSame(Config::HTTP_TIMEOUT, $config->getHttpTimeout());
     }
 
     /**

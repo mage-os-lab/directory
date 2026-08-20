@@ -10,26 +10,16 @@ declare(strict_types=1);
 
 /** @var \MageOS\ExtensionDirectory\ViewModel\DirectoryConfig $viewModel */
 $viewModel = $block->getData('view_model');
-?>
-<?php if (!$viewModel->isEnabled()): ?>
-<div class="messages">
-    <div class="message message-notice notice">
-        <div data-ui-id="mageos-extension-directory-disabled">
-            <?= $escaper->escapeHtml(
-                __('The Mage-OS Extension Directory is disabled. Enable it in Stores → Configuration → Mage-OS → Extension Directory.')
-            ) ?>
-        </div>
-    </div>
-</div>
-<?php else: ?>
-<?php
+
 $dataAsOf = $viewModel->getDataAsOf();
 $packageMavenUrl = 'https://package-maven.com/';
+$packagistUrl = 'https://packagist.org/';
 
 // escapeJs takes a string, and strict_types will not coerce a Phrase into one.
 $loadFailureMessage = $escaper->escapeJs(
     (string)__('The directory UI failed to load. Check that this browser can reach the script, then reload the page.')
 );
+$detailFrameTitle = $escaper->escapeJs((string)__('Module details'));
 
 $initJs = <<<JS
 (function () {
@@ -37,7 +27,8 @@ $initJs = <<<JS
 
     var host = document.getElementById('mageos-extension-directory'),
         configElement = document.getElementById('mageos-extension-directory-config'),
-        config;
+        config,
+        detailModal;
 
     if (!host || !configElement) {
         return;
@@ -57,9 +48,70 @@ $initJs = <<<JS
         return;
     }
 
+    // setTitle inserts its argument as markup. Package names are schema-constrained, but the
+    // feed is someone else's data, so it goes through here anyway.
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    /**
+     * Builds the modal on first use, then hands the same one back for every later package.
+     */
+    function withDetailModal(callback) {
+        if (detailModal) {
+            callback(detailModal);
+
+            return;
+        }
+
+        require(['jquery', 'Magento_Ui/js/modal/modal'], function (\$, modal) {
+            var wrapper, frame;
+
+            if (!detailModal) {
+                wrapper = document.createElement('div');
+                frame = document.createElement('iframe');
+                frame.setAttribute('title', '{$detailFrameTitle}');
+                wrapper.appendChild(frame);
+                document.body.appendChild(wrapper);
+
+                modal({
+                    type: 'slide',
+                    modalClass: 'mageos-extension-directory-modal',
+                    title: '',
+                    buttons: []
+                }, \$(wrapper));
+
+                detailModal = {
+                    element: \$(wrapper),
+                    frame: frame
+                };
+            }
+
+            callback(detailModal);
+        });
+    }
+
     // linkMode 'event': the bundle never navigates, so opening the detail page is up to us.
+    // It opens here, in the admin, and the links out to Packagist and the repository are the
+    // reader's own click inside that page.
     host.addEventListener('mosd:select', function (event) {
-        window.open(event.detail.packageUrl, '_blank', 'noopener');
+        var detail = event.detail;
+
+        if (typeof require !== 'function') {
+            window.open(detail.packageUrl, '_blank', 'noopener');
+
+            return;
+        }
+
+        withDetailModal(function (instance) {
+            instance.frame.setAttribute('src', detail.packageUrl);
+            instance.element.modal('setTitle', escapeHtml(detail.name));
+            instance.element.modal('openModal');
+        });
     });
 
     MageOSDirectory.mountDirectory(host, config);
@@ -98,17 +150,21 @@ JS;
 
     <?php
     /*
-     * Required attribution for the PackageMaven data, which the bundle itself does not render.
-     * The sentence is assembled from segments rather than passed through escapeHtml()'s
-     * allowed-tag mode, because that mode keeps only id/class/href/title/style and would drop
-     * the target and rel attributes these links need.
+     * Required attribution for the PackageMaven and Packagist data, which the bundle itself
+     * does not render. The sentence is assembled from segments rather than passed through
+     * escapeHtml()'s allowed-tag mode, because that mode keeps only id/class/href/title/style
+     * and would drop the target and rel attributes these links need.
      */
     ?>
     <p class="admin__field-note mageos-extension-directory-attribution">
         <?= $escaper->escapeHtml(__('Quality and compatibility data by')) ?>
         <a href="<?= $escaper->escapeUrl($packageMavenUrl) ?>"
            target="_blank"
-           rel="noopener"><?= $escaper->escapeHtml(__('PackageMaven')) ?></a>.
+           rel="noopener"><?= $escaper->escapeHtml(__('PackageMaven')) ?></a>,
+        <?= $escaper->escapeHtml(__('package metadata from')) ?>
+        <a href="<?= $escaper->escapeUrl($packagistUrl) ?>"
+           target="_blank"
+           rel="noopener"><?= $escaper->escapeHtml(__('Packagist')) ?></a>.
         <?= $escaper->escapeHtml(__('Each module\'s detail page on the')) ?>
         <a href="<?= $escaper->escapeUrl($viewModel->getDirectoryBaseUrl()) ?>"
            target="_blank"
@@ -121,4 +177,3 @@ JS;
 </div>
 <?= /* @noEscape */ $secureRenderer->renderTag('script', ['src' => $viewModel->getBundleUrl()], '', false) ?>
 <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $initJs, false) ?>
-<?php endif; ?>

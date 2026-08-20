@@ -12,35 +12,10 @@
             <resource>MageOS_ExtensionDirectory::config</resource>
             <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>General</label>
-                <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
-                    <label>Enable Extension Directory</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Turns the admin directory page on and off. When set to No the page renders a short notice instead of the catalog, and no request is made to the directory host.</comment>
-                </field>
-                <field id="base_url" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
-                    <label>Directory Base URL</label>
-                    <validate>required-entry</validate>
-                    <comment><![CDATA[Origin of the Mage-OS Extension Directory service. Enter it with no trailing slash. This host will change: the default is today's GitHub Pages fallback, the service moves to a Cloudflare Pages host next and to a Mage-OS custom domain after that, so expect to update this value. A custom domain also needs matching entries in the module's etc/csp_whitelist.xml if you use either remote mode below.]]></comment>
-                </field>
-                <field id="feed_mode" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
-                    <label>Feed Mode</label>
-                    <source_model>MageOS\ExtensionDirectory\Model\Config\Source\FeedMode</source_model>
-                    <comment>How the catalog reaches the browser. The server-side proxy fetches the feed once per cache period and serves it from this shop, so admin browsers never contact the directory host. "Direct" has each admin browser fetch the directory host itself, which requires CORS on that host and the hosts listed in the module's etc/csp_whitelist.xml.</comment>
-                </field>
-                <field id="bundle_source" translate="label comment" type="select" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
-                    <label>UI Bundle Source</label>
-                    <source_model>MageOS\ExtensionDirectory\Model\Config\Source\BundleSource</source_model>
-                    <comment>Where the directory user interface script is loaded from. The bundled copy ships with this module and is served from this shop's own origin. Loading it from the directory host picks up interface updates without a module release, but needs the host whitelisted for script-src.</comment>
-                </field>
-                <field id="cache_ttl" translate="label comment" type="text" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
-                    <label>Feed Cache Lifetime (seconds)</label>
-                    <validate>required-entry validate-digits</validate>
-                    <comment>How long the proxied feed is served from cache before it is revalidated against the directory host's manifest. The catalog is rebuilt once a day, so an hour is plenty. Used only in server-side proxy mode.</comment>
-                </field>
-                <field id="http_timeout" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
-                    <label>HTTP Timeout (seconds)</label>
-                    <validate>required-entry validate-digits</validate>
-                    <comment>Timeout for this shop's outbound requests to the directory host. If the request times out the last cached copy of the catalog is served instead. Used only in server-side proxy mode.</comment>
+                <field id="mode" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+                    <label>Mode</label>
+                    <source_model>MageOS\ExtensionDirectory\Model\Config\Source\Mode</source_model>
+                    <comment>Direct: admin browsers load the UI bundle and the catalog feed straight from the directory host, which needs the CSP whitelist shipped with this module and CORS on that host. Proxy: this store's server fetches and caches the feed and serves the copy of the UI bundle that ships with this module, so the page is fully same-origin — for restricted networks or privacy-sensitive admins.</comment>
                 </field>
             </group>
         </section>

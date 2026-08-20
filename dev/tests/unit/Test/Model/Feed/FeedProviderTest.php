@@ -16,9 +16,8 @@ use PHPUnit\Framework\TestCase;
 
 final class FeedProviderTest extends TestCase
 {
-    private const BASE_URL = 'https://directory.example.com';
-    private const MANIFEST_URL = self::BASE_URL . '/api/v1/manifest.json';
-    private const FEED_URL = self::BASE_URL . '/api/v1/feed.json';
+    private const MANIFEST_URL = Config::BASE_URL . '/api/v1/manifest.json';
+    private const FEED_URL = Config::BASE_URL . '/api/v1/feed.json';
 
     private const UNRELATED_HASH = 'd0d0cafed0d0cafed0d0cafed0d0cafed0d0cafed0d0cafed0d0cafed0d0cafe';
 
@@ -264,10 +263,10 @@ final class FeedProviderTest extends TestCase
         self::assertSame([], $this->http->getRequestedUrls());
     }
 
-    public function testTheConfiguredTimeoutIsAppliedToEveryRequest(): void
+    public function testTheHttpTimeoutIsAppliedToEveryRequest(): void
     {
         $body = $this->feed();
-        $provider = $this->provider(3600, 7);
+        $provider = $this->provider();
         $this->http->respondWith(self::FEED_URL, 200, $body);
         $provider->get();
 
@@ -275,37 +274,37 @@ final class FeedProviderTest extends TestCase
         $this->http->respondWith(self::MANIFEST_URL, 200, $this->manifest(hash('sha256', $body)));
         $provider->get();
 
-        self::assertSame([7, 7], $this->http->getTimeouts());
+        self::assertSame([Config::HTTP_TIMEOUT, Config::HTTP_TIMEOUT], $this->http->getTimeouts());
     }
 
     public function testStoredEntriesCarryTheModuleTagAndOutliveTheFreshnessWindow(): void
     {
         $this->http->respondWith(self::FEED_URL, 200, $this->feed());
-        $this->provider(3600)->get();
+        $this->provider()->get();
 
         $writes = $this->cache->getWrites();
 
         self::assertCount(2, $writes, 'The body and its metadata are stored separately.');
         foreach ($writes as $write) {
             self::assertSame([DirectoryCache::CACHE_TAG], $write['tags']);
-            self::assertGreaterThan(3600, $write['lifetime'], 'A stale copy has to outlive the TTL.');
+            self::assertGreaterThan(Config::CACHE_TTL, $write['lifetime'], 'A stale copy has to outlive the TTL.');
         }
     }
 
     public function testTheTtlDecidesWhenARevalidationHappens(): void
     {
         $body = $this->feed();
-        $provider = $this->provider(600);
+        $provider = $this->provider();
         $this->http->respondWith(self::FEED_URL, 200, $body);
         $provider->get();
         $this->http->respondWith(self::MANIFEST_URL, 200, $this->manifest(hash('sha256', $body)));
 
-        $this->cache->ageBy(560);
+        $this->cache->ageBy(Config::CACHE_TTL - 60);
         $this->http->forgetRequests();
         $provider->get();
         self::assertSame([], $this->http->getRequestedUrls(), 'Inside the TTL nothing is requested.');
 
-        $this->cache->ageBy(100);
+        $this->cache->ageBy(120);
         $this->http->forgetRequests();
         $provider->get();
         self::assertSame([self::MANIFEST_URL], $this->http->getRequestedUrls(), 'Past the TTL it revalidates.');
@@ -351,13 +350,9 @@ final class FeedProviderTest extends TestCase
         }
     }
 
-    private function provider(int $cacheTtl = 3600, int $httpTimeout = 10): FeedProvider
+    private function provider(): FeedProvider
     {
-        $config = new Config(new ArrayScopeConfig([
-            Config::XML_PATH_BASE_URL => self::BASE_URL,
-            Config::XML_PATH_CACHE_TTL => (string)$cacheTtl,
-            Config::XML_PATH_HTTP_TIMEOUT => (string)$httpTimeout,
-        ]));
+        $config = new Config(new ArrayScopeConfig());
 
         return new FeedProvider($config, $this->cache, $this->http, $this->logger);
     }

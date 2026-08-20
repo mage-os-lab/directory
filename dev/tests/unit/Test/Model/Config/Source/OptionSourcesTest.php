@@ -4,50 +4,34 @@ declare(strict_types=1);
 namespace MageOS\ExtensionDirectory\Test\Unit\Model\Config\Source;
 
 use MageOS\ExtensionDirectory\Model\Config;
-use MageOS\ExtensionDirectory\Model\Config\Source\BundleSource;
-use MageOS\ExtensionDirectory\Model\Config\Source\FeedMode;
+use MageOS\ExtensionDirectory\Model\Config\Source\Mode;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\ArrayScopeConfig;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The dropdowns in system.xml have to offer exactly the values Config is willing to accept back:
+ * The dropdown in system.xml has to offer exactly the values Config is willing to accept back:
  * an option the reader does not recognise silently turns into the default.
  */
 final class OptionSourcesTest extends TestCase
 {
-    public function testTheFeedModeOptionsAreTheValuesConfigAcceptsBack(): void
+    public function testTheModeOptionsAreTheValuesConfigAcceptsBack(): void
     {
-        $options = (new FeedMode())->toOptionArray();
+        $options = (new Mode())->toOptionArray();
 
         self::assertSame(
-            [Config::FEED_MODE_PROXY, Config::FEED_MODE_DIRECT],
-            array_column($options, 'value')
+            [Config::MODE_DIRECT, Config::MODE_PROXY],
+            array_column($options, 'value'),
+            'Direct is the default, so it is offered first.'
         );
+
         foreach ($options as $option) {
             self::assertNotSame('', (string)$option['label']);
-            self::assertSame($option['value'], $this->config(Config::XML_PATH_FEED_MODE, $option['value'])->getFeedMode());
+            self::assertSame($option['value'], $this->config($option['value'])->getMode());
         }
     }
 
-    public function testTheBundleSourceOptionsAreTheValuesConfigAcceptsBack(): void
+    private function config(string $mode): Config
     {
-        $options = (new BundleSource())->toOptionArray();
-
-        self::assertSame(
-            [Config::BUNDLE_SOURCE_BUNDLED, Config::BUNDLE_SOURCE_REMOTE],
-            array_column($options, 'value')
-        );
-        foreach ($options as $option) {
-            self::assertNotSame('', (string)$option['label']);
-            self::assertSame(
-                $option['value'],
-                $this->config(Config::XML_PATH_BUNDLE_SOURCE, $option['value'])->getBundleSource()
-            );
-        }
-    }
-
-    private function config(string $path, string $value): Config
-    {
-        return new Config(new ArrayScopeConfig([$path => $value]));
+        return new Config(new ArrayScopeConfig([Config::XML_PATH_MODE => $mode]));
     }
 }

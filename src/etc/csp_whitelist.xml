@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <!--
-    Only needed for the non-default remote modes: bundle_source "remote" loads the UI bundle
-    from the directory host (script-src), and feed_mode "direct" has the browser fetch the feed
-    from it (connect-src). The defaults - vendored bundle plus server-side feed proxy - are
-    same-origin and whitelist nothing. A future custom directory domain needs its own entries.
+    script-src and connect-src serve Direct mode, where each admin browser loads the UI bundle
+    and fetches the feed from the directory host. Proxy mode needs neither: both come from this
+    store's own origin. frame-src serves the package detail modal, which frames the directory
+    site in either mode. A future custom directory domain needs its own entries.
 -->
 <csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
@@ -15,6 +15,12 @@
             </values>
         </policy>
         <policy id="connect-src">
+            <values>
+                <value id="mageos_directory_pages" type="host">rhoerr.github.io</value>
+                <value id="mageos_directory_cloudflare" type="host">mage-os-directory.pages.dev</value>
+            </values>
+        </policy>
+        <policy id="frame-src">
             <values>
                 <value id="mageos_directory_pages" type="host">rhoerr.github.io</value>
                 <value id="mageos_directory_cloudflare" type="host">mage-os-directory.pages.dev</value>

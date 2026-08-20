@@ -4,10 +4,8 @@ declare(strict_types=1);
 namespace MageOS\ExtensionDirectory\Test\Unit\Controller\Adminhtml;
 
 use MageOS\ExtensionDirectory\Controller\Adminhtml\Feed\Index as FeedController;
-use MageOS\ExtensionDirectory\Model\Config;
 use MageOS\ExtensionDirectory\Model\Feed\FeedResult;
 use MageOS\ExtensionDirectory\Model\Feed\FeedUnavailableException;
-use MageOS\ExtensionDirectory\Test\Unit\Fake\ArrayScopeConfig;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeFeedProvider;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeResultFactory;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\RecordingRaw;
@@ -34,7 +32,7 @@ final class FeedControllerTest extends TestCase
     {
         $this->feedProvider->willReturn(new FeedResult('{"schemaVersion":1}', 1755648000, false));
 
-        $raw = $this->execute(true);
+        $raw = $this->execute();
 
         self::assertSame('application/json', $raw->getHeader('Content-Type'));
         self::assertSame('private, max-age=0, no-store', $raw->getHeader('Cache-Control'));
@@ -43,25 +41,12 @@ final class FeedControllerTest extends TestCase
         self::assertSame([ResultFactory::TYPE_RAW], $this->resultFactory->getRequestedTypes());
     }
 
-    public function testADisabledModuleAnswersWithAJsonErrorAndNeverAsksForTheFeed(): void
-    {
-        $raw = $this->execute(false);
-
-        self::assertSame(503, $raw->getHttpResponseCode());
-        self::assertSame('application/json', $raw->getHeader('Content-Type'));
-        self::assertSame('private, max-age=0, no-store', $raw->getHeader('Cache-Control'));
-        self::assertSame(['error' => 'The extension directory is disabled.'], $raw->getDecodedBody());
-        self::assertSame(0, $this->feedProvider->getGetCalls());
-        self::assertNull($raw->getHeader(self::DATA_AS_OF_HEADER));
-        self::assertNull($raw->getHeader(self::STALE_HEADER));
-    }
-
     public function testAFreshFeedIsPassedThroughByteForByteWithAnAsOfHeader(): void
     {
         $body = '{"schemaVersion":1,"packages":[{"name":"acme/module-checkout"}]}';
         $this->feedProvider->willReturn(new FeedResult($body, 1755648000, false));
 
-        $raw = $this->execute(true);
+        $raw = $this->execute();
 
         self::assertSame(200, $raw->getHttpResponseCode());
         self::assertSame($body, $raw->getBody());
@@ -74,7 +59,7 @@ final class FeedControllerTest extends TestCase
         $fetchedAt = time();
         $this->feedProvider->willReturn(new FeedResult('{"schemaVersion":1}', $fetchedAt, false));
 
-        $header = (string)$this->execute(true)->getHeader(self::DATA_AS_OF_HEADER);
+        $header = (string)$this->execute()->getHeader(self::DATA_AS_OF_HEADER);
 
         self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$/', $header);
         self::assertSame($fetchedAt, (new \DateTimeImmutable($header))->getTimestamp());
@@ -85,7 +70,7 @@ final class FeedControllerTest extends TestCase
         $body = '{"schemaVersion":1,"packages":[]}';
         $this->feedProvider->willReturn(new FeedResult($body, 1755561600, true));
 
-        $raw = $this->execute(true);
+        $raw = $this->execute();
 
         self::assertSame(200, $raw->getHttpResponseCode());
         self::assertSame($body, $raw->getBody());
@@ -99,7 +84,7 @@ final class FeedControllerTest extends TestCase
             new FeedUnavailableException(__('The extension directory feed is unavailable and no cached copy exists yet.'))
         );
 
-        $raw = $this->execute(true);
+        $raw = $this->execute();
 
         self::assertSame(503, $raw->getHttpResponseCode());
         self::assertSame('application/json', $raw->getHeader('Content-Type'));
@@ -111,10 +96,9 @@ final class FeedControllerTest extends TestCase
         self::assertNull($raw->getHeader(self::STALE_HEADER));
     }
 
-    private function execute(bool $enabled): RecordingRaw
+    private function execute(): RecordingRaw
     {
-        $config = new Config(new ArrayScopeConfig([Config::XML_PATH_ENABLED => $enabled ? '1' : '0']));
-        $controller = new FeedController(new Context($this->resultFactory), $config, $this->feedProvider);
+        $controller = new FeedController(new Context($this->resultFactory), $this->feedProvider);
 
         $result = $controller->execute();
 

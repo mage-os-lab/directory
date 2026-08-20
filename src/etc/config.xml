@@ -4,12 +4,7 @@
     <default>
         <mageos_extension_directory>
             <general>
-                <enabled>1</enabled>
-                <base_url>https://rhoerr.github.io/mage-os.directory</base_url>
-                <feed_mode>proxy</feed_mode>
-                <bundle_source>bundled</bundle_source>
-                <cache_ttl>3600</cache_ttl>
-                <http_timeout>10</http_timeout>
+                <mode>direct</mode>
             </general>
         </mageos_extension_directory>
     </default>

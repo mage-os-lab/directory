@@ -36,3 +36,11 @@
     max-width: 76em;
     padding: 12px 0 0;
 }
+
+/* The detail modal frames the directory site; everything else is the admin's own slide modal. */
+.mageos-extension-directory-modal iframe {
+    border: 0;
+    display: block;
+    height: calc(100vh - 190px);
+    width: 100%;
+}

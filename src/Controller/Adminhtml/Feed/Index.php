@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace MageOS\ExtensionDirectory\Controller\Adminhtml\Feed;
 
-use MageOS\ExtensionDirectory\Model\Config;
 use MageOS\ExtensionDirectory\Model\Feed\FeedProvider;
 use MageOS\ExtensionDirectory\Model\Feed\FeedUnavailableException;
 use Magento\Backend\App\Action;
@@ -15,6 +14,9 @@ use Magento\Framework\Controller\ResultInterface;
 
 /**
  * Same-origin proxy for the directory feed, called only by the directory admin page.
+ *
+ * It answers in either mode. Only proxy mode points the page here, but an admin tab opened
+ * before a switch to direct is still asking for this route, and it should keep working.
  */
 class Index extends Action implements HttpGetActionInterface
 {
@@ -22,7 +24,6 @@ class Index extends Action implements HttpGetActionInterface
 
     public function __construct(
         Context $context,
-        private readonly Config $config,
         private readonly FeedProvider $feedProvider
     ) {
         parent::__construct($context);
@@ -36,14 +37,6 @@ class Index extends Action implements HttpGetActionInterface
         // The body already comes out of Magento's cache; letting the browser cache it on top of
         // that would hide the staleness signalled below.
         $result->setHeader('Cache-Control', 'private, max-age=0, no-store', true);
-
-        if (!$this->config->isEnabled()) {
-            $result->setHttpResponseCode(503);
-
-            return $result->setContents(
-                (string)json_encode(['error' => (string)__('The extension directory is disabled.')])
-            );
-        }
 
         try {
             $feed = $this->feedProvider->get();
