@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (PHP ${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.1', '8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      - name: PHP syntax
+        run: |
+          find . -path ./vendor -prune -o \( -name '*.php' -o -name '*.phtml' \) -print | xargs -n1 php -l
+
+      - name: XML well-formedness
+        run: |
+          php -r '
+          $malformed = [];
+          foreach (["etc", "view"] as $directory) {
+              if (!is_dir($directory)) {
+                  continue;
+              }
+              $files = new RecursiveIteratorIterator(
+                  new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS)
+              );
+              foreach ($files as $file) {
+                  if (!$file->isFile() || strtolower($file->getExtension()) !== "xml") {
+                      continue;
+                  }
+                  libxml_clear_errors();
+                  libxml_use_internal_errors(true);
+                  if (simplexml_load_file($file->getPathname()) === false) {
+                      foreach (libxml_get_errors() as $error) {
+                          $malformed[] = $file->getPathname() . ": " . trim($error->message);
+                      }
+                  }
+                  libxml_clear_errors();
+              }
+          }
+          if ($malformed !== []) {
+              fwrite(STDERR, implode(PHP_EOL, $malformed) . PHP_EOL);
+              exit(1);
+          }
+          echo "All XML files under etc/ and view/ are well-formed." . PHP_EOL;
+          '
+
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.2', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      # The module's own require block needs repo.magento.com credentials. The unit suite runs
+      # against committed stubs instead, so only the toolchain manifest is installed; it puts
+      # PHPUnit in the repository's vendor/ directory, where the "test" script expects it.
+      - name: Install the test toolchain
+        run: composer install --working-dir=dev/tests/unit --no-interaction --no-progress --prefer-dist
+
+      - name: PHPUnit
+        run: composer test

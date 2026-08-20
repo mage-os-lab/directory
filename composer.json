@@ -9,6 +9,9 @@
         "magento/framework": "^103.0",
         "magento/module-backend": "^102.0"
     },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
     "autoload": {
         "files": [
             "registration.php"
@@ -16,5 +19,13 @@
         "psr-4": {
             "MageOS\\ExtensionDirectory\\": ""
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MageOS\\ExtensionDirectory\\Test\\Unit\\": "dev/tests/unit/Test/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit -c dev/tests/unit/phpunit.xml.dist"
     }
 }

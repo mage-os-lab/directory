@@ -1,0 +1,73 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies"
+    ],
+    "content-hash": "9b1f0a3d7c6e4f2a8d5b0c1e3f4a6b7c",
+    "packages": [
+        {
+            "name": "magento/framework",
+            "version": "103.0.7",
+            "type": "magento2-library",
+            "license": ["OSL-3.0", "AFL-3.0"]
+        },
+        {
+            "name": "magento/module-backend",
+            "version": "102.0.7",
+            "type": "magento2-module"
+        },
+        {
+            "name": "mage-os/module-extension-directory",
+            "version": "v0.1.0",
+            "type": "magento2-module"
+        },
+        {
+            "name": "yireo/magento2-webp2",
+            "version": "V2.1.0",
+            "type": "magento2-module"
+        },
+        {
+            "name": "hyva-themes/magento2-theme-module",
+            "version": "1.3.11",
+            "type": "magento2-module"
+        },
+        {
+            "name": "acme/module-nightly",
+            "version": "dev-main",
+            "type": "magento2-module"
+        },
+        {
+            "name": "acme/module-without-a-version",
+            "type": "magento2-module"
+        },
+        {
+            "version": "3.0.0",
+            "type": "magento2-module"
+        },
+        {
+            "name": "acme/module-with-an-empty-version",
+            "version": "",
+            "type": "magento2-module"
+        },
+        "a string where an object belongs"
+    ],
+    "packages-dev": [
+        {
+            "name": "phpunit/phpunit",
+            "version": "11.5.56",
+            "type": "library"
+        },
+        {
+            "name": "squizlabs/php_codesniffer",
+            "version": "3.10.2",
+            "type": "library"
+        }
+    ],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "platform": {
+        "php": "~8.3.0"
+    },
+    "plugin-api-version": "2.6.0"
+}
