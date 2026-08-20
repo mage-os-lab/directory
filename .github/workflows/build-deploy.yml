@@ -5,7 +5,7 @@ on:
     - cron: '23 5 * * *' # daily
   push:
     branches: [main]
-    paths: ['data/**']
+    paths: ['service/data/**']
   workflow_dispatch:
     inputs:
       source:
@@ -17,6 +17,9 @@ on:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: service
     # pages/id-token are only exercised on the GitHub Pages fallback path.
     permissions:
       contents: read
@@ -32,11 +35,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: service/package-lock.json
       - run: npm ci
       - name: Restore HTTP cache (ETags persist across ephemeral runners)
         uses: actions/cache@v4
         with:
-          path: .cache/http
+          path: service/.cache/http
           key: http-cache-${{ github.run_id }}
           restore-keys: http-cache-
       - name: Run pipeline
@@ -59,6 +63,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: service
           command: pages deploy dist --project-name=mage-os-directory
       - name: Configure GitHub Pages (fallback)
         if: env.HAS_CLOUDFLARE != 'true'
@@ -69,7 +74,7 @@ jobs:
         if: env.HAS_CLOUDFLARE != 'true'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: service/dist
       - name: Deploy to GitHub Pages (fallback)
         if: env.HAS_CLOUDFLARE != 'true'
         id: gh-pages-deploy

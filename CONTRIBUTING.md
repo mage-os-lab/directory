@@ -1,7 +1,13 @@
 # Contributing
 
-Two kinds of contribution matter here: code, and trust data. Code follows the usual
-fork-and-PR flow (`npm install && npm test` is the whole setup). Trust data has its own
+This repository holds both the directory service (`service/` — pipeline, site,
+embeddable UI) and the Magento admin module (`src/` — Composer package
+`mage-os/module-extension-directory`).
+
+Two kinds of contribution matter here: code, and trust data. Service code follows the
+usual fork-and-PR flow (`cd service && npm install && npm test` is the whole setup);
+module code needs only PHP (`composer install --working-dir=dev/tests/unit &&
+composer test`). Trust data has its own
 rules because it makes public claims about vendors — this page covers those; the
 governing policy is [docs/trust-policy.md](docs/trust-policy.md).
 
@@ -14,10 +20,10 @@ build.
 
 ## Creating or updating a vendor trust file
 
-Vendor trust files (`data/vendors/<vendor>.json`) add badges, display-name and
+Vendor trust files (`service/data/vendors/<vendor>.json`) add badges, display-name and
 category overrides, editorial picks, and warnings on top of the indexed data.
 
-1. Copy an existing file (e.g. `data/vendors/pixelforge.json`) and adjust it. The
+1. Copy an existing file (e.g. `service/data/vendors/pixelforge.json`) and adjust it. The
    filename must equal the `vendor` field — your Packagist vendor namespace.
 2. Include proof you control the namespace in the PR description (see the
    [trust policy](docs/trust-policy.md#vendor-identity)): open the PR from an account
@@ -32,7 +38,7 @@ category overrides, editorial picks, and warnings on top of the indexed data.
    npm run validate:data
    ```
 
-CI enforces the schema (`data/vendor.schema.json` gives editor autocomplete), the
+CI enforces the schema (`service/data/vendor.schema.json` gives editor autocomplete), the
 canonical format, category references, and that every package you reference exists in
 the current PM snapshot.
 
@@ -53,11 +59,23 @@ contact in the issue template). Credible malware/backdoor evidence gets an exped
 
 ## Code contributions
 
+Service (run inside `service/`):
+
 - `npm test` — schema, ranking, and pipeline tests
 - `npm run typecheck` — TypeScript + Astro check
 - `npm run dev` — pipeline on fixture data, then the site on localhost
-- `npm run build:ui && npm run dev` — then open `examples/embed-demo.html` for the
-  embeddable bundle
+- `npm run build:ui && npm run dev` — then open `service/examples/embed-demo.html`
+  for the embeddable bundle
+
+Module (run from the repository root):
+
+- `composer install --working-dir=dev/tests/unit` — installs the PHPUnit toolchain
+  (no Magento credentials needed)
+- `composer test` — the module's hermetic unit suite
+- A change to `service/src/ui/**` must be followed by `npm run build:ui` and copying
+  `service/public/embed/directory-ui.iife.js` to
+  `src/view/adminhtml/web/js/directory-ui.iife.js` — CI fails on drift.
 
 Keep changes small and covered by a test where behavior changes. Schema changes must
 regenerate the committed JSON Schemas (`npm run generate:schemas` — CI checks drift).
+
