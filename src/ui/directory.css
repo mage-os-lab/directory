@@ -12,13 +12,16 @@
   --mosd-bg-soft: var(--mosd-theme-bg-soft, #f3f2f7);
   --mosd-border: var(--mosd-theme-border, #dcd9e0);
   --mosd-radius: var(--mosd-theme-radius, 12px);
+  --mosd-band: var(--mosd-theme-band, #262335);
+  --mosd-band-2: var(--mosd-theme-band-2, #3a3450);
+  --mosd-font: var(--mosd-theme-font, Roboto, system-ui, sans-serif);
   --mosd-elevation-1: 0 1px 2px rgb(0 0 0 / 0.1), 0 1px 3px 1px rgb(0 0 0 / 0.06);
   --mosd-elevation-2: 0 1px 2px rgb(0 0 0 / 0.1), 0 2px 6px 2px rgb(0 0 0 / 0.1);
   --mosd-elevation-3: 0 4px 8px 3px rgb(0 0 0 / 0.12), 0 1px 3px rgb(0 0 0 / 0.14);
 
   color: var(--mosd-fg);
   background: var(--mosd-bg);
-  font: 14px/1.5 Roboto, system-ui, sans-serif;
+  font: 14px/1.5 var(--mosd-font);
 }
 
 .mosd-stale-notice {
@@ -164,7 +167,7 @@
 /* Header band (PM-inspired): dark surface carrying the identity */
 
 .mosd-card-band {
-  background: linear-gradient(135deg, var(--mosd-theme-band, #262335) 0%, #3a3450 100%);
+  background: linear-gradient(135deg, var(--mosd-band) 0%, var(--mosd-band-2) 100%);
   padding: 14px 16px 12px;
 }
 
@@ -292,7 +295,7 @@
 
 .mosd-require {
   align-items: center;
-  background: #262335;
+  background: var(--mosd-band);
   border-radius: 8px;
   display: flex;
   gap: 8px;

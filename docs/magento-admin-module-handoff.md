@@ -281,6 +281,9 @@ host element to match the admin:
 --mosd-theme-bg-soft     /* default #f3f2f7 */
 --mosd-theme-border      /* default #dcd9e0 */
 --mosd-theme-radius      /* default 12px */
+--mosd-theme-band        /* default #262335 — card header band + composer-command bar */
+--mosd-theme-band-2      /* default #3a3450 — band gradient end */
+--mosd-theme-font        /* default Roboto, system-ui, sans-serif */
 ```
 
 ### 5.5 Working example
