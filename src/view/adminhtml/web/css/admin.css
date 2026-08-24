@@ -1,0 +1,46 @@
+/*
+ * Theme mapping for the directory bundle. The bundle renders into an open shadow root, so
+ * admin CSS cannot reach its internals; these custom properties are its supported theming
+ * hook (they pierce the shadow boundary). The values are the Magento admin (backend) theme
+ * palette, so the component reads as part of the panel: primary-action orange, the admin
+ * menu's warm dark chrome for the card bands, the Admin Font stack, near-square corners.
+ *
+ * Everything outside the shadow root (intro, notices, attribution) deliberately reuses the
+ * admin's own classes and typography instead of restyling them here.
+ */
+.mageos-extension-directory {
+    --mosd-theme-accent: #eb5202;
+    --mosd-theme-accent-soft: #fdf0e8;
+    --mosd-theme-fg: #303030;
+    --mosd-theme-fg-muted: #666666;
+    --mosd-theme-bg: #ffffff;
+    --mosd-theme-bg-soft: #f8f8f8;
+    --mosd-theme-border: #cccccc;
+    --mosd-theme-radius: 2px;
+    --mosd-theme-band: #41362f;
+    --mosd-theme-band-2: #524a45;
+    --mosd-theme-font: 'Admin Font', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+    display: block;
+    min-height: 240px;
+}
+
+.mageos-extension-directory-intro {
+    margin: 0 0 15px;
+    max-width: 76em;
+}
+
+.mageos-extension-directory-attribution {
+    border-top: 1px solid #e3e3e3;
+    margin: 20px 0 0;
+    max-width: 76em;
+    padding: 12px 0 0;
+}
+
+/* The detail modal frames the directory site; everything else is the admin's own slide modal. */
+.mageos-extension-directory-modal iframe {
+    border: 0;
+    display: block;
+    height: calc(100vh - 190px);
+    width: 100%;
+}

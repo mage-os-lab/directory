@@ -1,19 +1,25 @@
-name: CI
+name: Service CI
 
 on:
   pull_request:
+    paths: ['service/**', '.github/workflows/service-ci.yml']
   push:
     branches: [main]
+    paths: ['service/**', '.github/workflows/service-ci.yml']
 
 jobs:
   verify:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: service
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: service/package-lock.json
       - run: npm ci
       - name: Typecheck
         run: npx tsc --noEmit

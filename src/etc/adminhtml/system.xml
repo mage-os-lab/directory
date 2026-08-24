@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="mageos" translate="label" sortOrder="400">
+            <label>Mage-OS</label>
+        </tab>
+        <section id="mageos_extension_directory" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+            <class>separator-top</class>
+            <label>Extension Directory</label>
+            <tab>mageos</tab>
+            <resource>MageOS_ExtensionDirectory::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>General</label>
+                <field id="mode" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+                    <label>Mode</label>
+                    <source_model>MageOS\ExtensionDirectory\Model\Config\Source\Mode</source_model>
+                    <comment>Direct: admin browsers load the UI bundle and the catalog feed straight from the directory host, which needs the CSP whitelist shipped with this module and CORS on that host. Proxy: this store's server fetches and caches the feed and serves the copy of the UI bundle that ships with this module, so the page is fully same-origin — for restricted networks or privacy-sensitive admins.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

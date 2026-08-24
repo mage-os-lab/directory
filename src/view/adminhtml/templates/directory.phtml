@@ -1,0 +1,179 @@
+<?php
+/**
+ * Admin page for the Mage-OS Extension Directory.
+ *
+ * @var \Magento\Backend\Block\Template $block
+ * @var \Magento\Framework\Escaper $escaper
+ * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
+ */
+declare(strict_types=1);
+
+/** @var \MageOS\ExtensionDirectory\ViewModel\DirectoryConfig $viewModel */
+$viewModel = $block->getData('view_model');
+
+$dataAsOf = $viewModel->getDataAsOf();
+$packageMavenUrl = 'https://package-maven.com/';
+$packagistUrl = 'https://packagist.org/';
+
+// escapeJs takes a string, and strict_types will not coerce a Phrase into one.
+$loadFailureMessage = $escaper->escapeJs(
+    (string)__('The directory UI failed to load. Check that this browser can reach the script, then reload the page.')
+);
+$detailFrameTitle = $escaper->escapeJs((string)__('Module details'));
+
+$initJs = <<<JS
+(function () {
+    'use strict';
+
+    var host = document.getElementById('mageos-extension-directory'),
+        configElement = document.getElementById('mageos-extension-directory-config'),
+        config,
+        detailModal;
+
+    if (!host || !configElement) {
+        return;
+    }
+
+    if (typeof MageOSDirectory === 'undefined' || !MageOSDirectory.mountDirectory) {
+        host.textContent = '{$loadFailureMessage}';
+
+        return;
+    }
+
+    try {
+        config = JSON.parse(configElement.textContent);
+    } catch (error) {
+        host.textContent = '{$loadFailureMessage}';
+
+        return;
+    }
+
+    // setTitle inserts its argument as markup. Package names are schema-constrained, but the
+    // feed is someone else's data, so it goes through here anyway.
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    /**
+     * Builds the modal on first use, then hands the same one back for every later package.
+     */
+    function withDetailModal(callback) {
+        if (detailModal) {
+            callback(detailModal);
+
+            return;
+        }
+
+        require(['jquery', 'Magento_Ui/js/modal/modal'], function (\$, modal) {
+            var wrapper, frame;
+
+            if (!detailModal) {
+                wrapper = document.createElement('div');
+                frame = document.createElement('iframe');
+                frame.setAttribute('title', '{$detailFrameTitle}');
+                wrapper.appendChild(frame);
+                document.body.appendChild(wrapper);
+
+                modal({
+                    type: 'slide',
+                    modalClass: 'mageos-extension-directory-modal',
+                    title: '',
+                    buttons: []
+                }, \$(wrapper));
+
+                detailModal = {
+                    element: \$(wrapper),
+                    frame: frame
+                };
+            }
+
+            callback(detailModal);
+        });
+    }
+
+    // linkMode 'event': the bundle never navigates, so opening the detail page is up to us.
+    // It opens here, in the admin, and the links out to Packagist and the repository are the
+    // reader's own click inside that page.
+    host.addEventListener('mosd:select', function (event) {
+        var detail = event.detail;
+
+        if (typeof require !== 'function') {
+            window.open(detail.packageUrl, '_blank', 'noopener');
+
+            return;
+        }
+
+        withDetailModal(function (instance) {
+            instance.frame.setAttribute('src', detail.packageUrl);
+            instance.element.modal('setTitle', escapeHtml(detail.name));
+            instance.element.modal('openModal');
+        });
+    });
+
+    MageOSDirectory.mountDirectory(host, config);
+}());
+JS;
+?>
+<div class="mageos-extension-directory-page">
+    <p class="mageos-extension-directory-intro">
+        <?= $escaper->escapeHtml(
+            __('Browse the catalog and mark the modules you want. Nothing is installed from here: marking modules builds a composer require command for you to copy and run on the server, where Composer resolves the dependencies.')
+        ) ?>
+    </p>
+
+    <?php if ($dataAsOf !== null): ?>
+    <div class="messages">
+        <div class="message message-warning warning">
+            <?= $escaper->escapeHtml(
+                __('Catalog data cached from %1 — the directory host could not be reached recently.', $dataAsOf)
+            ) ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <div id="mageos-extension-directory" class="mageos-extension-directory"></div>
+
+    <?php
+    /*
+     * A script tag of a non-executable type is an inert data block, so this is how the mount
+     * options reach the bundle without an inline script for CSP to reject. The payload is
+     * already JSON - escaping it would corrupt it.
+     */
+    ?>
+    <script type="application/json" id="mageos-extension-directory-config">
+        <?= /* @noEscape */ $viewModel->getMountConfigJson() ?>
+    </script>
+
+    <?php
+    /*
+     * Required attribution for the PackageMaven and Packagist data, which the bundle itself
+     * does not render. The sentence is assembled from segments rather than passed through
+     * escapeHtml()'s allowed-tag mode, because that mode keeps only id/class/href/title/style
+     * and would drop the target and rel attributes these links need.
+     */
+    ?>
+    <p class="admin__field-note mageos-extension-directory-attribution">
+        <?= $escaper->escapeHtml(__('Quality and compatibility data by')) ?>
+        <a href="<?= $escaper->escapeUrl($packageMavenUrl) ?>"
+           target="_blank"
+           rel="noopener"><?= $escaper->escapeHtml(__('PackageMaven')) ?></a>,
+        <?= $escaper->escapeHtml(__('package metadata from')) ?>
+        <a href="<?= $escaper->escapeUrl($packagistUrl) ?>"
+           target="_blank"
+           rel="noopener"><?= $escaper->escapeHtml(__('Packagist')) ?></a>.
+        <?= $escaper->escapeHtml(__('Each module\'s detail page on the')) ?>
+        <a href="<?= $escaper->escapeUrl($viewModel->getDirectoryBaseUrl()) ?>"
+           target="_blank"
+           rel="noopener"><?= $escaper->escapeHtml(__('Mage-OS Extension Directory')) ?></a>
+        <?= $escaper->escapeHtml(__('links to its Packagist page.')) ?>
+        <?= $escaper->escapeHtml(
+            __('Data is empirical test output provided "as is" — a module without a test result for your Magento version is untested, not incompatible.')
+        ) ?>
+    </p>
+</div>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['src' => $viewModel->getBundleUrl()], '', false) ?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $initJs, false) ?>

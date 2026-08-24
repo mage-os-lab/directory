@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+    script-src and connect-src serve Direct mode, where each admin browser loads the UI bundle
+    and fetches the feed from the directory host. Proxy mode needs neither: both come from this
+    store's own origin. frame-src serves the package detail modal, which frames the directory
+    site in either mode. A future custom directory domain needs its own entries.
+-->
+<csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
+    <policies>
+        <policy id="script-src">
+            <values>
+                <value id="mageos_directory_pages" type="host">rhoerr.github.io</value>
+                <value id="mageos_directory_cloudflare" type="host">mage-os-directory.pages.dev</value>
+            </values>
+        </policy>
+        <policy id="connect-src">
+            <values>
+                <value id="mageos_directory_pages" type="host">rhoerr.github.io</value>
+                <value id="mageos_directory_cloudflare" type="host">mage-os-directory.pages.dev</value>
+            </values>
+        </policy>
+        <policy id="frame-src">
+            <values>
+                <value id="mageos_directory_pages" type="host">rhoerr.github.io</value>
+                <value id="mageos_directory_cloudflare" type="host">mage-os-directory.pages.dev</value>
+            </values>
+        </policy>
+    </policies>
+</csp_whitelist>

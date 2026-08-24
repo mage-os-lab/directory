@@ -1,7 +1,13 @@
 # Mage-OS admin module — implementation handoff
 
-**Status:** the directory service is built, deployed, and serving live data. The Magento
-module is **not started** — this document is everything needed to build it.
+**Status:** the directory service is built, deployed, and serving live data.
+
+> **Update 2026-08-20:** the module described here has been **built and lives in this
+> repository** at `src/` (see [decision 12](decisions.md#12-one-repository-for-the-service-and-the-admin-module)
+> and [implementation-plan.md](implementation-plan.md)). The service moved under
+> `service/`, so repo paths below (`src/ui/…`, `data/…`, `public/…`, `examples/…`,
+> `test/…`) now carry a `service/` prefix. This document remains the contract
+> reference for the feed, the embed API, and the attribution obligations.
 
 **Audience:** whoever builds `mage-os/module-extension-directory` (Magento 2 / Mage-OS
 admin module). No prior context with this repo assumed.
@@ -281,6 +287,9 @@ host element to match the admin:
 --mosd-theme-bg-soft     /* default #f3f2f7 */
 --mosd-theme-border      /* default #dcd9e0 */
 --mosd-theme-radius      /* default 12px */
+--mosd-theme-band        /* default #262335 — card header band + composer-command bar */
+--mosd-theme-band-2      /* default #3a3450 — band gradient end */
+--mosd-theme-font        /* default Roboto, system-ui, sans-serif */
 ```
 
 ### 5.5 Working example

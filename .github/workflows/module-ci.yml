@@ -1,0 +1,143 @@
+name: Module CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (PHP ${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.1', '8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      - name: PHP syntax
+        run: |
+          find src dev -type f \( -name '*.php' -o -name '*.phtml' \) -print | xargs -n1 php -l
+
+      - name: XML well-formedness
+        run: |
+          php -r '
+          $malformed = [];
+          foreach (["src/etc", "src/view"] as $directory) {
+              if (!is_dir($directory)) {
+                  continue;
+              }
+              $files = new RecursiveIteratorIterator(
+                  new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS)
+              );
+              foreach ($files as $file) {
+                  if (!$file->isFile() || strtolower($file->getExtension()) !== "xml") {
+                      continue;
+                  }
+                  libxml_clear_errors();
+                  libxml_use_internal_errors(true);
+                  if (simplexml_load_file($file->getPathname()) === false) {
+                      foreach (libxml_get_errors() as $error) {
+                          $malformed[] = $file->getPathname() . ": " . trim($error->message);
+                      }
+                  }
+                  libxml_clear_errors();
+              }
+          }
+          if ($malformed !== []) {
+              fwrite(STDERR, implode(PHP_EOL, $malformed) . PHP_EOL);
+              exit(1);
+          }
+          echo "All XML files under src/etc and src/view are well-formed." . PHP_EOL;
+          '
+
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.2', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      # The module's own require block needs repo.magento.com credentials. The unit suite runs
+      # against committed stubs instead, so only the toolchain manifest is installed; it puts
+      # PHPUnit in the repository's vendor/ directory, where the "test" script expects it.
+      - name: Install the test toolchain
+        run: composer install --working-dir=dev/tests/unit --no-interaction --no-progress --prefer-dist
+
+      - name: PHPUnit
+        run: composer test
+
+  package:
+    name: Dist archive guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Composer package is the repo root with everything non-module stripped by
+      # .gitattributes export-ignore. A new top-level path that is not on this allowlist
+      # (and not export-ignored) fails here instead of silently shipping to merchants.
+      - name: Archive contains only the module package
+        run: |
+          set -euo pipefail
+          got=$(git archive HEAD | tar -t | awk -F/ '{print $1}' | sort -u)
+          want=$(printf 'LICENSE\nREADME.md\ncomposer.json\nsrc\n')
+          if [ "$got" != "$want" ]; then
+            echo '::error::composer dist archive drifted from the module allowlist:'
+            diff <(echo "$want") <(echo "$got") || true
+            exit 1
+          fi
+          echo "Archive top-level entries match the allowlist."
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: composer validate
+        run: composer validate --no-check-publish
+
+  bundle-sync:
+    name: Vendored UI bundle matches service/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: service/package-lock.json
+
+      - name: Build the embeddable bundle from source
+        working-directory: service
+        run: |
+          npm ci
+          npm run build:ui
+
+      # The module ships the built bundle at src/view/adminhtml/web/js/. Living in the same
+      # repository as its source means it must never drift: rebuild and compare bytes.
+      - name: Compare against the vendored copy
+        run: |
+          if ! cmp service/public/embed/directory-ui.iife.js src/view/adminhtml/web/js/directory-ui.iife.js; then
+            echo '::error::src/view/adminhtml/web/js/directory-ui.iife.js is out of date — run: cd service && npm run build:ui && cp public/embed/directory-ui.iife.js ../src/view/adminhtml/web/js/'
+            exit 1
+          fi
+          echo "Vendored bundle is in sync with service/src/ui."

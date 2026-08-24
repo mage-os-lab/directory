@@ -189,3 +189,36 @@ hoc in public. Cheap to write down now, expensive to improvise later.
 **Rejected:** pure maintainer discretion (opaque, indefensible under dispute);
 requiring evidence for `info`-severity notes too (friction disproportionate to a badge
 that carries no penalty).
+
+## 12. One repository for the service and the admin module
+
+**Decision:** the Magento admin module lives in this repository: `src/` holds the
+module (the Composer package `mage-os/module-extension-directory` is packaged from the
+repository root, with PSR-4 mapped to `src/`), `service/` holds the pipeline, site, and
+embeddable bundle. `.gitattributes` `export-ignore` strips everything except
+`composer.json`, `LICENSE`, `README.md`, and `src/` from dist archives, and module CI
+enforces two guards: the archive's top-level entries against an allowlist, and the
+vendored UI bundle in `src/view/adminhtml/web/js/` byte-identical to what `service/`
+builds.
+
+**Why:** the module vendors the embeddable bundle and codes against the
+`mountDirectory` contract. With separate repositories, every contract change took two
+coordinated PRs, and the vendored bundle could only drift — its freshness rested on a
+documented copy ritual. One repository makes contract changes atomic (schema, bundle,
+module, and both test suites in a single reviewable change) and turns bundle sync into
+a CI invariant. Ownership of both halves is unified today, which is the condition that
+makes this cheap.
+
+**Amends:** decision 6's assumption (and the handoff's open decision 3) that the module
+would live in a separate repository. The decoupling that actually matters — the bundle
+staying framework-agnostic behind the `mountDirectory` contract — is unchanged; it is a
+property of the code boundary, not the repository boundary.
+
+**Escape hatch:** if governance later splits (association-owned module, separately
+maintained), `git subtree split` extracts `src/` with full history — the
+`magento/magento2` monorepo-with-splits pattern.
+
+**Rejected:** staying split with an automated cross-repo bundle-sync PR bot (more
+machinery to run than the problem deserves while one group maintains both); a
+`composer.json` inside `src/` with a Packagist path hack (Packagist has no
+subdirectory-package support).

@@ -1,0 +1,14 @@
+{
+    "name": "mage-os/module-extension-directory-test-toolchain",
+    "description": "Toolchain manifest for the hermetic unit suite. The module's own require block pulls magento/framework from repo.magento.com, which needs marketplace credentials; the unit suite runs against committed stubs instead, so it only needs PHPUnit. Installing this file puts PHPUnit into the repository's vendor/ directory, keeping `vendor/bin/phpunit` and `composer test` working from the repository root.",
+    "license": "OSL-3.0",
+    "type": "project",
+    "require": {
+        "php": ">=8.2",
+        "phpunit/phpunit": "^11.0"
+    },
+    "config": {
+        "vendor-dir": "../../../vendor",
+        "sort-packages": true
+    }
+}
