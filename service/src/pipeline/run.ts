@@ -6,7 +6,7 @@ import { parseArgs } from 'node:util';
 import { loadCategories, loadRankingConfig, loadSnapshot, loadVendorFiles } from './load.js';
 import { mergeToFeed } from './merge.js';
 import { emitArtifacts } from './emit.js';
-import { fetchGithubExtras } from './github.js';
+import { disabledGithubExtras, fetchGithubExtras } from './github.js';
 import { fetchPackageMavenSnapshot } from './packagemaven.js';
 import { packageMavenSnapshot, type PackageMavenSnapshot } from '../schema/source.js';
 
@@ -44,7 +44,22 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
     warnings.push(...live.warnings);
   }
 
-  const github = await fetchGithubExtras();
+  // Live runs only: a fixture build must stay hermetic (the fixture's
+  // repository URLs are invented), so it publishes the disabled state —
+  // every package renders without a README or live star count.
+  const github =
+    options.source === 'live'
+      ? await fetchGithubExtras({
+          packages: snapshot.packages.map((p) => ({
+            name: p.name,
+            repositoryUrl: p.repositoryUrl,
+          })),
+          token: process.env.GITHUB_TOKEN,
+          cacheDir: path.join(options.rootDir, '.cache', 'http'),
+          now: options.now,
+        })
+      : disabledGithubExtras();
+  warnings.push(...github.warnings);
 
   const { feed, details, danglingTrustEntries, unmappedCategories } = mergeToFeed({
     snapshot,

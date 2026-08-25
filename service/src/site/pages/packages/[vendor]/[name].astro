@@ -27,6 +27,10 @@ const pkg = loadPackageDetail(vendor as string, name as string);
 
 const installCommand = `composer require ${pkg.name}`;
 
+// README HTML is sanitized and absolutized by the pipeline (src/pipeline/readme.ts);
+// the page only has to attribute it back to where it was reproduced from.
+const readmeSourceUrl = pkg.readmeSourceUrl ?? pkg.repositoryUrl;
+
 // Related listings (marketplace pattern): same vendor, then same category —
 // each excluding the package itself and anything already shown.
 const others = visiblePackages(loadFeed()).filter((p) => p.name !== pkg.name);
@@ -244,10 +248,26 @@ const jsonLd = {
     });
   </script>
 
-  <div class="readme">
+  <section class="readme">
+    <h2>README</h2>
     {
       pkg.readmeHtml ? (
-        <Fragment set:html={pkg.readmeHtml} />
+        <>
+          <p class="readme-attribution">
+            Reproduced from the package&rsquo;s own
+            {readmeSourceUrl ? (
+              <>
+                {' '}
+                <a href={readmeSourceUrl} rel="noopener">README</a>
+              </>
+            ) : (
+              ' README'
+            )}
+            , under its own license, as of {pkg.generatedAt.slice(0, 10)}. Links and images
+            point back at the source repository.
+          </p>
+          <div class="readme-body" set:html={pkg.readmeHtml} />
+        </>
       ) : (
         <p>
           No README is available yet.
@@ -260,7 +280,7 @@ const jsonLd = {
         </p>
       )
     }
-  </div>
+  </section>
 
   <div class="links-section">
     <h2>Links</h2>

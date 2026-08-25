@@ -63,8 +63,11 @@ the pipeline simple and reliable.
 
 ### GitHub (presentation extras, failure-tolerant)
 
-- **READMEs** for package detail pages, fetched at build time via the REST API with
-  ETag-conditional requests (steady-state daily runs are almost all 304s).
+- **READMEs** for package detail pages, fetched at build time via the REST readme
+  endpoint with the `html` media type — GitHub renders GFM, so the pipeline never
+  parses Markdown — using ETag-conditional requests (steady-state daily runs are
+  almost all 304s, which don't count against the rate limit). One request per
+  *repository*, so a monorepo's packages share it.
 - **Stars** as a popularity signal, fetched in batched GraphQL queries.
 
 Both are nullable. A GitHub failure never fails the build; affected packages simply
@@ -98,8 +101,13 @@ A TypeScript script under `src/pipeline/`, run by GitHub Actions:
      failure: the entry is skipped and reported. (PM's index moves between our runs, so
      an entry that validated at PR time can legitimately dangle later — a scheduled
      build must not hard-fail on that.)
-  3. Fetch GitHub READMEs (sanitized to HTML with a strict allowlist; relative links and
-     images rewritten to absolute raw URLs) and stars.
+  3. Fetch GitHub READMEs and stars (`src/pipeline/{github,readme,http-cache}.ts`).
+     READMEs pass a strict tag/attribute allowlist, get their relative links and
+     images rewritten to absolute github.com/raw URLs, their ids and in-page
+     anchors namespaced under `readme-` (so a README's own table of contents works
+     without colliding with the page), and their headings demoted one level (the
+     page owns the h1). Live runs only: a fixture build stays hermetic and
+     publishes the disabled state.
   4. Merge into canonical package records. Precedence: trust-file overrides → PackageMaven.
      PM's raw category labels map to canonical slugs via `data/categories.json`
      (unmapped labels land in the fallback category); a trust-file `categories` override
@@ -204,6 +212,8 @@ interface PackageDetail extends PackageSummary {
   schemaVersion: 1;
   generatedAt: string;
   readmeHtml: string | null;      // sanitized at build time
+  readmeSourceUrl: string | null; // where it was reproduced from (attribution);
+                                  // null whenever readmeHtml is
   releases: Array<{               // PM's per-release test matrix, newest first
     version: string;              // (latest release folded in); empty when PM
     releasedAt: string | null;    // supplies no per-release data

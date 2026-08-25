@@ -12,9 +12,11 @@ import { SCHEMA_VERSION } from '../schema/common.js';
 import { compareVersions, isNewer, parseVersion } from '../shared/version.js';
 import { buildRankingContext, rankPackage } from './rank.js';
 
-/** Per-package GitHub extras; both nullable, failure-tolerant. */
+/** Per-package GitHub extras; all nullable, failure-tolerant. */
 export interface GithubExtras {
   readmeHtml: string | null;
+  /** Where the README was reproduced from, for attribution on the detail page. */
+  readmeSourceUrl: string | null;
   stars: number | null;
 }
 
@@ -137,7 +139,11 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
     const vendorSlug = source.name.split('/')[0]!;
     const vendorFile = vendorBySlug.get(vendorSlug);
     const trustEntry = vendorFile?.packages[source.name];
-    const extras = github.get(source.name) ?? { readmeHtml: null, stars: null };
+    const extras = github.get(source.name) ?? {
+      readmeHtml: null,
+      readmeSourceUrl: null,
+      stars: null,
+    };
     const warnings = sortWarnings(trustEntry?.warnings ?? []);
     const deranked = warnings.some((w) => w.severity === 'derank' || w.severity === 'hide');
     const hidden = warnings.some((w) => w.severity === 'hide');
@@ -230,6 +236,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         schemaVersion: SCHEMA_VERSION,
         generatedAt,
         readmeHtml: a.extras.readmeHtml,
+        readmeSourceUrl: a.extras.readmeHtml === null ? null : a.extras.readmeSourceUrl,
         releases: a.releases,
         license: a.source.license,
         links: {

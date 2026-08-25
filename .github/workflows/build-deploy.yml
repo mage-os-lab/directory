@@ -48,7 +48,13 @@ jobs:
           PACKAGE_MAVEN_TOKEN: ${{ secrets.PACKAGE_MAVEN_TOKEN }}
           PM_API_URL: ${{ vars.PM_API_URL }}
           PUBLISHED_BASE_URL: ${{ vars.PUBLISHED_BASE_URL }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # READMEs and stars. The default Actions token is rate limited to
+          # 1,000 REST requests/hour, which a *cold* cache can exhaust before
+          # the corpus is covered (the run still succeeds, and the persisted
+          # ETag cache lets the next one pick up where it stopped). Set the
+          # README_GITHUB_TOKEN secret to a PAT (5,000/hour, no scopes needed
+          # for public repositories) to cover a cold cache in one run.
+          GITHUB_TOKEN: ${{ secrets.README_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
         run: npx tsx src/pipeline/run.ts --source "${{ inputs.source || 'live' }}" --out public
       - name: Build embeddable bundle (published at /embed/*)
         run: npm run build:ui
