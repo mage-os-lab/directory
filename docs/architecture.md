@@ -259,9 +259,9 @@ Rules, enforced by schema validation in CI:
   entries, because PM's index moves between our runs and a scheduled build must not
   hard-fail on external drift.
 - Categories must exist in `data/categories.json`.
-- Warning severity is one of `info` (badge only), `derank` (ranking penalty), `hide`
-  (excluded from default results). `derank` and `hide` warnings must carry an
-  `evidenceUrl` linking the public evidence.
+- Warning severity is one of `info` (shown on the card, no ranking effect), `derank`
+  (ranking penalty), `hide` (excluded from default results). `derank` and `hide`
+  warnings must carry an `evidenceUrl` linking the public evidence.
 
 Who may hold `trustedVendor`/`partnerTier`, the evidence and notification bar for
 warnings, dispute handling, and the expedited path for malicious packages are governed
@@ -385,11 +385,11 @@ Contract details the admin module depends on:
   (`installed` comes from the host reading composer.lock) and the output is a command
   the merchant runs manually — consistent with the copy-the-command model on detail
   pages.
-- With `magentoVersion`, compatibility is a lookup, never a solver: the badge states
-  are "tested with X" (latest release verified), "vN tested with X" (only an older
-  release verified — the install list pins `^N`), and "not tested with X". Because
-  this is PM's *empirical* test matrix, absence of a test result is never presented
-  as incompatibility, and full conflict resolution is deliberately left to
+- With `magentoVersion`, compatibility is a lookup, never a solver: the fit line at the
+  top of each card reads "tested with X" (latest release verified), "vN tested with X"
+  (only an older release verified — the install list pins `^N`), or "not tested with X".
+  Because this is PM's *empirical* test matrix, absence of a test result is never
+  presented as incompatibility, and full conflict resolution is deliberately left to
   `composer require --dry-run` on the merchant's machine.
 - Class prefixes (`.mosd-*`) keep our styles from leaking out, but only Shadow DOM
   keeps host-page styles (like the Magento admin's global element resets) from leaking
@@ -398,14 +398,34 @@ Contract details the admin module depends on:
   `shadow: false` since it owns the page.
 
 **UI features (v1):** text search, category browse, quality/badge filters, popularity
-sort (installs, stars, recency), default "recommended" sort by ranking score, stats on
-cards, README on detail pages, vendor pages. When the feed reports a stale or manually
-refreshed source, the UI shows a visible "quality data as of &lt;date&gt;" notice — stale
-data must never present as live. A Magento-version compatibility filter exists where
-the shop version is known — embeds passing `magentoVersion` (the public site can't
-know a visitor's version, so it displays supported versions as a field and the detail
-pages show the per-release test matrix). Also deferred, cheap to add later: a
-"recently added" page / RSS feed diffed from consecutive snapshots.
+sort (installs, stars, recency), default "recommended" sort by ranking score, README on
+detail pages, vendor pages. When the feed reports a stale or manually refreshed source,
+the UI shows a visible "quality data as of &lt;date&gt;" notice — stale data must never
+present as live. A Magento-version compatibility filter exists where the shop version is
+known — embeds passing `magentoVersion` (the public site can't know a visitor's version,
+so it displays supported versions as a field and the detail pages show the per-release
+test matrix). Also deferred, cheap to add later: a "recently added" page / RSS feed
+diffed from consecutive snapshots.
+
+**What a browse card carries.** A card is the shortlist test — open this one, or scroll
+past — so it answers eight questions and leaves the rest to the detail page: name, package
+path, one sentence, one quality verdict, fit, installs, time since the last release, and
+any risk (a trust warning or abandonment, with the maintainer's suggested replacement).
+Host-aware surfaces add a ninth, where the reader stands with it. PHPStan level, SemVer
+compliance, build status, stars, the release date, the licence and the `composer require`
+string are detail-page facts: each either restates the quality tier, restates a number
+already on the card, or decides nothing at browse time. Quality tiers are shown in the
+words a person choosing a module would use (`strict-compliant` reads as "Strict checks
+pass", `needs-help` as "Known issues") from `src/shared/quality.ts`, which the island and
+the prerendered pages share so one vocabulary reaches the reader everywhere.
+
+**How state reaches the reader.** Installed, update-available and at-risk are each carried
+three ways at once — a 3px rail on the card's left edge, a tint on the card surface, and
+the state in words — so nothing depends on colour alone. Risk outranks install state: an
+abandoned module the shop already runs shows the risk rail and still names the installed
+version. Marking a module for the install list is the reader's own choice rather than a
+fact about the package, so it draws an accent ring around the whole card instead of a
+fourth rail, and composes with whatever rail is already there.
 
 **Analytics:** Cloudflare Web Analytics (free, privacy-respecting, no cookies) on the
 public site. It covers the metrics that matter early — page views per package/vendor,

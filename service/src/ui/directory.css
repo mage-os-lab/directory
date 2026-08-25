@@ -12,9 +12,16 @@
   --mosd-bg-soft: var(--mosd-theme-bg-soft, #f3f2f7);
   --mosd-border: var(--mosd-theme-border, #dcd9e0);
   --mosd-radius: var(--mosd-theme-radius, 12px);
-  --mosd-band: var(--mosd-theme-band, #262335);
-  --mosd-band-2: var(--mosd-theme-band-2, #3a3450);
   --mosd-font: var(--mosd-theme-font, Roboto, system-ui, sans-serif);
+  /* Semantic state colours, separate from the accent: verified/installed,
+   * needs-attention/update, and risk. Themable for hosts whose admin palette
+   * reads differently, but never swap their meanings. */
+  --mosd-ok: var(--mosd-theme-ok, #0f7b45);
+  --mosd-ok-soft: var(--mosd-theme-ok-soft, #eff7f2);
+  --mosd-warn: var(--mosd-theme-warn, #8a5300);
+  --mosd-warn-soft: var(--mosd-theme-warn-soft, #fdf5e7);
+  --mosd-risk: var(--mosd-theme-risk, #a52626);
+  --mosd-risk-soft: var(--mosd-theme-risk-soft, #fdeeee);
   --mosd-elevation-1: 0 1px 2px rgb(0 0 0 / 0.1), 0 1px 3px 1px rgb(0 0 0 / 0.06);
   --mosd-elevation-2: 0 1px 2px rgb(0 0 0 / 0.1), 0 2px 6px 2px rgb(0 0 0 / 0.1);
   --mosd-elevation-3: 0 4px 8px 3px rgb(0 0 0 / 0.12), 0 1px 3px rgb(0 0 0 / 0.14);
@@ -136,119 +143,255 @@
   margin: 4px 0 14px;
 }
 
-/* Result cards: MD elevated cards, metric-forward */
+/* Result cards: quiet surfaces, one signal per question. Nothing on a card
+ * answers a question another line already answered, and status is carried by
+ * three things at once — a rail, a tint and a word — so none of it depends
+ * on colour alone. */
 
 .mosd-results {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .mosd-card {
-  background: var(--mosd-bg);
-  border: 0;
+  --mosd-rail: transparent;
+  --mosd-surface: var(--mosd-bg);
+  background: var(--mosd-surface);
+  border: 1px solid var(--mosd-border);
   border-radius: var(--mosd-radius);
-  box-shadow: var(--mosd-elevation-1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   padding: 0;
+  position: relative;
   transition: box-shadow 0.15s ease;
 }
 
 .mosd-card:hover,
 .mosd-card:focus-within {
-  box-shadow: var(--mosd-elevation-3);
+  box-shadow: var(--mosd-elevation-2);
 }
 
-/* Header band (PM-inspired): dark surface carrying the identity */
+/* The rail is painted inside the card rather than as a border, so the
+ * selection ring can sit at the edge without covering it. */
+.mosd-card::before {
+  background: var(--mosd-rail);
+  bottom: 0;
+  content: '';
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 3px;
+  z-index: 1;
+}
 
-.mosd-card-band {
-  background: linear-gradient(135deg, var(--mosd-band) 0%, var(--mosd-band-2) 100%);
-  padding: 14px 16px 12px;
+/* Rails are facts the host knows, from its composer.lock and the trust data.
+ * Risk outranks install state: an abandoned module you already run is the
+ * most useful thing this view can tell anyone. */
+.mosd-is-installed {
+  --mosd-rail: var(--mosd-ok);
+  --mosd-surface: var(--mosd-ok-soft);
+}
+
+.mosd-is-update {
+  --mosd-rail: var(--mosd-warn);
+  --mosd-surface: var(--mosd-warn-soft);
+}
+
+.mosd-is-risk {
+  --mosd-rail: var(--mosd-risk);
+  --mosd-surface: var(--mosd-risk-soft);
+}
+
+/* Marking is the reader's own choice, so it reads as a selection ring rather
+ * than a fourth rail — it has to stay legible on top of whichever rail is
+ * already there. Only when no rail is competing does it also tint. */
+.mosd-is-marked {
+  outline: 2px solid var(--mosd-accent);
+  outline-offset: -1px;
+}
+
+.mosd-is-marked::before {
+  left: 3px;
+}
+
+.mosd-is-marked-only {
+  --mosd-surface: var(--mosd-accent-soft);
+}
+
+/* Fit strip: the leading line wherever the host knows this shop's Magento
+ * version, because that is what decides whether the rest of the card is
+ * worth reading. "Not tested" is a gap in the test matrix, never a failure. */
+.mosd-card-fit {
+  align-items: center;
+  border-bottom: 1px solid var(--mosd-border);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  font-weight: 600;
+  gap: 3px 10px;
+  justify-content: space-between;
+  margin: 0;
+  padding: 7px 12px 7px 15px;
+}
+
+.mosd-fit-ok { background: var(--mosd-ok-soft); color: var(--mosd-ok); }
+.mosd-fit-older { background: var(--mosd-warn-soft); color: var(--mosd-warn); }
+.mosd-fit-untested { background: var(--mosd-bg-soft); color: var(--mosd-fg-muted); }
+.mosd-fit-plain { background: var(--mosd-bg-soft); color: var(--mosd-fg-muted); font-weight: 500; }
+
+.mosd-state {
+  align-items: center;
+  display: inline-flex;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.mosd-state-installed { color: var(--mosd-ok); }
+.mosd-state-update { color: var(--mosd-warn); }
+.mosd-is-risk .mosd-state { color: var(--mosd-risk); }
+
+.mosd-card-state {
+  margin: 0;
 }
 
 .mosd-card-body {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  padding: 12px 16px 16px;
+  gap: 7px;
+  padding: 12px 14px 13px 15px;
 }
 
 .mosd-card-head {
-  align-items: baseline;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-  justify-content: space-between;
+  align-items: start;
+  display: grid;
+  gap: 2px 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.mosd-card-head > .mosd-badge {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
 }
 
 .mosd-card-title {
-  color: #fff;
-  font-size: 16px;
+  color: var(--mosd-fg);
+  font-size: 15.5px;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.005em;
   text-decoration: none;
 }
 
 .mosd-card-title:hover,
 .mosd-card-title:focus {
+  color: var(--mosd-accent);
   text-decoration: underline;
 }
 
-.mosd-card-vendor {
-  color: var(--mosd-fg-muted);
-  font-size: 12px;
-  margin: 0 0 6px;
-}
-
-.mosd-card-vendor a {
-  color: inherit;
-}
-
-.mosd-card-vendor a:hover {
-  color: var(--mosd-accent);
-}
-
+/* The package path carries the vendor already, which is why there is no
+ * separate "by vendor" line. It is an identifier people copy, so a long one
+ * wraps at the slash rather than trailing off into an ellipsis. */
 .mosd-card-name {
-  color: rgb(255 255 255 / 0.75);
-  margin: 3px 0 0;
+  color: var(--mosd-fg-muted);
+  grid-column: 1 / -1;
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .mosd-card-name code {
   font-family: ui-monospace, monospace;
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
 .mosd-card-description {
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   display: -webkit-box;
-  flex: 1 1 auto;
-  margin: 6px 0;
+  margin: 0;
   overflow: hidden;
+}
+
+/* One line for "who is behind this": the vendor and every trust mark it has
+ * earned, instead of three more entries in the badge queue. */
+.mosd-card-vendor {
+  align-items: center;
+  color: var(--mosd-fg-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 2px 8px;
+  margin: 0;
+}
+
+.mosd-card-vendor a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mosd-card-vendor a:hover,
+.mosd-card-vendor a:focus {
+  color: var(--mosd-accent);
+  text-decoration: underline;
+}
+
+.mosd-card-vendor > :not(:last-child)::after {
+  color: var(--mosd-border);
+  content: '·';
+  margin-left: 7px;
+}
+
+.mosd-trust-mark { color: var(--mosd-ok); font-weight: 600; }
+.mosd-trust-pick { color: var(--mosd-accent); font-weight: 600; }
+
+/* The card already carries the risk tint and rail, so the message needs no
+ * box of its own — it only needs to be the one red thing on the card. */
+.mosd-card-risk {
+  color: var(--mosd-risk);
+  display: flex;
+  font-size: 12px;
+  gap: 7px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.mosd-risk-mark {
+  flex: none;
+  font-weight: 700;
+}
+
+.mosd-card-risk code {
+  font-family: ui-monospace, monospace;
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
 }
 
 .mosd-card-categories {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 2px 0 4px;
+  margin: 0;
 }
 
 .mosd-chip {
   background: var(--mosd-bg-soft);
   border: 0;
-  border-radius: 8px;
+  border-radius: calc(var(--mosd-radius) - 4px);
   color: var(--mosd-fg-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
-  padding: 3px 10px;
+  padding: 3px 9px;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -257,20 +400,22 @@
   color: var(--mosd-accent);
 }
 
-/* Metric row: PM-style labeled signals above the badge row */
-
+/* Footer: adoption and freshness, the two numbers read across cards rather
+ * than within one. `margin-top: auto` keeps them aligned along a row. */
 .mosd-card-stats {
-  border-top: 1px solid var(--mosd-bg-soft);
+  align-items: baseline;
+  border-top: 1px solid color-mix(in srgb, var(--mosd-border) 60%, transparent);
+  color: var(--mosd-fg-muted);
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  margin: 8px 0 0;
-  padding-top: 8px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  gap: 3px 12px;
+  margin: auto 0 0;
+  padding-top: 9px;
 }
 
 .mosd-stat {
-  color: var(--mosd-fg-muted);
-  font-size: 12px;
   white-space: nowrap;
 }
 
@@ -279,71 +424,17 @@
   font-weight: 600;
 }
 
-.mosd-card-meta {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 8px 0 0;
-}
-
-.mosd-card-actions {
-  margin: 12px 0 0;
-}
-
-/* Per-card composer command (PM-inspired copy bar) */
-
-.mosd-require {
-  align-items: center;
-  background: var(--mosd-band);
-  border-radius: 8px;
-  display: flex;
-  gap: 8px;
-  margin: 10px 0 0;
-  padding: 6px 6px 6px 10px;
-}
-
-.mosd-require code {
-  color: #d6f4dd;
-  flex: 1 1 auto;
-  font-family: ui-monospace, monospace;
-  font-size: 11.5px;
-  overflow-x: auto;
+/* The fit answer, for surfaces with no shop version to compare against. */
+.mosd-card-span {
+  border: 1px solid var(--mosd-border);
+  border-radius: calc(var(--mosd-radius) - 4px);
+  margin-left: auto;
+  padding: 2px 8px;
   white-space: nowrap;
 }
 
-.mosd-require-copy {
-  background: rgb(255 255 255 / 0.12);
-  border: 0;
-  border-radius: 6px;
-  color: #fff;
-  cursor: pointer;
-  flex-shrink: 0;
-  font: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 4px 10px;
-  transition: background 0.15s ease;
-}
-
-.mosd-require-copy:hover {
-  background: var(--mosd-accent);
-}
-
-/* Contribution nudge for needs-help packages (PM-inspired) */
-
-.mosd-contribute {
-  background: #fdf0c2;
-  border-radius: 8px;
-  color: #7a5d00;
-  font-size: 12.5px;
+.mosd-card-actions {
   margin: 10px 0 0;
-  padding: 7px 10px;
-}
-
-.mosd-contribute a {
-  color: inherit;
-  font-weight: 600;
 }
 
 /* Badges: MD assist-chip sized, tonal */
@@ -360,8 +451,7 @@
 }
 
 .mosd-badge-quality {
-  text-transform: uppercase;
-  font-size: 10.5px;
+  font-size: 11px;
 }
 
 .mosd-badge-strict-compliant { background: #d5f2dc; color: #1e6b34; }
@@ -369,15 +459,6 @@
 .mosd-badge-ready-to-install { background: #fdf0c2; color: #7a5d00; }
 .mosd-badge-needs-help { background: #fadcdc; color: #a52626; }
 .mosd-badge-untested { background: #ececec; color: #5f5f5f; }
-.mosd-badge-pick { background: #fdeee4; color: #a34a00; }
-.mosd-badge-trusted { background: #ddf0e8; color: #0f5c48; }
-.mosd-badge-warning { background: #fadcdc; color: #a52626; }
-.mosd-badge-abandoned { background: #4d5359; color: #f4f5f6; }
-.mosd-badge-installed { background: #d5f2dc; color: #1e6b34; }
-.mosd-badge-update { background: #fdf0c2; color: #7a5d00; }
-.mosd-badge-compat-ok { background: #ddf0e8; color: #0f5c48; }
-.mosd-badge-compat-older { background: #fdf0c2; color: #7a5d00; }
-.mosd-badge-compat-untested { background: var(--mosd-bg-soft); color: var(--mosd-fg-muted); }
 
 .mosd-empty,
 .mosd-loading,
