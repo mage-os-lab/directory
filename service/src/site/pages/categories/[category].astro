@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { withBase } from '../../lib/base.js';
 import { loadFeed, packageHref, packagesForCategory } from '../../lib/data.js';
+import { qualityLabel } from '../../../shared/quality.js';
 
 export function getStaticPaths() {
   const feed = loadFeed();
@@ -15,12 +16,6 @@ const { category } = Astro.props;
 const feed = loadFeed();
 const packages = packagesForCategory(feed, category.slug);
 
-const QUALITY_LABELS: Record<string, string> = {
-  'strict-compliant': 'Strict compliant',
-  'no-errors': 'No errors',
-  'ready-to-install': 'Ready to install',
-  'needs-help': 'Needs help',
-};
 ---
 
 <Base title={category.name} description={`${category.name} modules in the Mage-OS Extension Directory.`}>
@@ -45,7 +40,7 @@ const QUALITY_LABELS: Record<string, string> = {
             <p class="description">{pkg.description}</p>
             <p class="meta">
               <span class={`badge badge-${pkg.quality.tier ?? 'untested'}`}>
-                {pkg.quality.tier ? QUALITY_LABELS[pkg.quality.tier] : 'Not yet tested'}
+                {qualityLabel(pkg.quality.tier)}
               </span>
               {pkg.trust.editorialPick && <span class="badge badge-pick">Editors&rsquo; pick</span>}
               {pkg.trust.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}

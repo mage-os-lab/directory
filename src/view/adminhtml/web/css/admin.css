@@ -2,8 +2,12 @@
  * Theme mapping for the directory bundle. The bundle renders into an open shadow root, so
  * admin CSS cannot reach its internals; these custom properties are its supported theming
  * hook (they pierce the shadow boundary). The values are the Magento admin (backend) theme
- * palette, so the component reads as part of the panel: primary-action orange, the admin
- * menu's warm dark chrome for the card bands, the Admin Font stack, near-square corners.
+ * palette, so the component reads as part of the panel: primary-action orange, the Admin
+ * Font stack, near-square corners.
+ *
+ * The card's state colours (--mosd-theme-ok / -warn / -risk and their soft tints) are
+ * left at their defaults: they mark installed, update-available and at-risk modules, and
+ * they are deliberately not the admin's accent, which belongs to what the reader clicks.
  *
  * Everything outside the shadow root (intro, notices, attribution) deliberately reuses the
  * admin's own classes and typography instead of restyling them here.
@@ -17,8 +21,6 @@
     --mosd-theme-bg-soft: #f8f8f8;
     --mosd-theme-border: #cccccc;
     --mosd-theme-radius: 2px;
-    --mosd-theme-band: #41362f;
-    --mosd-theme-band-2: #524a45;
     --mosd-theme-font: 'Admin Font', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
     display: block;

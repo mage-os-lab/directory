@@ -287,10 +287,24 @@ host element to match the admin:
 --mosd-theme-bg-soft     /* default #f3f2f7 */
 --mosd-theme-border      /* default #dcd9e0 */
 --mosd-theme-radius      /* default 12px */
---mosd-theme-band        /* default #262335 — card header band + composer-command bar */
---mosd-theme-band-2      /* default #3a3450 — band gradient end */
 --mosd-theme-font        /* default Roboto, system-ui, sans-serif */
+
+/* Card state colours. Each pair is an ink and the tint it sits on: the ink
+ * carries the word, the tint carries the card surface, and a 3px rail on the
+ * card's left edge carries the same state a third time. Retheme them for an
+ * admin whose palette reads differently — never swap what they mean. */
+--mosd-theme-ok          /* default #0f7b45 — installed, and tested with this Magento */
+--mosd-theme-ok-soft     /* default #eff7f2 */
+--mosd-theme-warn        /* default #8a5300 — update available, or only an older release is tested */
+--mosd-theme-warn-soft   /* default #fdf5e7 */
+--mosd-theme-risk        /* default #a52626 — a trust warning, or abandoned */
+--mosd-theme-risk-soft   /* default #fdeeee */
 ```
+
+The accent stays what the reader *clicks* (marking, links, chips); the state colours stay
+what the catalog *reports*. Marking a module draws an accent ring around the whole card
+rather than a fourth state colour, so a marked module that also needs an update still
+shows its update rail.
 
 ### 5.5 Working example
 

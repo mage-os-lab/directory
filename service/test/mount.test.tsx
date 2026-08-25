@@ -85,6 +85,44 @@ const feed: Feed = {
       popularity: { installs: 20, githubStars: null },
       ranking: { score: 0.3, components: { qualityTier: 0.4 } },
     },
+    {
+      name: 'acme/module-legacy',
+      vendor: 'acme',
+      displayName: 'Acme Legacy',
+      description: 'An old integration.',
+      categories: ['payments'],
+      repositoryUrl: null,
+      latestVersion: '0.4.0',
+      latestReleasedAt: '2023-01-01T00:00:00.000Z',
+      supportedMagento: [],
+      compatibility: {},
+      abandoned: true,
+      abandonedReplacement: 'acme/module-modern',
+      quality: {
+        tier: null,
+        phpstanLevel: null,
+        buildStatus: 'unknown',
+        semver: null,
+        stale: false,
+      },
+      trust: {
+        trustedVendor: false,
+        partnerTier: null,
+        editorialPick: false,
+        warnings: [
+          {
+            code: 'unmaintained',
+            severity: 'derank',
+            message: 'No release since 2023.',
+            date: '2026-05-01',
+          },
+        ],
+        deranked: true,
+        hidden: false,
+      },
+      popularity: { installs: 4, githubStars: null },
+      ranking: { score: 0.1, components: { qualityTier: 0.1 } },
+    },
   ],
 };
 
@@ -165,7 +203,7 @@ describe('mountDirectory', () => {
     expect(el.textContent).toContain('Acme Pay');
   });
 
-  it('shows installed and update-available badges from the installed map', async () => {
+  it('shows install state and rails on the card from the installed map', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
@@ -177,13 +215,70 @@ describe('mountDirectory', () => {
     });
     await flush();
 
-    const badges = [...el.querySelectorAll('.mosd-badge-installed, .mosd-badge-update')].map(
-      (b) => b.textContent,
+    const states = [...el.querySelectorAll('.mosd-state')].map((s) =>
+      s.textContent!.replace(/\s+/g, ' ').trim(),
     );
-    expect(badges).toContain('Installed v1.0.0');
-    expect(badges).toContain('Installed v2.0.0 → v2.1.0');
-    // Up-to-date packages get no mark button even when selectable.
+    expect(states).toContain('✓ Installed v1.0.0');
+    expect(states).toContain('↑ Update v2.0.0 → v2.1.0');
+    // The rail classes carry the same two states without relying on colour.
+    expect(el.querySelectorAll('.mosd-card.mosd-is-installed')).toHaveLength(1);
+    expect(el.querySelectorAll('.mosd-card.mosd-is-update')).toHaveLength(1);
     expect(el.querySelector('select.mosd-install-filter')).not.toBeNull();
+  });
+
+  it('leads the card with the fit line only when the host knows the shop', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+
+    // The public site has no shop to compare against: no strip, and the
+    // tested range sits in the footer instead.
+    expect(el.querySelector('.mosd-card-fit')).toBeNull();
+    expect([...el.querySelectorAll('.mosd-card-span')].map((s) => s.textContent)).toEqual([
+      'Magento 2.4.7',
+      'Magento 2.4.7',
+    ]);
+    // The abandoned package has no tested Magento versions at all, so it
+    // gets no range rather than an empty or invented one.
+    expect(el.querySelectorAll('.mosd-card')).toHaveLength(3);
+  });
+
+  it('marks a card as selected without hiding the rail underneath it', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      selectable: true,
+      installed: { 'acme/module-search': '2.0.0' },
+    });
+    await flush();
+
+    const cardOf = (name: string) =>
+      [...el.querySelectorAll('.mosd-card')].find((c) =>
+        c.querySelector('.mosd-card-name')!.textContent!.includes(name),
+      )!;
+    // Marking an update keeps the update rail and adds the selection ring;
+    // marking an otherwise plain package may tint the surface as well.
+    (cardOf('module-search').querySelector('.mosd-mark') as HTMLButtonElement).click();
+    (cardOf('acme/module-pay').querySelector('.mosd-mark') as HTMLButtonElement).click();
+    await flush();
+
+    expect([...cardOf('module-search').classList].sort()).toEqual([
+      'mosd-card',
+      'mosd-is-marked',
+      'mosd-is-update',
+    ]);
+    expect([...cardOf('acme/module-pay').classList].sort()).toEqual([
+      'mosd-card',
+      'mosd-is-marked',
+      'mosd-is-marked-only',
+    ]);
   });
 
   it('builds the composer command and dispatches mosd:selection when marking', async () => {
@@ -199,7 +294,7 @@ describe('mountDirectory', () => {
     await flush();
 
     const buttons = [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')];
-    expect(buttons).toHaveLength(2);
+    expect(buttons).toHaveLength(3);
     buttons[0].click();
     await flush();
     [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')]
@@ -239,14 +334,14 @@ describe('mountDirectory', () => {
     unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, magentoVersion: '2.4.6' });
     await flush();
 
-    const badges = [
-      ...el.querySelectorAll(
-        '.mosd-badge-compat-ok, .mosd-badge-compat-older, .mosd-badge-compat-untested',
-      ),
-    ].map((b) => b.textContent!.trim());
+    const fits = [...el.querySelectorAll('.mosd-card-fit')].map((f) =>
+      f.querySelector('span')!.textContent!.trim(),
+    );
     // module-pay: latest not verified on 2.4.6, but 0.9.0 is; module-search: nothing is.
-    expect(badges).toContain('v0.9.0 tested with 2.4.6');
-    expect(badges).toContain('Not tested with 2.4.6');
+    expect(fits).toContain('v0.9.0 tested with 2.4.6');
+    expect(fits).toContain('Not tested with 2.4.6');
+    expect(el.querySelector('.mosd-card-fit.mosd-fit-older')).not.toBeNull();
+    expect(el.querySelector('.mosd-card-fit.mosd-fit-untested')).not.toBeNull();
 
     // The tested-only toggle hides the untested package.
     const toggle = el.querySelector<HTMLInputElement>('.mosd-tested-toggle input')!;
@@ -276,8 +371,8 @@ describe('mountDirectory', () => {
     });
     await flush();
 
-    expect(el.querySelector('.mosd-badge-update')!.textContent).toBe(
-      'Installed v0.8.0 → v0.9.0',
+    expect(el.querySelector('.mosd-state-update')!.textContent!.replace(/\s+/g, ' ').trim()).toBe(
+      '↑ Update v0.8.0 → v0.9.0',
     );
     const updateButton = [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')].find((b) =>
       b.textContent!.includes('update'),
@@ -294,6 +389,30 @@ describe('mountDirectory', () => {
         command: 'composer require acme/module-pay:^0.9.0',
       },
     ]);
+  });
+
+  it('states the risk in full, and lets it outrank the installed rail', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      installed: { 'acme/module-legacy': '0.4.0' },
+    });
+    await flush();
+
+    const risky = el.querySelector('.mosd-card.mosd-is-risk')!;
+    expect(risky.querySelector('.mosd-card-name')!.textContent).toBe('acme/module-legacy');
+    // Abandonment, the maintainer's replacement and the warning, in words —
+    // not a "1 warning" count.
+    expect(risky.querySelector('.mosd-card-risk')!.textContent!.replace(/\s+/g, ' ').trim()).toBe(
+      '⚠Abandoned by its maintainer. No release since 2023. Replaced by acme/module-modern.',
+    );
+    // Risk wins the rail; the card still says which version is installed.
+    expect(risky.classList.contains('mosd-is-installed')).toBe(false);
+    expect(risky.querySelector('.mosd-state')!.textContent).toContain('Installed v0.4.0');
   });
 
   it('unmount cleans the tree', async () => {

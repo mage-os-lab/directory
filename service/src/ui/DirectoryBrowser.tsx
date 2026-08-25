@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import MiniSearch from 'minisearch';
-import { isNewer } from '../shared/version.js';
+import { QUALITY_LABELS, qualityLabel } from '../shared/quality.js';
+import { compareVersions, isNewer } from '../shared/version.js';
 import type {
   DirectoryFilters,
   Feed,
@@ -49,13 +50,6 @@ export function composerCommand(entries: Array<{ name: string; version: string |
   return `composer require ${args.join(' ')}`;
 }
 
-const QUALITY_LABELS: Record<string, string> = {
-  'strict-compliant': 'Strict compliant',
-  'no-errors': 'No errors',
-  'ready-to-install': 'Ready to install',
-  'needs-help': 'Needs help',
-};
-
 const SORTS: Array<{ key: SortKey; label: string }> = [
   { key: 'recommended', label: 'Recommended' },
   { key: 'installs', label: 'Most installed' },
@@ -66,6 +60,53 @@ const SORTS: Array<{ key: SortKey; label: string }> = [
 
 export function packageUrl(baseUrl: string, pkg: PackageSummary): string {
   return `${baseUrl}/packages/${pkg.name}/`;
+}
+
+/** "2.4.5–2.4.7", or the single version, for surfaces with no host version
+ * to compare against. Sorted here rather than trusted from the feed. */
+export function magentoRange(pkg: PackageSummary): string | null {
+  if (pkg.supportedMagento.length === 0) return null;
+  const sorted = [...pkg.supportedMagento].sort(compareVersions);
+  const lowest = sorted[0];
+  const highest = sorted[sorted.length - 1];
+  return lowest === highest ? lowest : `${lowest}–${highest}`;
+}
+
+/**
+ * Time since the last release, in words. "Recently released" is a sort
+ * option; this is the column it sorts on, and the answer to "is anyone
+ * still working on this".
+ */
+export function releasedAgo(iso: string | null, now: number = Date.now()): string | null {
+  if (iso === null) return null;
+  const released = Date.parse(iso);
+  if (Number.isNaN(released)) return null;
+  const days = Math.floor((now - released) / 86_400_000);
+  if (days < 0) return null;
+  if (days < 7) return 'updated this week';
+  if (days < 31) {
+    const weeks = Math.max(1, Math.round(days / 7));
+    return `updated ${weeks} week${weeks === 1 ? '' : 's'} ago`;
+  }
+  if (days < 365) {
+    const months = Math.min(11, Math.max(1, Math.round(days / 30.44)));
+    return `updated ${months} month${months === 1 ? '' : 's'} ago`;
+  }
+  const years = Math.floor(days / 365);
+  return `updated ${years} year${years === 1 ? '' : 's'} ago`;
+}
+
+/** Install counts are scale, not accounting: 9.8k reads faster than 9,847. */
+export function installsLabel(installs: number): string {
+  if (installs < 1000) return String(installs);
+  const thousands = installs / 1000;
+  const rounded = thousands >= 10 ? String(Math.round(thousands)) : thousands.toFixed(1);
+  return `${rounded.replace(/\.0$/, '')}k`;
+}
+
+/** Warnings and abandonment are the only things on a card allowed to be red. */
+export function isRisky(pkg: PackageSummary): boolean {
+  return pkg.abandoned === true || pkg.trust.warnings.length > 0;
 }
 
 function compare(a: PackageSummary, b: PackageSummary, sort: SortKey): number {
@@ -95,10 +136,14 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   const [installFilter, setInstallFilter] = useState<'' | InstallState>('');
   const [marked, setMarked] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
-  const [copiedCard, setCopiedCard] = useState<string | null>(null);
 
   const categoryNames = useMemo(
     () => new Map(feed.categories.map((c) => [c.slug, c.name])),
+    [feed],
+  );
+
+  const vendorNames = useMemo(
+    () => new Map(feed.vendors.map((v) => [v.slug, v.name])),
     [feed],
   );
 
@@ -129,6 +174,14 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     const target = targetVersion(pkg);
     return target && isNewer(target, version) ? 'update' : 'installed';
   };
+
+  /**
+   * The host knows something about this shop — its Magento version, its
+   * composer.lock, or both. That is what separates the embedded surface from
+   * the public site, and it is what promotes the fit answer to the top of
+   * the card.
+   */
+  const hostAware = props.magentoVersion !== undefined || installed !== undefined;
 
   const search = useMemo(() => {
     const index = new MiniSearch<PackageSummary>({
@@ -231,33 +284,88 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     );
   };
 
-  const copyRequire = (pkg: PackageSummary) => {
-    const single = composerCommand([{ name: pkg.name, version: targetVersion(pkg) }]);
-    navigator.clipboard?.writeText(single).then(
-      () => setCopiedCard(pkg.name),
-      () => {},
-    );
-  };
-
-  const magentoBadge = (pkg: PackageSummary) => {
+  /**
+   * The card's fit answer. With a host Magento version it leads the card in
+   * a coloured strip; without one it is a neutral range in the footer. The
+   * wording stays PackageMaven's: a missing test result is "not tested",
+   * never "incompatible", and an older verified release is named so the
+   * reader can see what the install list would pin.
+   */
+  const fitLine = (pkg: PackageSummary): { tone: string; text: string } | null => {
     const support = magentoSupport(pkg);
-    if (support === null) return null;
+    if (support === null) {
+      const span = magentoRange(pkg);
+      return span === null ? null : { tone: 'plain', text: `Magento ${span}` };
+    }
     if (support.state === 'tested') {
-      return (
-        <span class="mosd-badge mosd-badge-compat-ok">Tested with {props.magentoVersion}</span>
-      );
+      return { tone: 'ok', text: `Tested with ${props.magentoVersion}` };
     }
     if (support.state === 'older') {
+      return { tone: 'older', text: `v${support.version} tested with ${props.magentoVersion}` };
+    }
+    return { tone: 'untested', text: `Not tested with ${props.magentoVersion}` };
+  };
+
+  /** Where the reader stands with the package — admin surfaces only. */
+  const stateTag = (pkg: PackageSummary) => {
+    const state = installState(pkg);
+    if (state === 'installed') {
       return (
-        <span class="mosd-badge mosd-badge-compat-older">
-          v{support.version} tested with {props.magentoVersion}
+        <span class="mosd-state mosd-state-installed">
+          <span aria-hidden="true">✓</span> Installed v{installed![pkg.name]}
         </span>
       );
     }
+    if (state === 'update') {
+      return (
+        <span class="mosd-state mosd-state-update">
+          <span aria-hidden="true">↑</span> Update v{installed![pkg.name]} → v
+          {targetVersion(pkg)}
+        </span>
+      );
+    }
+    return null;
+  };
+
+  /**
+   * A rail is a fact the system knows, a ring is a choice the reader made,
+   * and a card is often both — so they are separate classes that compose.
+   * Risk outranks install state: an abandoned module you have installed is
+   * the most useful thing this view can tell anyone.
+   */
+  const cardClass = (pkg: PackageSummary): string => {
+    const state = installState(pkg);
+    const rail = isRisky(pkg)
+      ? 'mosd-is-risk'
+      : state === 'update'
+        ? 'mosd-is-update'
+        : state === 'installed'
+          ? 'mosd-is-installed'
+          : '';
+    if (!marked.has(pkg.name)) return `mosd-card ${rail}`.trim();
+    // Nothing else is claiming the surface, so the selection may tint it.
+    const solo = rail === '' ? ' mosd-is-marked-only' : '';
+    return `mosd-card ${rail} mosd-is-marked${solo}`.replace(/\s+/g, ' ').trim();
+  };
+
+  /** The first warning, in full, plus what the maintainer suggests instead. */
+  const riskLine = (pkg: PackageSummary) => {
+    if (!isRisky(pkg)) return null;
+    const [warning, ...rest] = pkg.trust.warnings;
     return (
-      <span class="mosd-badge mosd-badge-compat-untested">
-        Not tested with {props.magentoVersion}
-      </span>
+      <p class="mosd-card-risk">
+        <span class="mosd-risk-mark" aria-hidden="true">⚠</span>
+        <span>
+          {pkg.abandoned === true && 'Abandoned by its maintainer. '}
+          {warning !== undefined && `${warning.message} `}
+          {pkg.abandonedReplacement !== null && (
+            <>
+              Replaced by <code>{pkg.abandonedReplacement}</code>.{' '}
+            </>
+          )}
+          {rest.length > 0 && `+${rest.length} more warning${rest.length === 1 ? '' : 's'}.`}
+        </span>
+      </p>
     );
   };
 
@@ -359,142 +467,103 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
         )}
       </p>
       <ul class="mosd-results">
-        {results.map((pkg) => (
-          <li key={pkg.name} class="mosd-card">
-            <div class="mosd-card-band">
-              <div class="mosd-card-head">
-                <a
-                  class="mosd-card-title"
-                  href={packageUrl(baseUrl, pkg)}
-                  onClick={(e) => select(e, pkg)}
-                >
-                  {pkg.displayName}
-                </a>
-                <span class={`mosd-badge mosd-badge-quality mosd-badge-${pkg.quality.tier ?? 'untested'}`}>
-                  {pkg.quality.tier ? QUALITY_LABELS[pkg.quality.tier] : 'Not yet tested'}
-                </span>
-              </div>
-              <p class="mosd-card-name">
-                <code>{pkg.name}</code>
-              </p>
-            </div>
-            <div class="mosd-card-body">
-            <p class="mosd-card-vendor">
-              by{' '}
-              {linkMode === 'href' ? (
-                <a href={`${baseUrl}/vendors/${pkg.vendor}/`}>{pkg.vendor}</a>
-              ) : (
-                pkg.vendor
+        {results.map((pkg) => {
+          const fit = fitLine(pkg);
+          const state = stateTag(pkg);
+          // The fit answer leads the card wherever the host knows something
+          // about this shop; otherwise it is a neutral note in the footer.
+          const leads = fit !== null && hostAware;
+          const age = releasedAgo(pkg.latestReleasedAt);
+          return (
+            <li key={pkg.name} class={cardClass(pkg)}>
+              {leads && (
+                <p class={`mosd-card-fit mosd-fit-${fit.tone}`}>
+                  <span>{fit.text}</span>
+                  {state}
+                </p>
               )}
-            </p>
-            <div class="mosd-card-categories">
-              {pkg.categories.slice(0, 3).map((slug) => (
-                <button
-                  key={slug}
-                  type="button"
-                  class="mosd-chip"
-                  onClick={() => setCategory(slug)}
-                >
-                  {categoryNames.get(slug) ?? slug}
-                </button>
-              ))}
-            </div>
-            <p class="mosd-card-description">{pkg.description}</p>
-            <p class="mosd-card-stats">
-              {pkg.popularity.githubStars !== null && (
-                <span class="mosd-stat">
-                  ★ <strong>{pkg.popularity.githubStars.toLocaleString()}</strong>
-                </span>
-              )}
-              {pkg.popularity.installs !== null && (
-                <span class="mosd-stat">
-                  ⤓ <strong>{pkg.popularity.installs.toLocaleString()}</strong>
-                </span>
-              )}
-              {pkg.quality.phpstanLevel !== null && pkg.quality.phpstanLevel >= 0 && (
-                <span class="mosd-stat">
-                  PHPStan <strong>L{pkg.quality.phpstanLevel}</strong>
-                </span>
-              )}
-              {pkg.quality.semver !== null && pkg.quality.semver.compliancePercent !== null && (
-                <span class="mosd-stat">
-                  SemVer <strong>{pkg.quality.semver.compliancePercent}%</strong>
-                </span>
-              )}
-              {pkg.latestVersion && (
-                <span class="mosd-stat">
-                  <strong>v{pkg.latestVersion}</strong>
-                </span>
-              )}
-            </p>
-            <p class="mosd-card-meta">
-              {pkg.trust.editorialPick && <span class="mosd-badge mosd-badge-pick">Editors’ pick</span>}
-              {pkg.trust.trustedVendor && (
-                <span class="mosd-badge mosd-badge-trusted">Trusted vendor</span>
-              )}
-              {pkg.trust.partnerTier && (
-                <span class={`mosd-badge mosd-badge-partner-${pkg.trust.partnerTier}`}>
-                  {pkg.trust.partnerTier} partner
-                </span>
-              )}
-              {pkg.trust.warnings.length > 0 && (
-                <span class="mosd-badge mosd-badge-warning">
-                  {pkg.trust.warnings.length} warning{pkg.trust.warnings.length === 1 ? '' : 's'}
-                </span>
-              )}
-              {pkg.abandoned && <span class="mosd-badge mosd-badge-abandoned">Abandoned</span>}
-              {magentoBadge(pkg)}
-              {installState(pkg) === 'installed' && (
-                <span class="mosd-badge mosd-badge-installed">
-                  Installed v{installed![pkg.name]}
-                </span>
-              )}
-              {installState(pkg) === 'update' && (
-                <span class="mosd-badge mosd-badge-update">
-                  Installed v{installed![pkg.name]} → v{targetVersion(pkg)}
-                </span>
-              )}
-            </p>
-            <div class="mosd-require">
-              <code>{composerCommand([{ name: pkg.name, version: targetVersion(pkg) }])}</code>
-              <button
-                type="button"
-                class="mosd-require-copy"
-                aria-label={`Copy composer command for ${pkg.name}`}
-                onClick={() => copyRequire(pkg)}
-              >
-                {copiedCard === pkg.name ? '✓ Copied' : 'Copy'}
-              </button>
-            </div>
-            {props.selectable && installState(pkg) !== 'installed' && (
-              <p class="mosd-card-actions">
-                <button
-                  type="button"
-                  class={`mosd-mark${marked.has(pkg.name) ? ' mosd-marked' : ''}`}
-                  onClick={() => toggleMark(pkg)}
-                >
-                  {marked.has(pkg.name)
-                    ? '✓ On install list'
-                    : installState(pkg) === 'update'
-                      ? '+ Mark for update'
-                      : '+ Mark for install'}
-                </button>
-              </p>
-            )}
-            {pkg.quality.tier === 'needs-help' && (
-              <p class="mosd-contribute">
-                {pkg.repositoryUrl ? (
-                  <a href={pkg.repositoryUrl} rel="noopener">
-                    Needs help — contribute on the repository →
+              <div class="mosd-card-body">
+                <div class="mosd-card-head">
+                  <a
+                    class="mosd-card-title"
+                    href={packageUrl(baseUrl, pkg)}
+                    onClick={(e) => select(e, pkg)}
+                  >
+                    {pkg.displayName}
                   </a>
-                ) : (
-                  'Needs help — contributions welcome'
+                  <span
+                    class={`mosd-badge mosd-badge-quality mosd-badge-${pkg.quality.tier ?? 'untested'}`}
+                  >
+                    {qualityLabel(pkg.quality.tier)}
+                  </span>
+                  <p class="mosd-card-name">
+                    <code>{pkg.name}</code>
+                  </p>
+                </div>
+                {!leads && state !== null && <p class="mosd-card-state">{state}</p>}
+                <p class="mosd-card-description">{pkg.description}</p>
+                <p class="mosd-card-vendor">
+                  {linkMode === 'href' ? (
+                    <a href={`${baseUrl}/vendors/${pkg.vendor}/`}>
+                      {vendorNames.get(pkg.vendor) ?? pkg.vendor}
+                    </a>
+                  ) : (
+                    <span>{vendorNames.get(pkg.vendor) ?? pkg.vendor}</span>
+                  )}
+                  {pkg.trust.trustedVendor && (
+                    <span class="mosd-trust-mark">✓ Trusted vendor</span>
+                  )}
+                  {pkg.trust.partnerTier && (
+                    <span class="mosd-trust-partner">
+                      {pkg.trust.partnerTier[0].toUpperCase() + pkg.trust.partnerTier.slice(1)}{' '}
+                      partner
+                    </span>
+                  )}
+                  {pkg.trust.editorialPick && <span class="mosd-trust-pick">★ Editors’ pick</span>}
+                </p>
+                {riskLine(pkg)}
+                <div class="mosd-card-categories">
+                  {pkg.categories.slice(0, 2).map((slug) => (
+                    <button
+                      key={slug}
+                      type="button"
+                      class="mosd-chip"
+                      onClick={() => setCategory(slug)}
+                    >
+                      {categoryNames.get(slug) ?? slug}
+                    </button>
+                  ))}
+                </div>
+                <p class="mosd-card-stats">
+                  {pkg.popularity.installs !== null && (
+                    <span class="mosd-stat">
+                      <strong>{installsLabel(pkg.popularity.installs)}</strong> installs
+                    </span>
+                  )}
+                  {age !== null && <span class="mosd-stat">{age}</span>}
+                  {!leads && fit !== null && (
+                    <span class="mosd-card-span">{fit.text}</span>
+                  )}
+                </p>
+                {props.selectable && installState(pkg) !== 'installed' && (
+                  <p class="mosd-card-actions">
+                    <button
+                      type="button"
+                      class={`mosd-mark${marked.has(pkg.name) ? ' mosd-marked' : ''}`}
+                      onClick={() => toggleMark(pkg)}
+                    >
+                      {marked.has(pkg.name)
+                        ? '✓ On install list'
+                        : installState(pkg) === 'update'
+                          ? '+ Mark for update'
+                          : '+ Mark for install'}
+                    </button>
+                  </p>
                 )}
-              </p>
-            )}
-            </div>
-          </li>
-        ))}
+              </div>
+            </li>
+          );
+        })}
       </ul>
       {results.length === 0 && <p class="mosd-empty">No modules match. Try widening the filters.</p>}
       {props.selectable && marked.size > 0 && (

@@ -222,3 +222,36 @@ maintained), `git subtree split` extracts `src/` with full history — the
 machinery to run than the problem deserves while one group maintains both); a
 `composer.json` inside `src/` with a Packagist path hack (Packagist has no
 subdirectory-package support).
+
+## 13. The browse card answers eight questions and defers the rest
+
+**Decision:** the card in `src/ui/` carries name, package path, one sentence, one quality
+verdict, fit, installs, time since the last release, and any risk — plus, where the host
+knows the shop, where the reader stands with it. PHPStan level, SemVer compliance, build
+status, GitHub stars, the raw version and release date, and the per-card `composer
+require` bar are gone from browse listings; they remain on detail pages. Quality tiers
+carry merchant-facing names (`src/shared/quality.ts`), shared by the island and the
+prerendered pages. Where the host passes `magentoVersion` or `installed`, the fit answer
+leads the card as a colour-coded strip; on the public site it is a neutral tested-version
+range in the footer. Installed / update-available / at-risk are each carried by a rail, a
+surface tint and a word at once, risk outranking install state; marking draws an accent
+ring, which composes on top of any rail.
+
+**Why:** the previous card rendered up to seven badges and five metrics, and repeated the
+same fact several times over — the version string in four places, the vendor in three,
+quality in four (tier, PHPStan level, SemVer percentage, needs-help strip), popularity in
+two. It also spoke to contributors: PHPStan levels and a "contribute on the repository"
+nudge are for the person who would fix a module, not the person deciding whether to run
+it. A browse card is the shortlist test — open this one, or scroll past — and anything
+that doesn't move that decision costs scanning time on every card in the list. Meanwhile
+the facts that *do* decide it were buried: compatibility with the shop's own Magento sat
+seventh in a badge row, "N warnings" was a count instead of the warning, and freshness —
+which the "recently released" sort orders on — was not shown at all.
+
+**Rejected:** a dense row/ledger listing and a compatibility-matrix row (both better for
+comparing many results, but wrong for the public site's discovery grid, and a second
+layout to maintain); tile and editorial-row variants (too little and too much room
+respectively); status by badge alone (an install state ranked level with "Editors' pick"
+is the problem being fixed, and colour-only encoding fails for the same reason);
+per-card composer commands (the admin's tray already builds one from the install list,
+and detail pages carry the single-package form).

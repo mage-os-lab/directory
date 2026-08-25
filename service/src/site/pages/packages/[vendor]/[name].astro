@@ -9,6 +9,7 @@ import {
   vendorHref,
   visiblePackages,
 } from '../../../lib/data.js';
+import { qualityLabel } from '../../../../shared/quality.js';
 
 export function getStaticPaths() {
   const feed = loadFeed();
@@ -23,12 +24,6 @@ export function getStaticPaths() {
 const { vendor, name } = Astro.params;
 const pkg = loadPackageDetail(vendor as string, name as string);
 
-const QUALITY_LABELS: Record<string, string> = {
-  'strict-compliant': 'Strict compliant',
-  'no-errors': 'No errors',
-  'ready-to-install': 'Ready to install',
-  'needs-help': 'Needs help',
-};
 
 const installCommand = `composer require ${pkg.name}`;
 
@@ -104,7 +99,7 @@ const jsonLd = {
 
   <div class="detail-badges">
     <span class={`badge badge-${pkg.quality.tier ?? 'untested'}`}>
-      {pkg.quality.tier ? QUALITY_LABELS[pkg.quality.tier] : 'Not yet tested'}
+      {qualityLabel(pkg.quality.tier)}
     </span>
     {pkg.quality.phpstanLevel !== null && pkg.quality.phpstanLevel >= 0 && (
       <span class="badge">PHPStan level {pkg.quality.phpstanLevel}</span>
