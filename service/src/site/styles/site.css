@@ -470,8 +470,68 @@ h3 {
   padding-top: 20px;
 }
 
-.readme img {
+.readme-attribution {
+  color: var(--fg-muted);
+  font-size: 0.85rem;
+  margin: -4px 0 16px;
+}
+
+/* Third-party content: sanitized upstream, but it still has to live inside
+ * the page's measure. Anything that can be wider than the column (images,
+ * code, tables) is capped or scrolls in its own box rather than stretching
+ * the layout. */
+.readme-body img {
   max-width: 100%;
+}
+
+.readme-body h2,
+.readme-body h3,
+.readme-body h4,
+.readme-body h5,
+.readme-body h6 {
+  line-height: 1.25;
+  margin: 24px 0 8px;
+}
+
+.readme-body pre {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  padding: 12px;
+}
+
+.readme-body :not(pre) > code {
+  background: var(--bg-soft);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+.readme-body blockquote {
+  border-left: 3px solid var(--border);
+  color: var(--fg-muted);
+  margin: 16px 0;
+  padding: 0 0 0 14px;
+}
+
+.readme-body table {
+  border-collapse: collapse;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.readme-body th,
+.readme-body td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.readme-body hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
 }
 
 .links-section {

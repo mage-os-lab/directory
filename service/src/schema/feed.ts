@@ -131,6 +131,8 @@ export const packageDetail = packageSummary.extend({
   generatedAt: isoDateTime,
   /** Sanitized at build time; null when the README is unavailable. */
   readmeHtml: z.string().nullable(),
+  /** The README's source, for attribution; null whenever readmeHtml is. */
+  readmeSourceUrl: z.url().nullable(),
   /** PM's per-release test matrix, newest release first (latest included).
    * Empty when PM supplied no per-release data. */
   releases: z.array(packageRelease),

@@ -4,8 +4,8 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { runPipeline } from '../src/pipeline/run.js';
 import { feed as feedSchema, packageDetail } from '../src/schema/feed.js';
-import { mapCategories, unmappedCategoryLabels } from '../src/pipeline/merge.js';
-import { loadCategories } from '../src/pipeline/load.js';
+import { mapCategories, mergeToFeed, unmappedCategoryLabels } from '../src/pipeline/merge.js';
+import { loadCategories, loadRankingConfig, loadSnapshot } from '../src/pipeline/load.js';
 
 const rootDir = path.resolve(__dirname, '..');
 const now = new Date('2026-07-01T12:00:00.000Z');
@@ -159,5 +159,61 @@ describe('category mapping', () => {
       'devops-infrastructure', 'import-export', 'ai-automation', 'miscellaneous',
     ];
     expect(unmappedCategoryLabels(liveSlugs, categories)).toEqual([]);
+  });
+});
+
+describe('GitHub extras', () => {
+  const dataDir = path.join(rootDir, 'data');
+  const snapshot = loadSnapshot(path.join(dataDir, 'fixtures', 'packagemaven-snapshot.json'));
+
+  function merge(github: Parameters<typeof mergeToFeed>[0]['github']) {
+    return mergeToFeed({
+      snapshot,
+      snapshotStale: false,
+      vendorFiles: [],
+      categories: loadCategories(dataDir),
+      rankingConfig: loadRankingConfig(dataDir),
+      github,
+      githubOk: true,
+      githubFetchedAt: now.toISOString(),
+      now,
+    });
+  }
+
+  const target = snapshot.packages[0]!.name;
+
+  it('carries a README into the package detail and stars into the feed', () => {
+    const { feed, details } = merge(
+      new Map([
+        [
+          target,
+          {
+            readmeHtml: '<p>Docs</p>',
+            readmeSourceUrl: 'https://github.com/northware/mage-modules#readme',
+            stars: 512,
+          },
+        ],
+      ]),
+    );
+
+    const detail = details.find((d) => d.name === target)!;
+    expect(detail.readmeHtml).toBe('<p>Docs</p>');
+    expect(detail.readmeSourceUrl).toBe('https://github.com/northware/mage-modules#readme');
+    // Live stars win over PM's reported count.
+    expect(feed.packages.find((p) => p.name === target)!.popularity.githubStars).toBe(512);
+
+    // Packages without extras stay fully renderable.
+    const other = details.find((d) => d.name !== target)!;
+    expect(other.readmeHtml).toBeNull();
+    expect(other.readmeSourceUrl).toBeNull();
+  });
+
+  it('never publishes an attribution link without the README it attributes', () => {
+    const { details } = merge(
+      new Map([
+        [target, { readmeHtml: null, readmeSourceUrl: 'https://github.com/o/r#readme', stars: null }],
+      ]),
+    );
+    expect(details.find((d) => d.name === target)!.readmeSourceUrl).toBeNull();
   });
 });
