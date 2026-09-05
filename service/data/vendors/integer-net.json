@@ -5,5 +5,9 @@
   "url": "https://integer-net.com/",
   "trustedVendor": false,
   "partnerTier": "bronze",
-  "packages": {}
+  "packages": {
+    "integer-net/magento2-sansec-watch": {
+      "editorialPick": true
+    }
+  }
 }
