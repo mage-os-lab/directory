@@ -83,11 +83,16 @@ export function rankVendors(packages: PackageSummary[], now: Date): VendorRow[] 
     // Quality carries the most weight, then how much of the catalogue is still
     // moving, then reach. Abandonment and standing warnings are penalties, not
     // signals to average away: one hidden package sinks a vendor's candidacy.
+    //
+    // Breadth is scored explicitly because the shares above are trivially
+    // perfect for a one-package vendor — without it the list fills with
+    // single-module authors, which is not what a trusted-vendor badge claims.
     const score =
-      0.4 * quality +
-      0.2 * activeShare +
+      0.3 * quality +
+      0.15 * activeShare +
       0.15 * logScale(installs, maxInstalls * 3) +
-      0.15 * testedShare +
+      0.15 * logScale(tiers.length, 40) +
+      0.1 * testedShare +
       0.1 * logScale(list.reduce((sum, p) => sum + (p.popularity.githubStars ?? 0), 0), 3000) -
       0.3 * (abandoned / list.length) -
       0.5 * (warned > 0 ? 1 : 0);
@@ -173,6 +178,12 @@ const { values } = parseArgs({
   options: {
     feed: { type: 'string', default: path.join('public', 'api', 'v1', 'feed.json') },
     vendors: { type: 'string' },
+    /** Dump every signal for these exact packages, whatever the filters say. */
+    packages: { type: 'string' },
+    /** Minimum tested packages for a vendor to appear — a badge claims a track
+     * record across a catalogue, not one good module. */
+    'min-packages': { type: 'string', default: '3' },
+    detail: { type: 'boolean', default: false },
     top: { type: 'string', default: '30' },
   },
 });
@@ -190,11 +201,16 @@ console.log(
     `${parsed.vendors.length} vendors, ${untested} untested by PM\n`,
 );
 
-console.log('## Trusted-vendor candidates (curation aid — longevity still needs a human check)\n');
+const minPackages = Number(values['min-packages']);
+console.log(
+  `## Trusted-vendor candidates (>= ${minPackages} PM-tested packages; ` +
+    'longevity still needs a human check)\n',
+);
 console.log(
   table(
     ['vendor', 'pkgs', 'tested', 'strict', 'clean', 'help', 'aband', 'warn', 'installs', 'stars', 'fresh_mo', 'active%', 'score'],
     rankVendors(packages, now)
+      .filter((r) => r.tested >= minPackages)
       .slice(0, top)
       .map((r) => [
         r.vendor,
@@ -232,3 +248,50 @@ console.log(
       ]),
   ),
 );
+
+if (values.packages) {
+  const wanted = new Set(values.packages.split(',').map((n) => n.trim()));
+  console.log('\n## Named packages\n');
+  const found = parsed.packages.filter((p) => wanted.has(p.name));
+  for (const name of wanted) {
+    if (!found.some((p) => p.name === name)) console.log(`${name}: NOT IN THE PM INDEX`);
+  }
+  console.log(
+    table(
+      ['package', 'tier', 'phpstan', 'semver', 'build', 'installs', 'stars', 'released', 'aband', 'magento'],
+      found.map((p) => [
+        p.name,
+        p.quality.tier ?? 'untested',
+        p.quality.phpstanLevel === null ? '-' : String(p.quality.phpstanLevel),
+        p.quality.semver ? `${p.quality.semver.status}${p.quality.semver.compliancePercent === null ? '' : ` ${p.quality.semver.compliancePercent}%`}` : '-',
+        p.quality.buildStatus,
+        p.popularity.installs === null ? '-' : p.popularity.installs.toLocaleString('en-US'),
+        p.popularity.githubStars === null ? '-' : String(p.popularity.githubStars),
+        (p.latestReleasedAt ?? '-').slice(0, 10),
+        p.abandoned === true ? 'yes' : 'no',
+        p.supportedMagento.join(' ') || '-',
+      ]),
+    ),
+  );
+}
+
+if (values.detail && only) {
+  console.log('\n## Per-package detail for the named vendors\n');
+  console.log(
+    table(
+      ['package', 'tier', 'phpstan', 'installs', 'stars', 'released', 'aband'],
+      packages
+        .slice()
+        .sort((a, b) => (b.popularity.installs ?? 0) - (a.popularity.installs ?? 0))
+        .map((p) => [
+          p.name,
+          p.quality.tier ?? 'untested',
+          p.quality.phpstanLevel === null ? '-' : String(p.quality.phpstanLevel),
+          p.popularity.installs === null ? '-' : p.popularity.installs.toLocaleString('en-US'),
+          p.popularity.githubStars === null ? '-' : String(p.popularity.githubStars),
+          (p.latestReleasedAt ?? '-').slice(0, 10),
+          p.abandoned === true ? 'yes' : 'no',
+        ]),
+    ),
+  );
+}
