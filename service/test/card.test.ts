@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  installsAtPercentile,
   installsLabel,
+  isHighQuality,
+  isRecent,
   isRisky,
+  latestMagentoVersion,
   magentoRange,
   releasedAgo,
 } from '../src/ui/DirectoryBrowser.js';
@@ -80,5 +84,57 @@ describe('isRisky', () => {
         }),
       ),
     ).toBe(true);
+  });
+});
+
+describe('isRecent', () => {
+  it('counts a release inside the last year, and nothing older or unknown', () => {
+    expect(isRecent(pkg({ latestReleasedAt: daysAgo(30) }), NOW)).toBe(true);
+    expect(isRecent(pkg({ latestReleasedAt: daysAgo(364) }), NOW)).toBe(true);
+    expect(isRecent(pkg({ latestReleasedAt: daysAgo(400) }), NOW)).toBe(false);
+    expect(isRecent(pkg({ latestReleasedAt: null }), NOW)).toBe(false);
+    expect(isRecent(pkg({ latestReleasedAt: 'whenever' }), NOW)).toBe(false);
+  });
+});
+
+describe('isHighQuality', () => {
+  it('is the top two PackageMaven tiers only', () => {
+    const tier = (t: string | null) => pkg({ quality: { tier: t } as PackageSummary['quality'] });
+    expect(isHighQuality(tier('strict-compliant'))).toBe(true);
+    expect(isHighQuality(tier('no-errors'))).toBe(true);
+    expect(isHighQuality(tier('ready-to-install'))).toBe(false);
+    expect(isHighQuality(tier('needs-help'))).toBe(false);
+    expect(isHighQuality(tier(null))).toBe(false);
+  });
+});
+
+describe('latestMagentoVersion', () => {
+  it('is the newest version anything was verified against, by numeric order', () => {
+    expect(
+      latestMagentoVersion([
+        pkg({ supportedMagento: ['2.4.10', '2.4.6'] }),
+        pkg({ supportedMagento: ['2.4.9'] }),
+        pkg({ supportedMagento: [] }),
+      ]),
+    ).toBe('2.4.10');
+  });
+
+  it('is null when nothing has been tested', () => {
+    expect(latestMagentoVersion([pkg({ supportedMagento: [] })])).toBeNull();
+  });
+});
+
+describe('installsAtPercentile', () => {
+  const withInstalls = (installs: number | null) =>
+    pkg({ popularity: { installs, githubStars: null } });
+
+  it('is the nearest-rank percentile of packages that report installs', () => {
+    const packages = [10, 20, 30, 40, 50, 60, 70, 80, null, 0].map(withInstalls);
+    expect(installsAtPercentile(packages, 0.75)).toBe(60);
+    expect(installsAtPercentile(packages, 0.5)).toBe(40);
+  });
+
+  it('declines to call anything popular in a corpus too small to rank', () => {
+    expect(installsAtPercentile([10, 20, 30].map(withInstalls), 0.75)).toBeNull();
   });
 });

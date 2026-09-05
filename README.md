@@ -39,7 +39,10 @@ service/data/vendors/*.json (trust overlay, by PR) ─┘               (src/, t
 ## The admin module
 
 The module renders the same browse/search UI inside the Magento admin
-(**System → Mage-OS Extension Directory**), enriched with what only the shop knows:
+(**System → Mage-OS Extension Directory**) — one list with search, category chips,
+one-click filters (trusted vendor, editors' picks, tested with your version, recently
+updated, high quality, popular) and a page of cards at a time — enriched with what only
+the shop knows:
 its installed modules (read from `composer.lock` — never by shelling out) and its
 Magento version, which drive installed/update badges and version pinning against
 PackageMaven's test matrix. Package details open in an admin modal showing the

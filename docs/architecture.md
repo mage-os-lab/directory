@@ -335,10 +335,10 @@ experience as a Preact island using MiniSearch for client-side search over the f
 
 | Route | Contents |
 |---|---|
-| `/` | Hero, editorial picks (prerendered), category grid, search island |
+| `/` | Hero, editorial picks (prerendered), and the browse island — search, category chips, one-click filters, sort, paged results; filter state mirrors into `?q=`, `?category=`, `?only=`, `?sort=` |
 | `/packages/<vendor>/<name>/` | Prerendered detail page: README, badges, stats, supported Magento versions, copyable `composer require`, JSON-LD |
 | `/vendors/<vendor>/` | Vendor trust badges + ranked package list |
-| `/categories/<category>/` | Prerendered category list, island preset to that filter |
+| `/categories/<category>/` | Redirect (meta refresh + canonical) to `/?category=<category>` — browsing by category is a filter on the one list, not a second listing |
 | `/how-to-get-listed/` | Rendered from docs |
 | `/api/v1/**` | The pipeline's static JSON output |
 | `/embed/*` | The embeddable bundle (`directory-ui.iife.js`, `directory-ui.js`, `directory-ui.css`), served CORS-open from the directory's own origin |
@@ -364,7 +364,12 @@ mountDirectory(el: HTMLElement, options: {
   feedUrl?: string;                // default "/api/v1/feed.json" — embedders pass the
                                    // absolute directory URL (CORS is open on /api/v1/*)
   linkMode?: 'href' | 'event';     // default 'href'
-  initialFilters?: { category?: string; quality?: string[]; query?: string };
+  initialFilters?: {                // seeds the controls; sort and flags are the same
+    category?: string; query?: string; sort?: SortKey;
+    flags?: FilterFlag[];            // 'trusted' | 'picks' | 'tested' | 'recent' |
+                                     // 'quality' | 'popular' | 'installed' | 'update'
+    quality?: string[];              // tier allowlist; honoured, no control of its own
+  };
   baseUrl?: string;                // href prefix for linkMode 'href'; default ""
   shadow?: boolean;                // default true: render inside an open Shadow DOM
   installed?: Record<string, string>; // composer name → installed version, read by the
@@ -373,9 +378,12 @@ mountDirectory(el: HTMLElement, options: {
   selectable?: boolean;            // default false: mark-for-install toggles + a tray
                                    // with the copyable composer require command
   magentoVersion?: string;         // the host shop's Magento/Mage-OS version; adds
-                                   // tested-with badges + a tested-only filter, and the
-                                   // install list pins the newest release verified
-                                   // against it (via PackageSummary.compatibility)
+                                   // tested-with badges, points the "tested with" chip
+                                   // at it, and the install list pins the newest release
+                                   // verified against it (via PackageSummary.compatibility)
+  colorScheme?: 'auto' | 'light' | 'dark'; // default 'auto' follows prefers-color-scheme;
+                                   // pin it for hosts whose chrome has one palette
+  pageSize?: number;               // cards before "Show more" (default 24)
 }): () => void;                    // returns unmount
 ```
 
@@ -401,21 +409,33 @@ Contract details the admin module depends on:
   Because this is PM's *empirical* test matrix, absence of a test result is never
   presented as incompatibility, and full conflict resolution is deliberately left to
   `composer require --dry-run` on the merchant's machine.
+- The component's ground is transparent and its typography inherits from the host, so
+  it sits on whichever page background and font the host has (the two Magento admin
+  themes differ in both). Cards, the filter panel and the floating install tray are the
+  opaque surfaces. Two palettes ship in the stylesheet — light by default, dark when the
+  OS asks and `colorScheme` is `'auto'`, or when it is pinned `'dark'` — and the host's
+  `--mosd-theme-*` custom properties override either.
 - Class prefixes (`.mosd-*`) keep our styles from leaking out, but only Shadow DOM
   keeps host-page styles (like the Magento admin's global element resets) from leaking
   *in* — hence `shadow: true` by default for embeds. Theming still works because CSS
   custom properties pierce the shadow boundary. The Astro site mounts with
   `shadow: false` since it owns the page.
 
-**UI features (v1):** text search, category browse, quality/badge filters, popularity
-sort (installs, stars, recency), default "recommended" sort by ranking score, README on
-detail pages, vendor pages. When the feed reports a stale or manually refreshed source,
-the UI shows a visible "quality data as of &lt;date&gt;" notice — stale data must never
-present as live. A Magento-version compatibility filter exists where the shop version is
-known — embeds passing `magentoVersion` (the public site can't know a visitor's version,
-so it displays supported versions as a field and the detail pages show the per-release
-test matrix). Also deferred, cheap to add later: a "recently added" page / RSS feed
-diffed from consecutive snapshots.
+**UI features:** text search; category chips (alphabetical, with counts — one at a
+time, and the chips on each card are the same control); "show only" chips that each
+answer one shortlisting question and combine with AND — Trusted vendor, Editors' picks,
+Tested with &lt;version&gt;, Recently updated (a release in the last 12 months), High
+quality (PackageMaven's top two tiers), Popular (top quarter of the catalog by installs),
+plus Installed and Update available where the host supplied `installed`; sort
+(recommended by ranking score, installs, stars, recency, name); a page of 24 cards with
+"Show more"; README on detail pages; vendor pages. Quality tier is still shown on every
+card but is no longer a filter of its own: "Known issues" is not something anyone narrows
+*to*. "Tested with" targets the shop's own version where an embed passes
+`magentoVersion`, and otherwise the newest Magento version anything in the catalog has
+been verified against. When the feed reports a stale or manually refreshed source, the UI
+shows a visible "quality data as of &lt;date&gt;" notice — stale data must never present
+as live. Deferred, cheap to add later: a "recently added" page / RSS feed diffed from
+consecutive snapshots.
 
 **What a browse card carries.** A card is the shortlist test — open this one, or scroll
 past — so it answers eight questions and leaves the rest to the detail page: name, package

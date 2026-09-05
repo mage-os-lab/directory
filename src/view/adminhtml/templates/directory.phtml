@@ -95,6 +95,18 @@ $initJs = <<<JS
         });
     }
 
+    /**
+     * The admin chrome has one palette, so the framed detail page is told to keep it rather
+     * than follow the reader's OS setting on its own.
+     */
+    function detailPageUrl(packageUrl) {
+        if (config.colorScheme !== 'light' && config.colorScheme !== 'dark') {
+            return packageUrl;
+        }
+
+        return packageUrl + (packageUrl.indexOf('?') === -1 ? '?' : '&') + 'scheme=' + config.colorScheme;
+    }
+
     // linkMode 'event': the bundle never navigates, so opening the detail page is up to us.
     // It opens here, in the admin, and the links out to Packagist and the repository are the
     // reader's own click inside that page.
@@ -102,13 +114,13 @@ $initJs = <<<JS
         var detail = event.detail;
 
         if (typeof require !== 'function') {
-            window.open(detail.packageUrl, '_blank', 'noopener');
+            window.open(detailPageUrl(detail.packageUrl), '_blank', 'noopener');
 
             return;
         }
 
         withDetailModal(function (instance) {
-            instance.frame.setAttribute('src', detail.packageUrl);
+            instance.frame.setAttribute('src', detailPageUrl(detail.packageUrl));
             instance.element.modal('setTitle', escapeHtml(detail.name));
             instance.element.modal('openModal');
         });

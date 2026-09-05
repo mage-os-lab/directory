@@ -3,18 +3,10 @@ import Base from '../layouts/Base.astro';
 import SearchIsland from '../components/SearchIsland.js';
 import { withBase } from '../lib/base.js';
 import { qualityLabel } from '../../shared/quality.js';
-import {
-  categoryHref,
-  editorialPicks,
-  loadFeed,
-  packageHref,
-} from '../lib/data.js';
+import { editorialPicks, loadFeed, packageHref } from '../lib/data.js';
 
 const feed = loadFeed();
 const picks = editorialPicks(feed, 6);
-const categories = feed.categories
-  .filter((c) => c.packageCount > 0)
-  .sort((a, b) => b.packageCount - a.packageCount);
 
 // Hero counters (PM-style): visible modules by readiness.
 const visible = feed.packages.filter((p) => !p.trust.hidden);
@@ -79,22 +71,13 @@ const vendorCount = new Set(visible.map((p) => p.vendor)).size;
     )
   }
 
-  <section class="section" id="categories">
-    <h2>Browse by category</h2>
-    <ul class="category-grid">
-      {categories.map((c) => (
-        <li>
-          <a class="category-card" href={categoryHref(c.slug)}>
-            <span class="category-name">{c.name}</span>{' '}
-            <span class="category-count">({c.packageCount})</span>
-          </a>
-        </li>
-      ))}
-    </ul>
-  </section>
-
-  <section class="section" id="search">
-    <h2>Search &amp; browse all modules</h2>
+  <section class="section" id="browse">
+    <h2>Browse all modules</h2>
+    <p class="section-intro">
+      Search, pick a category, or narrow to what matters — trusted vendors, tested with the
+      latest Magento, recently updated. Filters stay in the address bar, so a narrowed view is
+      a link you can share.
+    </p>
     <SearchIsland client:load />
   </section>
 </Base>

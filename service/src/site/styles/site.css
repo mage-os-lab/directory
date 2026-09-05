@@ -1,6 +1,10 @@
 /* Mage-OS Extension Directory — site chrome styles. Plain CSS, no framework.
  * Palette matches src/ui/directory.css so the embedded island doesn't feel
- * like a foreign object dropped on the page. */
+ * like a foreign object dropped on the page.
+ *
+ * Two palettes: light is the default; dark follows the reader's OS unless
+ * the document pins one with data-theme (Base.astro sets it from ?scheme=,
+ * which the Magento admin passes when it frames a detail page). */
 :root {
   --accent: #e8590c;
   --accent-dark: #b34f00;
@@ -9,8 +13,58 @@
   --bg: #ffffff;
   --bg-soft: #f4f5f7;
   --border: #d9dde3;
+  --ok: #1e6b34;
+  --warn: #8a5300;
+  --warn-bg: #fff3cd;
+  --warn-border: #ffe08a;
+  --danger: #862e2e;
+  --danger-bg: #ffe3e3;
+  --danger-border: #ffa8a8;
+  /* Badge text is the badge colour itself in light; dark lifts it toward white. */
+  --badge-text-mix: 100%;
   --radius: 6px;
   --max-width: 1040px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --accent: #ff8a4c;
+    --accent-dark: #ffa06f;
+    --fg: #e8e6ec;
+    --fg-muted: #a9a5b2;
+    --bg: #141317;
+    --bg-soft: #1f1e24;
+    --border: #35333d;
+    --ok: #6fd39a;
+    --warn: #f2be62;
+    --warn-bg: #302614;
+    --warn-border: #5a4520;
+    --danger: #ff8585;
+    --danger-bg: #33191b;
+    --danger-border: #5c2a2d;
+    --badge-text-mix: 65%;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --accent: #ff8a4c;
+  --accent-dark: #ffa06f;
+  --fg: #e8e6ec;
+  --fg-muted: #a9a5b2;
+  --bg: #141317;
+  --bg-soft: #1f1e24;
+  --border: #35333d;
+  --ok: #6fd39a;
+  --warn: #f2be62;
+  --warn-bg: #302614;
+  --warn-border: #5a4520;
+  --danger: #ff8585;
+  --danger-bg: #33191b;
+  --danger-border: #5c2a2d;
+  --badge-text-mix: 65%;
+  color-scheme: dark;
 }
 
 * {
@@ -93,9 +147,9 @@ h3 {
 }
 
 .stale-banner {
-  background: #fff3cd;
-  border-bottom: 1px solid #ffe08a;
-  color: #664d03;
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--warn-border);
+  color: var(--warn);
   font-size: 14px;
   margin: 0;
   padding: 8px 20px;
@@ -103,16 +157,16 @@ h3 {
 }
 
 .withdrawn-banner {
-  background: #ffe3e3;
-  border: 1px solid #ffa8a8;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
   border-radius: var(--radius);
-  color: #862e2e;
+  color: var(--danger);
   margin: 20px 0;
   padding: 14px 18px;
 }
 
 .withdrawn-banner h2 {
-  color: #862e2e;
+  color: var(--danger);
   font-size: 16px;
   margin: 0 0 6px;
 }
@@ -191,11 +245,11 @@ h3 {
 }
 
 .hero-stat-ready strong {
-  color: #1e6b34;
+  color: var(--ok);
 }
 
 .hero-stat-help strong {
-  color: #a34a00;
+  color: var(--warn);
 }
 
 /* Section headings shared across the homepage */
@@ -262,11 +316,15 @@ h3 {
   gap: 6px;
 }
 
-/* Badges — shared visual language with the island's .mosd-badge-* set */
+/* Badges — shared visual language with the island's .mosd-badge-* set.
+ * Each badge names one colour; fill and border are mixed from it so the
+ * same rule reads in both palettes. */
 .badge {
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
+  --badge: var(--fg-muted);
+  background: color-mix(in srgb, var(--badge) 14%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--badge) 40%, transparent);
   border-radius: 999px;
+  color: color-mix(in srgb, var(--badge) var(--badge-text-mix), #fff);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -275,59 +333,26 @@ h3 {
   white-space: nowrap;
 }
 
-.badge-strict-compliant { background: #d3f9d8; border-color: #8ce99a; color: #2b8a3e; }
-.badge-no-errors { background: #d0ebff; border-color: #74c0fc; color: #1971c2; }
-.badge-ready-to-install { background: #fff3bf; border-color: #ffd43b; color: #997404; }
-.badge-needs-help { background: #ffe3e3; border-color: #ffa8a8; color: #c92a2a; }
-.badge-untested { background: #f1f3f5; border-color: #ced4da; color: #495057; }
-.badge-pick { background: #fdf0e5; border-color: #f8c99b; color: #b34f00; }
-.badge-trusted { background: #e5f4ef; border-color: #9cd6bf; color: #14735c; }
-.badge-warning { background: #ffe3e3; border-color: #ffa8a8; color: #c92a2a; }
+.badge-strict-compliant { --badge: #2b8a3e; }
+.badge-no-errors { --badge: #1971c2; }
+.badge-ready-to-install { --badge: #997404; }
+.badge-needs-help { --badge: #c92a2a; }
+.badge-untested { --badge: #495057; }
+.badge-pick { --badge: #b34f00; }
+.badge-trusted { --badge: #14735c; }
+.badge-warning { --badge: #c92a2a; }
 .badge-partner-platinum,
 .badge-partner-gold,
 .badge-partner-silver,
-.badge-partner-bronze { background: #fff9db; border-color: #ffe066; color: #997404; }
-.badge-semver-ok { background: #e6fcf5; border-color: #63e6be; color: #087f5b; }
-.badge-semver-violations { background: #fff0f6; border-color: #faa2c1; color: #a61e4d; }
-.badge-abandoned { background: #495057; border-color: #343a40; color: #f8f9fa; }
+.badge-partner-bronze { --badge: #997404; }
+.badge-semver-ok { --badge: #087f5b; }
+.badge-semver-violations { --badge: #a61e4d; }
+.badge-abandoned { background: var(--fg); border-color: var(--fg); color: var(--bg); }
 
 .stat {
   color: var(--fg-muted);
   font-size: 12px;
   white-space: nowrap;
-}
-
-/* Category grid */
-.category-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.category-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  display: block;
-  padding: 12px 14px;
-  text-decoration: none;
-}
-
-.category-card:hover,
-.category-card:focus {
-  border-color: var(--accent);
-}
-
-.category-card .category-name {
-  color: var(--fg);
-  font-weight: 600;
-}
-
-.category-card .category-count {
-  color: var(--fg-muted);
-  font-size: 13px;
 }
 
 /* Package detail page */
@@ -453,7 +478,7 @@ h3 {
   background: var(--accent);
   border: 0;
   border-radius: var(--radius);
-  color: #fff;
+  color: var(--bg);
   cursor: pointer;
   flex-shrink: 0;
   font: inherit;

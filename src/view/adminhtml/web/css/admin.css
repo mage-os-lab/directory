@@ -1,9 +1,14 @@
 /*
  * Theme mapping for the directory bundle. The bundle renders into an open shadow root, so
  * admin CSS cannot reach its internals; these custom properties are its supported theming
- * hook (they pierce the shadow boundary). The values are the Magento admin (backend) theme
- * palette, so the component reads as part of the panel: primary-action orange, the Admin
- * Font stack, near-square corners.
+ * hook (they pierce the shadow boundary).
+ *
+ * The bundle's own ground is transparent and its typography inherits from the page, so the
+ * page background and font are the admin theme's business, whichever theme is active: the
+ * legacy backend theme (Open Sans, #f8f8f8, square corners) or M137 (Inter, neutral grey,
+ * rounded). Only the tokens that need to agree with the surrounding chrome are set here, and
+ * the M137 values are scoped to the class that theme puts on <body>. Both admin themes are
+ * light-only, which is why the mount pins colorScheme to light (see DirectoryConfig).
  *
  * The card's state colours (--mosd-theme-ok / -warn / -risk and their soft tints) are
  * left at their defaults: they mark installed, update-available and at-risk modules, and
@@ -17,14 +22,22 @@
     --mosd-theme-accent-soft: #fdf0e8;
     --mosd-theme-fg: #303030;
     --mosd-theme-fg-muted: #666666;
-    --mosd-theme-bg: #ffffff;
-    --mosd-theme-bg-soft: #f8f8f8;
+    --mosd-theme-surface: #ffffff;
+    --mosd-theme-bg-soft: #f2f2f2;
     --mosd-theme-border: #cccccc;
     --mosd-theme-radius: 2px;
-    --mosd-theme-font: 'Admin Font', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
     display: block;
     min-height: 240px;
+}
+
+/* M137 admin theme: HCT neutral palette, rounded corners. */
+.m137-admin-theme .mageos-extension-directory {
+    --mosd-theme-fg: #1b1b1b;
+    --mosd-theme-fg-muted: #5e5e5e;
+    --mosd-theme-bg-soft: #f1f1f1;
+    --mosd-theme-border: #e2e2e2;
+    --mosd-theme-radius: 8px;
 }
 
 .mageos-extension-directory-intro {

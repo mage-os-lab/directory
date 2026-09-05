@@ -25,6 +25,18 @@ const dataAsOf = staleNotice(feed);
     <title>{title} · Mage-OS Extension Directory</title>
     <meta name="description" content={description} />
     <link rel="icon" href="data:," />
+    <meta name="color-scheme" content="light dark" />
+    <script is:inline>
+      // The palette follows the reader's OS unless the URL pins one: the
+      // Magento admin frames detail pages in its own light chrome and asks
+      // for ?scheme=light so the frame doesn't go dark on its own.
+      (function () {
+        var scheme = new URLSearchParams(location.search).get('scheme');
+        if (scheme === 'light' || scheme === 'dark') {
+          document.documentElement.setAttribute('data-theme', scheme);
+        }
+      })();
+    </script>
   </head>
   <body>
     <header class="site-header">

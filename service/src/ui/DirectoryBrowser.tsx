@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import MiniSearch from 'minisearch';
-import { QUALITY_LABELS, qualityLabel } from '../shared/quality.js';
+import { qualityLabel } from '../shared/quality.js';
 import { compareVersions, isNewer } from '../shared/version.js';
 import type {
+  ColorScheme,
   DirectoryFilters,
   Feed,
+  FilterFlag,
   PackageSummary,
   SelectDetail,
   SelectionDetail,
@@ -24,6 +26,12 @@ export interface DirectoryBrowserProps {
   onSelectionChange?: (detail: SelectionDetail) => void;
   /** The host shop's Magento/Mage-OS version (e.g. "2.4.6"). */
   magentoVersion?: string;
+  /** Follow the OS palette ('auto', default) or pin one. */
+  colorScheme?: ColorScheme;
+  /** Cards shown before "Show more". */
+  pageSize?: number;
+  /** Fired after every filter/sort change (not on mount) — the site mirrors it into the URL. */
+  onFiltersChange?: (filters: DirectoryFilters) => void;
 }
 
 /**
@@ -38,12 +46,13 @@ type MagentoSupport =
 
 type InstallState = 'not-installed' | 'installed' | 'update';
 
-const INSTALL_FILTERS: Array<{ key: '' | InstallState; label: string }> = [
-  { key: '', label: 'All modules' },
-  { key: 'installed', label: 'Installed' },
-  { key: 'update', label: 'Update available' },
-  { key: 'not-installed', label: 'Not installed' },
-];
+export const DEFAULT_PAGE_SIZE = 24;
+
+/** "Recently updated" means a release inside this window. */
+export const RECENT_DAYS = 365;
+
+/** "Popular" means installs at or above this percentile of the catalog. */
+export const POPULAR_PERCENTILE = 0.75;
 
 export function composerCommand(entries: Array<{ name: string; version: string | null }>): string {
   const args = entries.map((e) => (e.version ? `${e.name}:^${e.version}` : e.name));
@@ -55,7 +64,7 @@ const SORTS: Array<{ key: SortKey; label: string }> = [
   { key: 'installs', label: 'Most installed' },
   { key: 'stars', label: 'Most starred' },
   { key: 'recency', label: 'Recently released' },
-  { key: 'name', label: 'Name' },
+  { key: 'name', label: 'Name A–Z' },
 ];
 
 export function packageUrl(baseUrl: string, pkg: PackageSummary): string {
@@ -70,6 +79,52 @@ export function magentoRange(pkg: PackageSummary): string | null {
   const lowest = sorted[0];
   const highest = sorted[sorted.length - 1];
   return lowest === highest ? lowest : `${lowest}–${highest}`;
+}
+
+/**
+ * The newest Magento version anything in the catalog has been verified
+ * against — what "compatible with the latest version" means on the public
+ * site, where there is no shop version to ask about. Null when PM has
+ * reported no test results at all.
+ */
+export function latestMagentoVersion(packages: PackageSummary[]): string | null {
+  let newest: string | null = null;
+  for (const pkg of packages) {
+    for (const version of pkg.supportedMagento) {
+      if (newest === null || compareVersions(version, newest) > 0) newest = version;
+    }
+  }
+  return newest;
+}
+
+/**
+ * Install count at the given percentile of packages that report one
+ * (nearest rank), or null when too few do for "popular" to mean anything.
+ */
+export function installsAtPercentile(
+  packages: PackageSummary[],
+  percentile: number,
+): number | null {
+  const counts = packages
+    .map((p) => p.popularity.installs)
+    .filter((n): n is number => n !== null && n > 0)
+    .sort((a, b) => a - b);
+  if (counts.length < 4) return null;
+  const index = Math.min(counts.length - 1, Math.ceil(percentile * counts.length) - 1);
+  return counts[Math.max(0, index)]!;
+}
+
+/** Released within RECENT_DAYS of `now`. Unparseable dates are not recent. */
+export function isRecent(pkg: PackageSummary, now: number = Date.now()): boolean {
+  if (pkg.latestReleasedAt === null) return false;
+  const released = Date.parse(pkg.latestReleasedAt);
+  if (Number.isNaN(released)) return false;
+  return now - released <= RECENT_DAYS * 86_400_000;
+}
+
+/** PackageMaven found nothing wrong: the top two tiers. */
+export function isHighQuality(pkg: PackageSummary): boolean {
+  return pkg.quality.tier === 'strict-compliant' || pkg.quality.tier === 'no-errors';
 }
 
 /**
@@ -118,24 +173,41 @@ function compare(a: PackageSummary, b: PackageSummary, sort: SortKey): number {
     case 'recency':
       return (b.latestReleasedAt ?? '').localeCompare(a.latestReleasedAt ?? '');
     case 'name':
-      return a.name.localeCompare(b.name);
+      return a.displayName.localeCompare(b.displayName, 'en', { sensitivity: 'base' });
     default:
       return b.ranking.score - a.ranking.score;
   }
 }
 
+const SearchIcon = () => (
+  <svg class="mosd-search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
+    <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+  </svg>
+);
+
 export function DirectoryBrowser(props: DirectoryBrowserProps) {
   const { feed, linkMode, baseUrl } = props;
+  const pageSize = Math.max(1, props.pageSize ?? DEFAULT_PAGE_SIZE);
   const [query, setQuery] = useState(props.initialFilters?.query ?? '');
   const [category, setCategory] = useState(props.initialFilters?.category ?? '');
-  const [quality, setQuality] = useState<Set<string>>(
-    new Set(props.initialFilters?.quality ?? []),
+  const [quality] = useState<Set<string>>(new Set(props.initialFilters?.quality ?? []));
+  const [flags, setFlags] = useState<Set<FilterFlag>>(
+    new Set(props.initialFilters?.flags ?? []),
   );
-  const [sort, setSort] = useState<SortKey>('recommended');
+  const [sort, setSort] = useState<SortKey>(props.initialFilters?.sort ?? 'recommended');
   const [showHidden, setShowHidden] = useState(false);
-  const [installFilter, setInstallFilter] = useState<'' | InstallState>('');
+  const [limit, setLimit] = useState(pageSize);
   const [marked, setMarked] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
+
+  const categories = useMemo(
+    () =>
+      feed.categories
+        .filter((c) => c.packageCount > 0)
+        .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })),
+    [feed],
+  );
 
   const categoryNames = useMemo(
     () => new Map(feed.categories.map((c) => [c.slug, c.name])),
@@ -147,7 +219,11 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     [feed],
   );
 
-  const [testedOnly, setTestedOnly] = useState(false);
+  const latestMagento = useMemo(() => latestMagentoVersion(feed.packages), [feed]);
+  const popularFloor = useMemo(
+    () => installsAtPercentile(feed.packages, POPULAR_PERCENTILE),
+    [feed],
+  );
 
   const magentoSupport = (pkg: PackageSummary): MagentoSupport | null => {
     const magento = props.magentoVersion;
@@ -183,6 +259,78 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
    */
   const hostAware = props.magentoVersion !== undefined || installed !== undefined;
 
+  /** "Tested with" targets the shop's version when known, else the newest
+   * version anything in the catalog was verified against. */
+  const testedTarget = props.magentoVersion ?? latestMagento;
+  const testedWith = (pkg: PackageSummary): boolean => {
+    if (props.magentoVersion) return magentoSupport(pkg)?.state !== 'untested';
+    return testedTarget !== null && pkg.supportedMagento.includes(testedTarget);
+  };
+
+  /**
+   * The chips, in the order a reader shortlists: who is behind it, does it
+   * fit, is it maintained, is it sound, is it used — then, where the host
+   * knows the shop, where I stand with it. Each is a yes/no the card can
+   * show, so a chip never hides something the card wouldn't have said.
+   */
+  const chips: Array<{ flag: FilterFlag; label: string; title: string }> = [
+    { flag: 'trusted', label: 'Trusted vendor', title: 'From a vendor with a sustained track record' },
+    { flag: 'picks', label: 'Editors’ picks', title: 'Selected by the Mage-OS maintainers' },
+  ];
+  if (testedTarget !== null) {
+    chips.push({
+      flag: 'tested',
+      label: `Tested with ${testedTarget}`,
+      title: props.magentoVersion
+        ? `A release is verified against your Magento ${props.magentoVersion}`
+        : `The latest release is verified against Magento ${testedTarget}, the newest version in the catalog`,
+    });
+  }
+  chips.push(
+    { flag: 'recent', label: 'Recently updated', title: 'Released in the last 12 months' },
+    { flag: 'quality', label: 'High quality', title: 'PackageMaven found no errors' },
+  );
+  if (popularFloor !== null) {
+    chips.push({
+      flag: 'popular',
+      label: 'Popular',
+      title: `Top quarter of the catalog by installs (${installsLabel(popularFloor)}+)`,
+    });
+  }
+  if (installed) {
+    chips.push(
+      { flag: 'installed', label: 'Installed', title: 'Already in this shop’s composer.lock' },
+      { flag: 'update', label: 'Update available', title: 'A newer verified release than the one installed' },
+    );
+  }
+
+  const passesFlag = (pkg: PackageSummary, flag: FilterFlag): boolean => {
+    switch (flag) {
+      case 'trusted':
+        return pkg.trust.trustedVendor;
+      case 'picks':
+        return pkg.trust.editorialPick;
+      case 'tested':
+        return testedWith(pkg);
+      case 'recent':
+        return isRecent(pkg);
+      case 'quality':
+        return isHighQuality(pkg);
+      case 'popular':
+        return (
+          popularFloor !== null &&
+          pkg.popularity.installs !== null &&
+          pkg.popularity.installs >= popularFloor
+        );
+      case 'installed':
+        return installState(pkg) !== 'not-installed';
+      case 'update':
+        return installState(pkg) === 'update';
+      default:
+        return true;
+    }
+  };
+
   const search = useMemo(() => {
     const index = new MiniSearch<PackageSummary>({
       idField: 'name',
@@ -215,8 +363,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
         (showHidden || !p.trust.hidden) &&
         (category === '' || p.categories.includes(category)) &&
         (quality.size === 0 || (p.quality.tier !== null && quality.has(p.quality.tier))) &&
-        (installFilter === '' || installState(p) === installFilter) &&
-        (!testedOnly || magentoSupport(p)?.state !== 'untested'),
+        [...flags].every((flag) => passesFlag(p, flag)),
     );
   }, [
     feed,
@@ -224,19 +371,46 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     query,
     category,
     quality,
+    flags,
     sort,
     showHidden,
-    installFilter,
     installed,
-    testedOnly,
     props.magentoVersion,
   ]);
 
-  const toggleQuality = (tier: string) => {
-    const next = new Set(quality);
-    if (next.has(tier)) next.delete(tier);
-    else next.add(tier);
-    setQuality(next);
+  // Every change to what is being asked starts the list over from the top.
+  useEffect(() => {
+    setLimit(pageSize);
+  }, [query, category, flags, sort, showHidden, pageSize]);
+
+  const filtersActive = query.trim() !== '' || category !== '' || flags.size > 0;
+
+  // Report filter state after it settles, never on mount: the host seeded it.
+  const reportedOnce = useRef(false);
+  useEffect(() => {
+    if (!reportedOnce.current) {
+      reportedOnce.current = true;
+      return;
+    }
+    props.onFiltersChange?.({
+      query: query.trim() || undefined,
+      category: category || undefined,
+      flags: flags.size > 0 ? [...flags] : undefined,
+      sort: sort === 'recommended' ? undefined : sort,
+    });
+  }, [query, category, flags, sort]);
+
+  const toggleFlag = (flag: FilterFlag) => {
+    const next = new Set(flags);
+    if (next.has(flag)) next.delete(flag);
+    else next.add(flag);
+    setFlags(next);
+  };
+
+  const clearFilters = () => {
+    setQuery('');
+    setCategory('');
+    setFlags(new Set());
   };
 
   const select = (event: Event, pkg: PackageSummary) => {
@@ -369,105 +543,134 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     );
   };
 
+  const shown = results.slice(0, limit);
+  const remaining = results.length - shown.length;
+  const total = feed.packages.filter((p) => showHidden || !p.trust.hidden).length;
+  const scheme = props.colorScheme ?? 'auto';
+
   return (
-    <div class="mosd-browser">
+    <div class="mosd-browser" data-mosd-scheme={scheme === 'auto' ? undefined : scheme}>
       {dataAsOf && (
         <p class="mosd-stale-notice" role="status">
           Quality data as of {dataAsOf.slice(0, 10)} — the live source was unavailable at the
           last update.
         </p>
       )}
-      <div class="mosd-controls">
-        <input
-          class="mosd-search"
-          type="search"
-          placeholder="Search modules…"
-          aria-label="Search modules"
-          value={query}
-          onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
-        />
-        <select
-          class="mosd-category"
-          aria-label="Category"
-          value={category}
-          onChange={(e) => setCategory((e.target as HTMLSelectElement).value)}
-        >
-          <option value="">All categories</option>
-          {feed.categories
-            .filter((c) => c.packageCount > 0)
-            .map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name} ({c.packageCount})
-              </option>
-            ))}
-        </select>
-        <select
-          class="mosd-sort"
-          aria-label="Sort by"
-          value={sort}
-          onChange={(e) => setSort((e.target as HTMLSelectElement).value as SortKey)}
-        >
-          {SORTS.map((s) => (
-            <option key={s.key} value={s.key}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-        {installed && (
-          <select
-            class="mosd-install-filter"
-            aria-label="Installed state"
-            value={installFilter}
-            onChange={(e) =>
-              setInstallFilter((e.target as HTMLSelectElement).value as '' | InstallState)
-            }
+      <div class="mosd-panel">
+        <div class="mosd-controls">
+          <label class="mosd-search-field">
+            <SearchIcon />
+            <input
+              class="mosd-search"
+              type="search"
+              placeholder="Search by name, package or purpose…"
+              aria-label="Search modules"
+              value={query}
+              onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+            />
+          </label>
+          <label class="mosd-select-field mosd-category-field">
+            <span class="mosd-select-label">Category</span>
+            <select
+              class="mosd-category"
+              aria-label="Category"
+              value={category}
+              onChange={(e) => setCategory((e.target as HTMLSelectElement).value)}
+            >
+              <option value="">All categories</option>
+              {categories.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name} ({c.packageCount})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label class="mosd-select-field">
+            <span class="mosd-select-label">Sort</span>
+            <select
+              class="mosd-sort"
+              aria-label="Sort by"
+              value={sort}
+              onChange={(e) => setSort((e.target as HTMLSelectElement).value as SortKey)}
+            >
+              {SORTS.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div class="mosd-chip-row mosd-category-row" role="group" aria-label="Category">
+          <span class="mosd-chip-row-label">Category</span>
+          <button
+            type="button"
+            class="mosd-filter-chip mosd-category-chip"
+            aria-pressed={category === ''}
+            onClick={() => setCategory('')}
           >
-            {INSTALL_FILTERS.map((f) => (
-              <option key={f.key} value={f.key}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        )}
+            All
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c.slug}
+              type="button"
+              class="mosd-filter-chip mosd-category-chip"
+              aria-pressed={category === c.slug}
+              onClick={() => setCategory(category === c.slug ? '' : c.slug)}
+            >
+              {c.name} <span class="mosd-chip-count">{c.packageCount}</span>
+            </button>
+          ))}
+        </div>
+        <div class="mosd-chip-row" role="group" aria-label="Show only">
+          <span class="mosd-chip-row-label">Show only</span>
+          {chips.map((chip) => (
+            <button
+              key={chip.flag}
+              type="button"
+              class={`mosd-filter-chip mosd-flag-${chip.flag}`}
+              aria-pressed={flags.has(chip.flag)}
+              title={chip.title}
+              onClick={() => toggleFlag(chip.flag)}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+        <div class="mosd-panel-foot">
+          <p class="mosd-count" role="status">
+            {results.length === total ? (
+              <>
+                Showing <strong>{Math.min(shown.length, results.length)}</strong> of{' '}
+                <strong>{total}</strong> modules
+              </>
+            ) : (
+              <>
+                <strong>{results.length}</strong> of {total} modules match
+                {shown.length < results.length && <> · showing {shown.length}</>}
+              </>
+            )}
+          </p>
+          {feed.packages.some((p) => p.trust.hidden) && (
+            <label class="mosd-show-hidden">
+              <input
+                type="checkbox"
+                checked={showHidden}
+                onChange={() => setShowHidden(!showHidden)}
+              />{' '}
+              include withdrawn listings
+            </label>
+          )}
+          {filtersActive && (
+            <button type="button" class="mosd-link-btn mosd-clear" onClick={clearFilters}>
+              Clear filters
+            </button>
+          )}
+        </div>
       </div>
-      <div class="mosd-quality-filters" role="group" aria-label="Quality tier">
-        {Object.entries(QUALITY_LABELS).map(([tier, label]) => (
-          <label key={tier} class="mosd-quality-toggle">
-            <input
-              type="checkbox"
-              checked={quality.has(tier)}
-              onChange={() => toggleQuality(tier)}
-            />{' '}
-            {label}
-          </label>
-        ))}
-        {props.magentoVersion && (
-          <label class="mosd-quality-toggle mosd-tested-toggle">
-            <input
-              type="checkbox"
-              checked={testedOnly}
-              onChange={() => setTestedOnly(!testedOnly)}
-            />{' '}
-            Tested with {props.magentoVersion}
-          </label>
-        )}
-      </div>
-      <p class="mosd-count" role="status">
-        {results.length} module{results.length === 1 ? '' : 's'}
-        {feed.packages.some((p) => p.trust.hidden) && (
-          <label class="mosd-show-hidden">
-            {' '}
-            <input
-              type="checkbox"
-              checked={showHidden}
-              onChange={() => setShowHidden(!showHidden)}
-            />{' '}
-            include withdrawn listings
-          </label>
-        )}
-      </p>
       <ul class="mosd-results">
-        {results.map((pkg) => {
+        {shown.map((pkg) => {
           const fit = fitLine(pkg);
           const state = stateTag(pkg);
           // The fit answer leads the card wherever the host knows something
@@ -528,6 +731,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                       key={slug}
                       type="button"
                       class="mosd-chip"
+                      aria-pressed={category === slug}
                       onClick={() => setCategory(slug)}
                     >
                       {categoryNames.get(slug) ?? slug}
@@ -565,7 +769,29 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
           );
         })}
       </ul>
-      {results.length === 0 && <p class="mosd-empty">No modules match. Try widening the filters.</p>}
+      {results.length === 0 && (
+        <div class="mosd-empty">
+          <p class="mosd-empty-title">No modules match</p>
+          <p>Try a different search, or widen the filters.</p>
+          {filtersActive && (
+            <button type="button" class="mosd-btn" onClick={clearFilters}>
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
+      {remaining > 0 && (
+        <div class="mosd-more">
+          <button
+            type="button"
+            class="mosd-btn mosd-btn-more"
+            onClick={() => setLimit(limit + pageSize)}
+          >
+            Show {Math.min(pageSize, remaining)} more
+          </button>
+          <span class="mosd-more-note">{remaining} more not shown</span>
+        </div>
+      )}
       {props.selectable && marked.size > 0 && (
         <div class="mosd-tray" role="region" aria-label="Install list">
           <span class="mosd-tray-count">

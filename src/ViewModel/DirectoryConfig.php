@@ -58,6 +58,8 @@ class DirectoryConfig implements ArgumentInterface
             'baseUrl' => $this->config->getBaseUrl(),
             'linkMode' => 'event',
             'selectable' => true,
+            // Both admin themes are light-only; the bundle must not follow the OS into dark.
+            'colorScheme' => 'light',
         ];
 
         // An empty PHP array serializes to [], but the bundle expects an object here, so the

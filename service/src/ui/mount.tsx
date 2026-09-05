@@ -16,14 +16,24 @@
  *    every change dispatched as CustomEvent('mosd:selection',
  *    {detail: {packages, command}}).
  *  - magentoVersion (the host shop's Magento/Mage-OS version) adds
- *    tested-with badges from PM's test matrix and a tested-only filter, and
- *    makes the install list pin the newest release verified against that
- *    version ("not tested" is never presented as "incompatible").
+ *    tested-with badges from PM's test matrix, points the "tested with"
+ *    filter at that version, and makes the install list pin the newest
+ *    release verified against it ("not tested" is never presented as
+ *    "incompatible").
+ *  - colorScheme pins the palette ('light' | 'dark') for hosts whose chrome
+ *    has only one; the default 'auto' follows prefers-color-scheme.
+ *  - pageSize caps the cards rendered before a "Show more" button (24).
  */
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { DirectoryBrowser } from './DirectoryBrowser.js';
-import type { Feed, MountOptions, SelectDetail, SelectionDetail } from './types.js';
+import type {
+  ColorScheme,
+  Feed,
+  MountOptions,
+  SelectDetail,
+  SelectionDetail,
+} from './types.js';
 // The plain import makes the library build emit directory-ui.css, which is
 // what shadow:false embedders link. The ?inline import is the same styles as
 // a string, injected into the shadow root for the default shadow:true path.
@@ -32,8 +42,16 @@ import styles from './directory.css?inline';
 
 interface RootProps {
   options: Required<Pick<MountOptions, 'feedUrl' | 'linkMode' | 'baseUrl'>> &
-    Pick<MountOptions, 'initialFilters' | 'installed' | 'selectable' | 'magentoVersion'>;
+    Pick<
+      MountOptions,
+      'initialFilters' | 'installed' | 'selectable' | 'magentoVersion' | 'colorScheme' | 'pageSize'
+    >;
   host: HTMLElement;
+}
+
+/** The data attribute the stylesheet keys the pinned palette on; 'auto' sets none. */
+function schemeAttr(scheme: ColorScheme | undefined): 'light' | 'dark' | undefined {
+  return scheme === 'light' || scheme === 'dark' ? scheme : undefined;
 }
 
 function Root({ options, host }: RootProps) {
@@ -68,9 +86,10 @@ function Root({ options, host }: RootProps) {
     };
   }, [options.feedUrl, attempt]);
 
+  const scheme = schemeAttr(options.colorScheme);
   if (error !== null) {
     return (
-      <div class="mosd-browser">
+      <div class="mosd-browser" data-mosd-scheme={scheme}>
         <p class="mosd-error">
           Could not load the module directory ({error}).
           <button type="button" onClick={() => setAttempt(attempt + 1)}>
@@ -82,7 +101,7 @@ function Root({ options, host }: RootProps) {
   }
   if (feed === null) {
     return (
-      <div class="mosd-browser">
+      <div class="mosd-browser" data-mosd-scheme={scheme}>
         <p class="mosd-loading">Loading module directory…</p>
       </div>
     );
@@ -96,6 +115,8 @@ function Root({ options, host }: RootProps) {
       installed={options.installed}
       selectable={options.selectable}
       magentoVersion={options.magentoVersion}
+      colorScheme={options.colorScheme}
+      pageSize={options.pageSize}
       onSelect={(detail: SelectDetail) => {
         host.dispatchEvent(
           new CustomEvent('mosd:select', { bubbles: true, composed: true, detail }),
@@ -119,6 +140,8 @@ export function mountDirectory(el: HTMLElement, options: MountOptions = {}): () 
     installed: options.installed,
     selectable: options.selectable ?? false,
     magentoVersion: options.magentoVersion,
+    colorScheme: options.colorScheme,
+    pageSize: options.pageSize,
   } as const;
   const shadow = options.shadow ?? true;
 

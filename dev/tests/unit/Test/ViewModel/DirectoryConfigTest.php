@@ -108,6 +108,7 @@ final class DirectoryConfigTest extends TestCase
         self::assertSame(self::BASE_URL, $mount['baseUrl']);
         self::assertSame('event', $mount['linkMode']);
         self::assertTrue($mount['selectable']);
+        self::assertSame('light', $mount['colorScheme'], 'The admin chrome is light-only.');
         self::assertSame('2.4.7-p3', $mount['magentoVersion']);
     }
 

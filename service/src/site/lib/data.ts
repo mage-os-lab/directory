@@ -76,10 +76,6 @@ export function vendorHref(vendorSlug: string): string {
   return withBase(`/vendors/${vendorSlug}/`);
 }
 
-export function categoryHref(slug: string): string {
-  return withBase(`/categories/${slug}/`);
-}
-
 /** The packagemaven source's fetchedAt when it's marked stale, or null —
  * drives the site-wide "quality data as of <date>" banner. */
 export function staleNotice(feed: Feed): string | null {

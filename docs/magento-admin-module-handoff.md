@@ -231,11 +231,19 @@ MageOSDirectory.mountDirectory(el: HTMLElement, options: {
                                        // directory URL, or your own proxy endpoint
   linkMode?: 'href' | 'event';         // default 'href'. Use 'event' in the admin
   baseUrl?: string;                    // href prefix when linkMode 'href'; default ""
-  initialFilters?: { category?: string; quality?: string[]; query?: string };
+  initialFilters?: {                   // seeds the controls
+    category?: string; query?: string; sort?: SortKey;
+    flags?: FilterFlag[];              // 'trusted' | 'picks' | 'tested' | 'recent' |
+                                       // 'quality' | 'popular' | 'installed' | 'update'
+    quality?: string[];                // tier allowlist; honoured, no control of its own
+  };
   shadow?: boolean;                    // default true — keep it; see 5.4
   installed?: Record<string, string>;  // composer name → installed version, from composer.lock
   selectable?: boolean;                // default false — mark-for-install toggles + command tray
   magentoVersion?: string;             // e.g. "2.4.7" — the shop's own version
+  colorScheme?: 'auto' | 'light' | 'dark'; // default 'auto' follows the OS; the admin
+                                       // passes 'light' because its chrome is light-only
+  pageSize?: number;                   // cards before "Show more"; default 24
 }): () => void;                        // returns an unmount function
 ```
 
@@ -275,19 +283,28 @@ The component prefixes every class `.mosd-*` and renders into an **open Shadow D
 default**. Keep `shadow: true` in the admin — class prefixes stop our styles leaking out,
 but only Shadow DOM stops the Magento admin's global resets leaking *in*.
 
-Theming still works: CSS custom properties pierce the shadow boundary. Set these on the
-host element to match the admin:
+Two things need no theming at all. The component's ground is **transparent**, so the
+admin's own page background shows through (the legacy theme's grey and M137's neutral
+grey differ, and neither has to be named here); cards, the filter panel and the floating
+install tray are the opaque surfaces. And its **font inherits** from the page, so it is
+Open Sans under the legacy theme and Inter under M137 without detecting either. Both
+admin themes are light-only, so the module mounts with `colorScheme: 'light'` — the
+bundle otherwise follows `prefers-color-scheme` and would go dark on its own.
+
+For the rest, CSS custom properties pierce the shadow boundary. Set these on the host
+element to match the admin (the module scopes M137's values to the `m137-admin-theme`
+body class):
 
 ```css
 --mosd-theme-accent      /* default #e8590c */
 --mosd-theme-accent-soft /* default #fdeee4 */
 --mosd-theme-fg          /* default #1c1b1f */
 --mosd-theme-fg-muted    /* default #5f5b66 */
---mosd-theme-bg          /* default #ffffff */
---mosd-theme-bg-soft     /* default #f3f2f7 */
+--mosd-theme-surface     /* default #ffffff — cards, panel, inputs, tray (--mosd-theme-bg is an alias) */
+--mosd-theme-bg-soft     /* default #f3f2f7 — chip and code fills */
 --mosd-theme-border      /* default #dcd9e0 */
 --mosd-theme-radius      /* default 12px */
---mosd-theme-font        /* default Roboto, system-ui, sans-serif */
+--mosd-theme-font        /* unset: inherits from the page */
 
 /* Card state colours. Each pair is an ink and the tint it sits on: the ink
  * carries the word, the tint carries the card surface, and a 3px rail on the

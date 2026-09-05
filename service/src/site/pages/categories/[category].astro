@@ -1,8 +1,13 @@
 ---
-import Base from '../../layouts/Base.astro';
+/**
+ * Category pages used to be a second, prerendered listing. Browsing by
+ * category is now a filter on the one directory list, so this route only
+ * keeps old links alive: it sends the reader to the home page with the
+ * category preselected. Static hosting has no server redirect, hence the
+ * meta refresh; the canonical link keeps search engines on the target.
+ */
+import { loadFeed } from '../../lib/data.js';
 import { withBase } from '../../lib/base.js';
-import { loadFeed, packageHref, packagesForCategory } from '../../lib/data.js';
-import { qualityLabel } from '../../../shared/quality.js';
 
 export function getStaticPaths() {
   const feed = loadFeed();
@@ -13,44 +18,24 @@ export function getStaticPaths() {
 }
 
 const { category } = Astro.props;
-const feed = loadFeed();
-const packages = packagesForCategory(feed, category.slug);
-
+const target = withBase(`/?category=${encodeURIComponent(category.slug)}`);
+const canonical = new URL(target, Astro.site).href;
 ---
 
-<Base title={category.name} description={`${category.name} modules in the Mage-OS Extension Directory.`}>
-  <h1>{category.name}</h1>
-  <p>
-    <a href={withBase(`/?category=${category.slug}`)}>Search within this category →</a>
-  </p>
-
-  {
-    packages.length === 0 ? (
-      <p>No visible packages in this category right now.</p>
-    ) : (
-      <ul class="package-grid">
-        {packages.map((pkg) => (
-          <li class="package-card">
-            <h3>
-              <a href={packageHref(pkg)}>{pkg.displayName}</a>
-            </h3>
-            <p class="package-name">
-              <code>{pkg.name}</code>
-            </p>
-            <p class="description">{pkg.description}</p>
-            <p class="meta">
-              <span class={`badge badge-${pkg.quality.tier ?? 'untested'}`}>
-                {qualityLabel(pkg.quality.tier)}
-              </span>
-              {pkg.trust.editorialPick && <span class="badge badge-pick">Editors&rsquo; pick</span>}
-              {pkg.trust.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
-              {pkg.popularity.installs !== null && (
-                <span class="stat">{pkg.popularity.installs.toLocaleString()} installs</span>
-              )}
-            </p>
-          </li>
-        ))}
-      </ul>
-    )
-  }
-</Base>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="refresh" content={`0;url=${target}`} />
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={canonical} />
+    <title>{category.name} · Mage-OS Extension Directory</title>
+  </head>
+  <body>
+    <p>
+      Browsing by category now happens on the directory itself. Continue to
+      <a href={target}>{category.name} modules</a>.
+    </p>
+  </body>
+</html>

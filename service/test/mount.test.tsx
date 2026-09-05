@@ -11,7 +11,11 @@ const feed: Feed = {
     { id: 'github', ok: false, stale: false, fetchedAt: null },
   ],
   rankingConfigVersion: 'test-1',
-  categories: [{ slug: 'payments', name: 'Payments', packageCount: 1 }],
+  // Deliberately out of order: the UI sorts categories by name.
+  categories: [
+    { slug: 'search', name: 'Search', packageCount: 1 },
+    { slug: 'payments', name: 'Payments', packageCount: 2 },
+  ],
   vendors: [
     {
       slug: 'acme',
@@ -59,7 +63,7 @@ const feed: Feed = {
       vendor: 'acme',
       displayName: 'Acme Search',
       description: 'A search engine.',
-      categories: ['payments'],
+      categories: ['search'],
       repositoryUrl: null,
       latestVersion: '2.1.0',
       latestReleasedAt: '2026-05-01T00:00:00.000Z',
@@ -223,7 +227,17 @@ describe('mountDirectory', () => {
     // The rail classes carry the same two states without relying on colour.
     expect(el.querySelectorAll('.mosd-card.mosd-is-installed')).toHaveLength(1);
     expect(el.querySelectorAll('.mosd-card.mosd-is-update')).toHaveLength(1);
-    expect(el.querySelector('select.mosd-install-filter')).not.toBeNull();
+
+    // The installed map also adds two one-click filters; "Update available"
+    // narrows the list to the one card with a newer verified release.
+    const chip = el.querySelector<HTMLButtonElement>('.mosd-filter-chip.mosd-flag-update')!;
+    expect(chip).not.toBeNull();
+    expect(el.querySelector('.mosd-filter-chip.mosd-flag-installed')).not.toBeNull();
+    chip.click();
+    await flush();
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
+    expect(el.querySelectorAll('.mosd-card')).toHaveLength(1);
+    expect(el.textContent).toContain('Acme Search');
   });
 
   it('leads the card with the fit line only when the host knows the shop', async () => {
@@ -343,12 +357,91 @@ describe('mountDirectory', () => {
     expect(el.querySelector('.mosd-card-fit.mosd-fit-older')).not.toBeNull();
     expect(el.querySelector('.mosd-card-fit.mosd-fit-untested')).not.toBeNull();
 
-    // The tested-only toggle hides the untested package.
-    const toggle = el.querySelector<HTMLInputElement>('.mosd-tested-toggle input')!;
-    toggle.click();
+    // The "tested with" chip targets the shop's version and hides the untested package.
+    const chip = el.querySelector<HTMLButtonElement>('.mosd-filter-chip.mosd-flag-tested')!;
+    expect(chip.textContent).toBe('Tested with 2.4.6');
+    chip.click();
     await flush();
     expect(el.textContent).toContain('Acme Pay');
     expect(el.textContent).not.toContain('Acme Search');
+  });
+
+  it('targets the newest catalog version with the tested chip when no shop is known', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+
+    const chip = el.querySelector<HTMLButtonElement>('.mosd-filter-chip.mosd-flag-tested')!;
+    expect(chip.textContent).toBe('Tested with 2.4.7');
+    chip.click();
+    await flush();
+    // The abandoned package has no test results and drops out.
+    expect(el.querySelectorAll('.mosd-card')).toHaveLength(2);
+  });
+
+  it('lists categories alphabetically as chips and filters in place', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+
+    const labels = [...el.querySelectorAll('.mosd-category-chip')].map((c) =>
+      c.textContent!.replace(/\d+$/, '').trim(),
+    );
+    expect(labels).toEqual(['All', 'Payments', 'Search']);
+
+    const search = [...el.querySelectorAll<HTMLButtonElement>('.mosd-category-chip')].find((c) =>
+      c.textContent!.startsWith('Search'),
+    )!;
+    search.click();
+    await flush();
+    expect(search.getAttribute('aria-pressed')).toBe('true');
+    expect(el.querySelectorAll('.mosd-card')).toHaveLength(1);
+    expect(el.textContent).toContain('Acme Search');
+    // Clear filters puts the whole list back.
+    (el.querySelector('.mosd-clear') as HTMLButtonElement).click();
+    await flush();
+    expect(el.querySelectorAll('.mosd-card')).toHaveLength(3);
+  });
+
+  it('shows one page of cards and the rest on request', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, pageSize: 2 });
+    await flush();
+
+    expect(el.querySelectorAll('.mosd-card')).toHaveLength(2);
+    expect(el.querySelector('.mosd-count')!.textContent!.replace(/\s+/g, ' ')).toBe(
+      'Showing 2 of 3 modules',
+    );
+    const more = el.querySelector<HTMLButtonElement>('.mosd-btn-more')!;
+    expect(more.textContent).toBe('Show 1 more');
+    more.click();
+    await flush();
+    expect(el.querySelectorAll('.mosd-card')).toHaveLength(3);
+    expect(el.querySelector('.mosd-btn-more')).toBeNull();
+  });
+
+  it('pins the palette only when asked', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, colorScheme: 'light' });
+    await flush();
+    expect(el.querySelector('.mosd-browser')!.getAttribute('data-mosd-scheme')).toBe('light');
+    unmount();
+
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+    expect(el.querySelector('.mosd-browser')!.hasAttribute('data-mosd-scheme')).toBe(false);
   });
 
   it('pins the newest release verified for the host Magento in the install list', async () => {

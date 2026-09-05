@@ -255,3 +255,45 @@ respectively); status by badge alone (an install state ranked level with "Editor
 is the problem being fixed, and colour-only encoding fails for the same reason);
 per-card composer commands (the admin's tray already builds one from the install list,
 and detail pages carry the single-package form).
+
+## 14. One list, a few filters that matter, and a page at a time
+
+**Decision:** browsing by category is a filter on the single directory list, not a
+second listing: the home page's category grid and the prerendered `/categories/<slug>/`
+pages are gone, the old URLs redirect to `/?category=<slug>`, and the island mirrors its
+whole filter state into the URL (`q`, `category`, `only`, `sort`) so a narrowed view is a
+link. Categories are alphabetical. The quality-tier checkboxes are replaced by one-click
+chips that each answer a shortlisting question — Trusted vendor, Editors' picks, Tested
+with &lt;version&gt;, Recently updated, High quality, Popular, and on host-aware
+surfaces Installed / Update available — combined with AND. Results render a page of 24
+with a "Show more" button rather than the whole catalog. The component's ground is
+transparent and its font inherits from the host; it ships a light and a dark palette,
+follows `prefers-color-scheme` by default, and lets a host pin one (`colorScheme`). The
+Magento admin pins light, since both admin themes are light-only, and passes
+`?scheme=light` to the detail pages it frames.
+
+**Why:** two ways to browse by category (a grid of links to prerendered pages, and a
+select inside the island) meant two experiences that looked alike and behaved
+differently; clicking a category should narrow what is already on screen. Filtering by
+"Known issues" or "Not assessed yet" narrows toward what nobody is looking for, while
+the questions people actually ask before shortlisting — who is behind it, does it fit my
+version, is it maintained, is it any good, does anyone use it — had no control at all.
+Rendering ~1,100 cards on load is slow to paint and hides that the ordering is the
+recommendation; a page plus "Show more" keeps the top of the list the answer and works
+without pagination state in the URL. A transparent ground is what lets one bundle sit on
+the legacy admin's grey, M137's neutral grey and the site's white without a per-host
+background token, and inheriting the font is what makes it read as native under both
+admin themes without detecting which one is active. The chip vocabulary, the filter
+panel as one surface with a result count and "Clear filters", the URL-as-state, and the
+dark palette are borrowed from the Mage-OS Lab catalogue ([mage-os-org#92](https://github.com/mage-os/mage-os-org/pull/92)).
+
+**Rejected:** numbered pagination (meaningless once the sort or filter changes, and a
+second URL contract); infinite scroll (loses the footer and the sense of how far the
+list goes); keeping prerendered category landing pages for SEO (the detail pages carry
+the search value; a category page whose list differs from the home page's is the
+confusion being removed); favourites in localStorage as on the Lab page (the admin's
+install list already plays that role, and on the public site a shareable filtered URL
+is the more useful bookmark); a fixed install threshold for "Popular" (brittle as the
+corpus shifts — a percentile is self-adjusting); auto-dark in the admin (the admin chrome
+does not follow the OS, so the panel must not either).
+

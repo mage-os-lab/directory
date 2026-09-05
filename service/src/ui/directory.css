@@ -1,18 +1,28 @@
-/* Embeddable directory UI — Material Design 3 flavored, metric-forward cards
- * in the spirit of PackageMaven's listings. Every class is .mosd-* prefixed;
- * theme via the custom properties below (they pierce the Shadow DOM
- * boundary). No external fonts: Roboto applies when the host has it, the
- * system stack otherwise. */
+/* Embeddable directory UI — quiet surfaces on a transparent ground, so the
+ * host page's own background shows through (the Magento admin's grey, the
+ * site's white). Every class is .mosd-* prefixed; theme via the
+ * --mosd-theme-* custom properties below (they pierce the Shadow DOM
+ * boundary). Typography inherits from the host unless --mosd-theme-font is
+ * set: a declaration whose only value is an undefined custom property is
+ * invalid at computed-value time and falls back to `unset`, which for
+ * font-family means inherit.
+ *
+ * Two palettes. The light one is the default; the dark one applies when the
+ * reader's OS asks for it and the host has not pinned a scheme, or when the
+ * host pins data-mosd-scheme="dark". Host --mosd-theme-* overrides win over
+ * both, so a host that sets them owns the answer for both schemes. */
 .mosd-browser {
   --mosd-accent: var(--mosd-theme-accent, #e8590c);
   --mosd-accent-soft: var(--mosd-theme-accent-soft, #fdeee4);
   --mosd-fg: var(--mosd-theme-fg, #1c1b1f);
   --mosd-fg-muted: var(--mosd-theme-fg-muted, #5f5b66);
-  --mosd-bg: var(--mosd-theme-bg, #ffffff);
+  /* Surfaces: cards, the filter panel, inputs and the tray sit on --mosd-surface;
+   * --mosd-bg-soft is the muted fill for chips and code. The ground itself is
+   * transparent. */
+  --mosd-surface: var(--mosd-theme-surface, var(--mosd-theme-bg, #ffffff));
   --mosd-bg-soft: var(--mosd-theme-bg-soft, #f3f2f7);
   --mosd-border: var(--mosd-theme-border, #dcd9e0);
   --mosd-radius: var(--mosd-theme-radius, 12px);
-  --mosd-font: var(--mosd-theme-font, Roboto, system-ui, sans-serif);
   /* Semantic state colours, separate from the accent: verified/installed,
    * needs-attention/update, and risk. Themable for hosts whose admin palette
    * reads differently, but never swap their meanings. */
@@ -22,125 +32,331 @@
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #fdf5e7);
   --mosd-risk: var(--mosd-theme-risk, #a52626);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #fdeeee);
-  --mosd-elevation-1: 0 1px 2px rgb(0 0 0 / 0.1), 0 1px 3px 1px rgb(0 0 0 / 0.06);
-  --mosd-elevation-2: 0 1px 2px rgb(0 0 0 / 0.1), 0 2px 6px 2px rgb(0 0 0 / 0.1);
-  --mosd-elevation-3: 0 4px 8px 3px rgb(0 0 0 / 0.12), 0 1px 3px rgb(0 0 0 / 0.14);
+  /* Quality tiers, PackageMaven's four plus "not assessed". */
+  --mosd-q-strict-bg: #d5f2dc;
+  --mosd-q-strict-fg: #1e6b34;
+  --mosd-q-clean-bg: #d7e9fb;
+  --mosd-q-clean-fg: #135ba1;
+  --mosd-q-installs-bg: #fdf0c2;
+  --mosd-q-installs-fg: #7a5d00;
+  --mosd-q-issues-bg: #fadcdc;
+  --mosd-q-issues-fg: #a52626;
+  --mosd-q-none-bg: #ececec;
+  --mosd-q-none-fg: #5f5f5f;
+  --mosd-shadow-color: 0 0 0;
+  --mosd-elevation-1: 0 1px 2px rgb(var(--mosd-shadow-color) / 0.1),
+    0 1px 3px 1px rgb(var(--mosd-shadow-color) / 0.06);
+  --mosd-elevation-2: 0 1px 2px rgb(var(--mosd-shadow-color) / 0.1),
+    0 2px 6px 2px rgb(var(--mosd-shadow-color) / 0.1);
+  --mosd-elevation-3: 0 4px 8px 3px rgb(var(--mosd-shadow-color) / 0.12),
+    0 1px 3px rgb(var(--mosd-shadow-color) / 0.14);
 
+  background: transparent;
   color: var(--mosd-fg);
-  background: var(--mosd-bg);
-  font: 14px/1.5 var(--mosd-font);
+  color-scheme: light;
+  font-family: var(--mosd-theme-font);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* The dark palette, once for the OS preference (unless the host pinned
+ * light) and once for a host that pins dark. Keep the two blocks identical. */
+@media (prefers-color-scheme: dark) {
+  .mosd-browser:not([data-mosd-scheme='light']) {
+    --mosd-accent: var(--mosd-theme-accent, #ff8a4c);
+    --mosd-accent-soft: var(--mosd-theme-accent-soft, #3d2416);
+    --mosd-fg: var(--mosd-theme-fg, #e8e6ec);
+    --mosd-fg-muted: var(--mosd-theme-fg-muted, #a9a5b2);
+    --mosd-surface: var(--mosd-theme-surface, var(--mosd-theme-bg, #1f1e24));
+    --mosd-bg-soft: var(--mosd-theme-bg-soft, #2b2a31);
+    --mosd-border: var(--mosd-theme-border, #3b3944);
+    --mosd-ok: var(--mosd-theme-ok, #6fd39a);
+    --mosd-ok-soft: var(--mosd-theme-ok-soft, #182b21);
+    --mosd-warn: var(--mosd-theme-warn, #f2be62);
+    --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
+    --mosd-risk: var(--mosd-theme-risk, #ff8585);
+    --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
+    --mosd-q-strict-bg: #1b3a26;
+    --mosd-q-strict-fg: #8ee0a8;
+    --mosd-q-clean-bg: #1a2f47;
+    --mosd-q-clean-fg: #8fc4f5;
+    --mosd-q-installs-bg: #3a3011;
+    --mosd-q-installs-fg: #f0d271;
+    --mosd-q-issues-bg: #42201f;
+    --mosd-q-issues-fg: #ff9d9d;
+    --mosd-q-none-bg: #333238;
+    --mosd-q-none-fg: #b5b2bb;
+    --mosd-shadow-color: 0 0 0;
+    color-scheme: dark;
+  }
+}
+
+.mosd-browser[data-mosd-scheme='dark'] {
+  --mosd-accent: var(--mosd-theme-accent, #ff8a4c);
+  --mosd-accent-soft: var(--mosd-theme-accent-soft, #3d2416);
+  --mosd-fg: var(--mosd-theme-fg, #e8e6ec);
+  --mosd-fg-muted: var(--mosd-theme-fg-muted, #a9a5b2);
+  --mosd-surface: var(--mosd-theme-surface, var(--mosd-theme-bg, #1f1e24));
+  --mosd-bg-soft: var(--mosd-theme-bg-soft, #2b2a31);
+  --mosd-border: var(--mosd-theme-border, #3b3944);
+  --mosd-ok: var(--mosd-theme-ok, #6fd39a);
+  --mosd-ok-soft: var(--mosd-theme-ok-soft, #182b21);
+  --mosd-warn: var(--mosd-theme-warn, #f2be62);
+  --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
+  --mosd-risk: var(--mosd-theme-risk, #ff8585);
+  --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
+  --mosd-q-strict-bg: #1b3a26;
+  --mosd-q-strict-fg: #8ee0a8;
+  --mosd-q-clean-bg: #1a2f47;
+  --mosd-q-clean-fg: #8fc4f5;
+  --mosd-q-installs-bg: #3a3011;
+  --mosd-q-installs-fg: #f0d271;
+  --mosd-q-issues-bg: #42201f;
+  --mosd-q-issues-fg: #ff9d9d;
+  --mosd-q-none-bg: #333238;
+  --mosd-q-none-fg: #b5b2bb;
+  --mosd-shadow-color: 0 0 0;
+  color-scheme: dark;
+}
+
+.mosd-browser *,
+.mosd-browser *::before,
+.mosd-browser *::after {
+  box-sizing: border-box;
 }
 
 .mosd-stale-notice {
-  background: #fff3cd;
-  border: 1px solid #ffe08a;
+  background: var(--mosd-warn-soft);
+  border: 1px solid color-mix(in srgb, var(--mosd-warn) 35%, transparent);
   border-radius: var(--mosd-radius);
-  color: #664d03;
+  color: var(--mosd-warn);
   margin: 0 0 12px;
   padding: 8px 14px;
 }
 
-/* Controls row: MD search bar + outlined selects */
+/* Filter panel: one surface holding everything that narrows the list, so
+ * the controls read as a unit and the results as another. */
+
+.mosd-panel {
+  background: var(--mosd-surface);
+  border: 1px solid var(--mosd-border);
+  border-radius: calc(var(--mosd-radius) + 4px);
+  box-shadow: var(--mosd-elevation-1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+}
 
 .mosd-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 12px;
+}
+
+.mosd-search-field {
+  align-items: center;
+  display: flex;
+  flex: 1 1 260px;
+  position: relative;
+}
+
+.mosd-search-icon {
+  color: var(--mosd-fg-muted);
+  left: 12px;
+  pointer-events: none;
+  position: absolute;
 }
 
 .mosd-search {
-  background: var(--mosd-bg-soft);
-  border: 1px solid transparent;
-  border-radius: 24px;
+  background: var(--mosd-surface);
+  border: 1px solid var(--mosd-border);
+  border-radius: 10px;
   color: var(--mosd-fg);
-  flex: 1 1 240px;
   font: inherit;
-  padding: 9px 18px;
-  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  padding: 9px 14px 9px 38px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+}
+
+.mosd-search::placeholder {
+  color: var(--mosd-fg-muted);
+  opacity: 0.8;
 }
 
 .mosd-search:hover {
-  background: color-mix(in srgb, var(--mosd-bg-soft), var(--mosd-fg) 4%);
+  border-color: color-mix(in srgb, var(--mosd-border), var(--mosd-fg) 20%);
 }
 
 .mosd-search:focus {
-  background: var(--mosd-bg);
   border-color: var(--mosd-accent);
-  box-shadow: 0 0 0 1px var(--mosd-accent);
+  box-shadow: 0 0 0 3px var(--mosd-accent-soft);
   outline: none;
 }
 
+.mosd-select-field {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.mosd-select-label {
+  color: var(--mosd-fg-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* Categories are chips where there is room for them and a select where there
+ * is not; the two are the same control, so only one is shown at a time. */
+.mosd-category-field {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .mosd-category-field {
+    display: flex;
+  }
+
+  .mosd-chip-row.mosd-category-row {
+    display: none;
+  }
+}
+
 .mosd-category,
-.mosd-sort,
-.mosd-install-filter {
-  background: var(--mosd-bg);
+.mosd-sort {
+  background: var(--mosd-surface);
   border: 1px solid var(--mosd-border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--mosd-fg);
   font: inherit;
   padding: 8px 12px;
 }
 
 .mosd-category:focus,
-.mosd-sort:focus,
-.mosd-install-filter:focus {
+.mosd-sort:focus {
   border-color: var(--mosd-accent);
-  outline: 1px solid var(--mosd-accent);
+  box-shadow: 0 0 0 3px var(--mosd-accent-soft);
+  outline: none;
 }
 
-/* Filter chips (MD filter chip: outlined, tonal fill when selected) */
+/* Chip rows: categories (one at a time) and "show only" flags (any number).
+ * A chip is pressed or not — aria-pressed carries the state, the tonal fill
+ * only repeats it. */
 
-.mosd-quality-filters {
+.mosd-chip-row {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 6px;
 }
 
-.mosd-quality-toggle {
+.mosd-chip-row-label {
+  color: var(--mosd-fg-muted);
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+  min-width: 68px;
+  text-transform: uppercase;
+}
+
+.mosd-filter-chip {
+  align-items: center;
+  background: transparent;
   border: 1px solid var(--mosd-border);
-  border-radius: 8px;
+  border-radius: 999px;
   color: var(--mosd-fg-muted);
   cursor: pointer;
-  font-size: 13px;
+  display: inline-flex;
+  font: inherit;
+  font-size: 12.5px;
   font-weight: 500;
+  gap: 5px;
+  line-height: 1.3;
   padding: 5px 12px;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   user-select: none;
 }
 
-.mosd-quality-toggle:hover {
+.mosd-filter-chip:hover {
   background: var(--mosd-bg-soft);
+  color: var(--mosd-fg);
 }
 
-.mosd-quality-toggle:has(input:checked) {
+.mosd-filter-chip:focus-visible {
+  box-shadow: 0 0 0 3px var(--mosd-accent-soft);
+  outline: none;
+}
+
+.mosd-filter-chip[aria-pressed='true'] {
   background: var(--mosd-accent-soft);
   border-color: var(--mosd-accent);
   color: var(--mosd-accent);
+  font-weight: 600;
 }
 
-.mosd-quality-toggle input {
-  height: 1px;
+.mosd-filter-chip[aria-pressed='true']:not(.mosd-category-chip)::before {
+  content: '✓';
+  font-size: 11px;
+}
+
+.mosd-chip-count {
+  color: var(--mosd-fg-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.mosd-filter-chip[aria-pressed='true'] .mosd-chip-count {
+  color: inherit;
+}
+
+.mosd-panel-foot {
+  align-items: center;
+  border-top: 1px solid color-mix(in srgb, var(--mosd-border) 70%, transparent);
+  color: var(--mosd-fg-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 6px 18px;
+  padding-top: 10px;
+}
+
+.mosd-count {
   margin: 0;
-  opacity: 0.01;
-  position: absolute;
-  width: 1px;
 }
 
-.mosd-quality-toggle:has(input:checked)::before {
-  content: '✓ ';
+.mosd-count strong {
+  color: var(--mosd-fg);
+  font-weight: 600;
 }
 
 .mosd-show-hidden {
-  color: var(--mosd-fg-muted);
   cursor: pointer;
   user-select: none;
 }
 
-.mosd-count {
-  color: var(--mosd-fg-muted);
-  margin: 4px 0 14px;
+.mosd-link-btn {
+  background: none;
+  border: 0;
+  color: var(--mosd-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+}
+
+.mosd-link-btn:hover,
+.mosd-link-btn:focus-visible {
+  text-decoration: underline;
+}
+
+.mosd-clear {
+  margin-left: auto;
 }
 
 /* Result cards: quiet surfaces, one signal per question. Nothing on a card
@@ -150,7 +366,7 @@
 
 .mosd-results {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   list-style: none;
   margin: 0;
@@ -159,25 +375,31 @@
 
 .mosd-card {
   --mosd-rail: transparent;
-  --mosd-surface: var(--mosd-bg);
-  background: var(--mosd-surface);
+  --mosd-rail-edge: var(--mosd-border);
+  --mosd-card-surface: var(--mosd-surface);
+  background: var(--mosd-card-surface);
   border: 1px solid var(--mosd-border);
+  border-left-color: var(--mosd-rail-edge);
   border-radius: var(--mosd-radius);
+  box-shadow: var(--mosd-elevation-1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   padding: 0;
   position: relative;
-  transition: box-shadow 0.15s ease;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .mosd-card:hover,
 .mosd-card:focus-within {
+  border-color: color-mix(in srgb, var(--mosd-accent) 55%, var(--mosd-border));
   box-shadow: var(--mosd-elevation-2);
 }
 
-/* The rail is painted inside the card rather than as a border, so the
- * selection ring can sit at the edge without covering it. */
+/* The rail is a 3px bar flush with the card's left edge: the border pixel on
+ * that side takes the rail colour and the bar continues inward from it, so
+ * there is no hairline between the edge and the rail. The selection ring
+ * paints over the border pixel only, so a marked card's rail stays whole. */
 .mosd-card::before {
   background: var(--mosd-rail);
   bottom: 0;
@@ -195,33 +417,33 @@
  * most useful thing this view can tell anyone. */
 .mosd-is-installed {
   --mosd-rail: var(--mosd-ok);
-  --mosd-surface: var(--mosd-ok-soft);
+  --mosd-rail-edge: var(--mosd-ok);
+  --mosd-card-surface: var(--mosd-ok-soft);
 }
 
 .mosd-is-update {
   --mosd-rail: var(--mosd-warn);
-  --mosd-surface: var(--mosd-warn-soft);
+  --mosd-rail-edge: var(--mosd-warn);
+  --mosd-card-surface: var(--mosd-warn-soft);
 }
 
 .mosd-is-risk {
   --mosd-rail: var(--mosd-risk);
-  --mosd-surface: var(--mosd-risk-soft);
+  --mosd-rail-edge: var(--mosd-risk);
+  --mosd-card-surface: var(--mosd-risk-soft);
 }
 
 /* Marking is the reader's own choice, so it reads as a selection ring rather
  * than a fourth rail — it has to stay legible on top of whichever rail is
- * already there. Only when no rail is competing does it also tint. */
+ * already there, which it is: the ring wraps all four sides and the rail
+ * runs inside it. Only when no rail is competing does it also tint. */
 .mosd-is-marked {
   outline: 2px solid var(--mosd-accent);
   outline-offset: -1px;
 }
 
-.mosd-is-marked::before {
-  left: 3px;
-}
-
 .mosd-is-marked-only {
-  --mosd-surface: var(--mosd-accent-soft);
+  --mosd-card-surface: var(--mosd-accent-soft);
 }
 
 /* Fit strip: the leading line wherever the host knows this shop's Magento
@@ -268,7 +490,7 @@
   flex: 1 1 auto;
   flex-direction: column;
   gap: 7px;
-  padding: 12px 14px 13px 15px;
+  padding: 14px 16px 14px 17px;
 }
 
 .mosd-card-head {
@@ -286,9 +508,10 @@
 
 .mosd-card-title {
   color: var(--mosd-fg);
-  font-size: 15.5px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
   text-decoration: none;
 }
 
@@ -309,13 +532,13 @@
 }
 
 .mosd-card-name code {
-  font-family: ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11.5px;
 }
 
 .mosd-card-description {
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
@@ -370,7 +593,7 @@
 }
 
 .mosd-card-risk code {
-  font-family: ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11.5px;
   overflow-wrap: anywhere;
 }
@@ -382,20 +605,23 @@
   margin: 0;
 }
 
+/* Category chips on a card are the same filter as the rail above, one click
+ * away: pressing one narrows the list to that category. */
 .mosd-chip {
   background: var(--mosd-bg-soft);
   border: 0;
-  border-radius: calc(var(--mosd-radius) - 4px);
+  border-radius: 999px;
   color: var(--mosd-fg-muted);
   cursor: pointer;
   font: inherit;
   font-size: 11.5px;
   font-weight: 500;
-  padding: 3px 9px;
+  padding: 3px 10px;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.mosd-chip:hover {
+.mosd-chip:hover,
+.mosd-chip[aria-pressed='true'] {
   background: var(--mosd-accent-soft);
   color: var(--mosd-accent);
 }
@@ -427,7 +653,7 @@
 /* The fit answer, for surfaces with no shop version to compare against. */
 .mosd-card-span {
   border: 1px solid var(--mosd-border);
-  border-radius: calc(var(--mosd-radius) - 4px);
+  border-radius: 999px;
   margin-left: auto;
   padding: 2px 8px;
   white-space: nowrap;
@@ -442,7 +668,7 @@
 .mosd-badge {
   background: var(--mosd-bg-soft);
   border: 0;
-  border-radius: 8px;
+  border-radius: 999px;
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -454,11 +680,13 @@
   font-size: 11px;
 }
 
-.mosd-badge-strict-compliant { background: #d5f2dc; color: #1e6b34; }
-.mosd-badge-no-errors { background: #d7e9fb; color: #135ba1; }
-.mosd-badge-ready-to-install { background: #fdf0c2; color: #7a5d00; }
-.mosd-badge-needs-help { background: #fadcdc; color: #a52626; }
-.mosd-badge-untested { background: #ececec; color: #5f5f5f; }
+.mosd-badge-strict-compliant { background: var(--mosd-q-strict-bg); color: var(--mosd-q-strict-fg); }
+.mosd-badge-no-errors { background: var(--mosd-q-clean-bg); color: var(--mosd-q-clean-fg); }
+.mosd-badge-ready-to-install { background: var(--mosd-q-installs-bg); color: var(--mosd-q-installs-fg); }
+.mosd-badge-needs-help { background: var(--mosd-q-issues-bg); color: var(--mosd-q-issues-fg); }
+.mosd-badge-untested { background: var(--mosd-q-none-bg); color: var(--mosd-q-none-fg); }
+
+/* Empty, loading and error states share one quiet, centred voice. */
 
 .mosd-empty,
 .mosd-loading,
@@ -466,6 +694,26 @@
   color: var(--mosd-fg-muted);
   padding: 32px 0;
   text-align: center;
+}
+
+.mosd-empty {
+  border: 1px dashed var(--mosd-border);
+  border-radius: var(--mosd-radius);
+  padding: 40px 20px;
+}
+
+.mosd-empty p {
+  margin: 0 0 6px;
+}
+
+.mosd-empty-title {
+  color: var(--mosd-fg);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.mosd-empty .mosd-btn {
+  margin-top: 10px;
 }
 
 .mosd-error button {
@@ -478,6 +726,27 @@
   font-weight: 500;
   margin-left: 8px;
   padding: 6px 16px;
+}
+
+/* Progressive disclosure: a page of cards, then a button for the next page.
+ * A count beside it says how far the list goes without anyone scrolling. */
+
+.mosd-more {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.mosd-btn-more {
+  padding: 9px 22px;
+}
+
+.mosd-more-note {
+  color: var(--mosd-fg-muted);
+  font-size: 13px;
 }
 
 /* Install-list marking (selectable mounts): MD tonal buttons */
@@ -506,12 +775,13 @@
   color: #fff;
 }
 
-/* Tray: MD bottom-bar style, elevated */
+/* Tray: the one surface that must stay opaque, because it floats over the
+ * cards while the reader scrolls. */
 
 .mosd-tray {
   align-items: center;
-  background: var(--mosd-bg);
-  border: 0;
+  background: var(--mosd-surface);
+  border: 1px solid var(--mosd-border);
   border-radius: 16px;
   bottom: 8px;
   box-shadow: var(--mosd-elevation-3);
@@ -521,6 +791,7 @@
   margin-top: 16px;
   padding: 12px 16px;
   position: sticky;
+  z-index: 2;
 }
 
 .mosd-tray-count {
@@ -532,7 +803,7 @@
   background: var(--mosd-bg-soft);
   border-radius: 8px;
   flex: 1 1 260px;
-  font-family: ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   overflow-x: auto;
   padding: 8px 10px;
@@ -541,7 +812,7 @@
 
 .mosd-btn {
   background: var(--mosd-bg-soft);
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 20px;
   color: var(--mosd-fg);
   cursor: pointer;
@@ -549,10 +820,11 @@
   font-size: 13px;
   font-weight: 500;
   padding: 7px 16px;
-  transition: box-shadow 0.15s ease;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .mosd-btn:hover {
+  border-color: var(--mosd-border);
   box-shadow: var(--mosd-elevation-1);
 }
 
