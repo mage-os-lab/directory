@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "magepal",
+  "vendorName": "MagePal",
+  "url": "https://github.com/magepal",
+  "trustedVendor": true,
+  "partnerTier": null,
+  "packages": {}
+}

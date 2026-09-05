@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "customgento",
+  "vendorName": "CustomGento",
+  "url": "https://github.com/customgento",
+  "trustedVendor": true,
+  "partnerTier": null,
+  "packages": {}
+}

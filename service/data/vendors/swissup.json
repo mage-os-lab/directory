@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "swissup",
+  "vendorName": "Swissup",
+  "url": "https://github.com/swissup",
+  "trustedVendor": true,
+  "partnerTier": null,
+  "packages": {}
+}

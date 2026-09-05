@@ -128,23 +128,22 @@ export interface PickRow {
 }
 
 /**
- * Editorial-pick shortlist. A pick is a recommendation the directory puts its
- * name to, so the filter is deliberately strict: tested clean, released this
- * year, not abandoned, no standing warning.
+ * Editorial-pick shortlist: released within 18 months, not abandoned, no
+ * standing warning.
+ *
+ * There is deliberately no quality-tier floor. PM's tiers grade PHPStan and
+ * build cleanliness, not usefulness — only 26 of ~1,100 packages reach
+ * strict-compliant, while the ecosystem's most-installed modules sit at
+ * ready-to-install — so a floor would have the gate picking on code hygiene
+ * instead of a curator picking on merit. Tier still contributes to the score;
+ * it just no longer excludes.
  */
-export function rankPicks(
-  packages: PackageSummary[],
-  now: Date,
-  minTier: QualityTier = 'no-errors',
-): PickRow[] {
-  const floor = TIER_SCORE[minTier];
+export function rankPicks(packages: PackageSummary[], now: Date): PickRow[] {
   const maxInstalls = Math.max(...packages.map((p) => p.popularity.installs ?? 0), 0);
   return packages
     .filter((p) => {
       const months = monthsSince(p.latestReleasedAt, now);
       return (
-        p.quality.tier !== null &&
-        TIER_SCORE[p.quality.tier] >= floor &&
         p.abandoned !== true &&
         !p.trust.deranked &&
         !p.trust.hidden &&
@@ -163,7 +162,7 @@ export function rankPicks(
         months,
         magento: p.supportedMagento.join(' '),
         score:
-          0.35 * TIER_SCORE[p.quality.tier!] +
+          0.35 * (p.quality.tier === null ? 0 : TIER_SCORE[p.quality.tier]) +
           0.3 * logScale(p.popularity.installs, maxInstalls) +
           0.15 * logScale(p.popularity.githubStars, 2000) +
           0.1 * Math.max(0, 1 - months / 18) +
@@ -190,11 +189,6 @@ const { values } = parseArgs({
      * record across a catalogue, not one good module. */
     'min-packages': { type: 'string', default: '3' },
     detail: { type: 'boolean', default: false },
-    /** Lowest PM quality tier a pick candidate may hold. PM's tiers grade code
-     * hygiene, not usefulness — the ecosystem's most-installed modules sit at
-     * ready-to-install — so a curation round that weighs usefulness can widen
-     * this rather than let the gate pick for it. */
-    'min-tier': { type: 'string', default: 'no-errors' },
     top: { type: 'string', default: '30' },
   },
 });
@@ -241,12 +235,11 @@ console.log(
   ),
 );
 
-const minTier = values['min-tier'] as QualityTier;
-console.log(`\n## Editorial-pick shortlist (${minTier} or better, released within 18 months)\n`);
+console.log('\n## Editorial-pick shortlist (released within 18 months, not abandoned, unwarned)\n');
 console.log(
   table(
     ['package', 'tier', 'phpstan', 'installs', 'stars', 'age_mo', 'magento', 'score'],
-    rankPicks(packages, now, minTier)
+    rankPicks(packages, now)
       .slice(0, top)
       .map((r) => [
         r.name,
