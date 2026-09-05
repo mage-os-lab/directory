@@ -472,9 +472,10 @@ A sketch, not a spec — the module author owns the details.
    Default-bundled raises the bar on privacy and offline behavior considerably.
 6. **`schemaVersion` bump policy** — the module should check `schemaVersion` and degrade
    gracefully rather than misrender a future v2. No bump is planned.
-7. **Trust data is thin.** `data/vendors/` currently holds three demo vendor files whose
-   packages don't exist in the live corpus. Real curated trust data is a Mage-OS
-   association task, independent of the module.
+7. **Trust data is thin.** `data/vendors/` holds the Mage-OS partner roster (tiers only,
+   no packages yet); the three demo vendor files moved to `data/fixtures/vendors/` and
+   apply to fixture builds only. Trusted-vendor badges and editorial picks are still
+   unpopulated — a Mage-OS association task, independent of the module.
 8. **Attribution gap in the bundle** (§8) — fix upstream, or handle in the module.
 
 **Timeline context:** the directory was targeted to be ready before Mage-OS's next feature

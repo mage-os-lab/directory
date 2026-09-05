@@ -60,13 +60,26 @@ export function loadSnapshot(filePath: string): PackageMavenSnapshot {
 }
 
 /**
- * Load and validate every data/vendors/*.json trust file. Malformed files
+ * Where the trust overlay for a given universe lives. The real overlay
+ * (data/vendors/) names real packages, so it only makes sense against the
+ * live PM universe; a fixture build gets the invented vendors that match its
+ * invented snapshot. Keeping them in separate directories is what stops
+ * example trust data — fake tiers, a fake security warning — from ever
+ * reaching a live build.
+ */
+export function vendorsDirFor(dataDir: string, source: 'live' | 'fixture'): string {
+  return source === 'fixture'
+    ? path.join(dataDir, 'fixtures', 'vendors')
+    : path.join(dataDir, 'vendors');
+}
+
+/**
+ * Load and validate every <vendorsDir>/*.json trust file. Malformed files
  * throw (our own data — CI on the PR should have caught it); cross-file
  * checks (filename = vendor, key prefixes, category refs, warning evidence)
  * are enforced here because the schema alone can't see filenames.
  */
-export function loadVendorFiles(dataDir: string, categories: CategoriesFile): VendorFile[] {
-  const vendorsDir = path.join(dataDir, 'vendors');
+export function loadVendorFiles(vendorsDir: string, categories: CategoriesFile): VendorFile[] {
   if (!fs.existsSync(vendorsDir)) return [];
 
   const slugs = new Set(categories.categories.map((c) => c.slug));

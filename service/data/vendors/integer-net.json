@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "integer-net",
+  "vendorName": "integer_net",
+  "url": "https://integer-net.com/",
+  "trustedVendor": false,
+  "partnerTier": "bronze",
+  "packages": {}
+}

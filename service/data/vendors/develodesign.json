@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "develodesign",
+  "vendorName": "Develo",
+  "url": "https://develodesign.co.uk/",
+  "trustedVendor": false,
+  "partnerTier": "bronze",
+  "packages": {}
+}

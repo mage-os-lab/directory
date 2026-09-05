@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "paradoxlabs",
+  "vendorName": "ParadoxLabs",
+  "url": "https://www.paradoxlabs.com/",
+  "trustedVendor": false,
+  "partnerTier": "silver",
+  "packages": {}
+}

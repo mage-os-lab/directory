@@ -1,5 +1,7 @@
 # Trust data changes (badges, tiers, picks, warnings) require maintainer
-# review — see docs/trust-policy.md.
-/data/vendors/  @rhoerr
-/data/ranking.json @rhoerr
-/data/categories.json @rhoerr
+# review — see docs/trust-policy.md. Paths are repo-root anchored: the data
+# lives under service/, so root-relative /data/... matches nothing.
+/service/data/vendors/ @rhoerr
+/service/data/ranking.json @rhoerr
+/service/data/categories.json @rhoerr
+/docs/trust-policy.md @rhoerr

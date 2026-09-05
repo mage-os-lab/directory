@@ -23,8 +23,10 @@ build.
 Vendor trust files (`service/data/vendors/<vendor>.json`) add badges, display-name and
 category overrides, editorial picks, and warnings on top of the indexed data.
 
-1. Copy an existing file (e.g. `service/data/vendors/pixelforge.json`) and adjust it. The
-   filename must equal the `vendor` field — your Packagist vendor namespace.
+1. Copy an existing file (e.g. `service/data/vendors/vendic.json`) and adjust it. The
+   filename must equal the `vendor` field — your Packagist vendor namespace. (The demo
+   vendors under `service/data/fixtures/vendors/` decorate the fixture snapshot only;
+   don't add real vendors there.)
 2. Include proof you control the namespace in the PR description (see the
    [trust policy](docs/trust-policy.md#vendor-identity)): open the PR from an account
    in the org that owns the vendor's repositories, or link a commit/site note that

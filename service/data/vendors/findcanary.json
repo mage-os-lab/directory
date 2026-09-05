@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "findcanary",
+  "vendorName": "FindCanary",
+  "url": "https://findcanary.com/",
+  "trustedVendor": false,
+  "partnerTier": "bronze",
+  "packages": {}
+}

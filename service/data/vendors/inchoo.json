@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "inchoo",
+  "vendorName": "Inchoo",
+  "url": "https://inchoo.net/",
+  "trustedVendor": false,
+  "partnerTier": "bronze",
+  "packages": {}
+}

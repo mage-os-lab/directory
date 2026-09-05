@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "jetrails",
+  "vendorName": "JetRails",
+  "url": "https://jetrails.com/",
+  "trustedVendor": false,
+  "partnerTier": "bronze",
+  "packages": {}
+}

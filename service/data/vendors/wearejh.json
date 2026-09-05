@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "wearejh",
+  "vendorName": "JH",
+  "url": "https://wearejh.com/",
+  "trustedVendor": false,
+  "partnerTier": "silver",
+  "packages": {}
+}
