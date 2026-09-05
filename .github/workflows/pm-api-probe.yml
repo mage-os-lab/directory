@@ -42,6 +42,8 @@ jobs:
         env:
           PACKAGE_MAVEN_TOKEN: ${{ secrets.PACKAGE_MAVEN_TOKEN }}
         run: npx tsx src/pipeline/run.ts --source live --out /tmp/pm-live-out
+      - name: Trust-overlay candidate shortlist
+        run: npx tsx src/pipeline/tools/trust-candidates.ts --feed /tmp/pm-live-out/api/v1/feed.json --top 40
       - name: Summarize emitted feed
         run: |
           python3 - <<'EOF'
