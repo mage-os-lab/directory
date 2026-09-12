@@ -102,6 +102,12 @@ h3 {
   line-height: 1.25;
 }
 
+/* Framed by a host (?embed=1): the host's chrome names the page, so the
+ * site's own header and navigation stay out of the frame. */
+html[data-embed] .site-header {
+  display: none;
+}
+
 .site-header {
   border-bottom: 1px solid var(--border);
 }
