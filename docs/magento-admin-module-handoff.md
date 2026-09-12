@@ -109,7 +109,7 @@ for the header). The server-side proxy approach in §6 sidesteps this entirely.
 | Feed size | ~1.5–1.7 MB raw, ~200 KB gzipped at 1090 packages (extrapolated from fixture) |
 | Detail file | ~2–20 KB each, depending on README |
 | `manifest.json` | ~200 bytes |
-| Refresh cadence | Daily (05:23 UTC) plus any push touching `data/**` |
+| Refresh cadence | Daily (05:23 UTC) plus any push to `main` touching `service/**` |
 
 The feed is big enough that fetching it on every admin page load is wasteful. Fetch
 `manifest.json` (200 bytes) and compare `feedHash` to decide whether to refetch — that is

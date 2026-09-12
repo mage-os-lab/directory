@@ -5,7 +5,10 @@ on:
     - cron: '23 5 * * *' # daily
   push:
     branches: [main]
-    paths: ['service/data/**']
+    # The site and the embeddable bundle are both built from service/, so any change there ships.
+    paths:
+      - 'service/**'
+      - '.github/workflows/build-deploy.yml'
   workflow_dispatch:
     inputs:
       source:

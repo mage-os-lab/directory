@@ -98,8 +98,9 @@ invented vendors that match the fixture snapshot live separately in
 
 A TypeScript script under `src/pipeline/`, run by GitHub Actions:
 
-- **Triggers:** daily cron, push to `main` touching `data/**`, and manual
-  `workflow_dispatch`.
+- **Triggers:** daily cron, push to `main` touching anything under `service/` (data,
+  pipeline, site, or UI source — the site and the embeddable bundle are built from all of
+  it), and manual `workflow_dispatch`.
 - **Stages:**
   1. Fetch the PackageMaven export and normalize it into the internal snapshot shape.
   2. Load and validate the trust overlay for the universe being built —
