@@ -2,10 +2,13 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
-        <mageos_extension_directory>
-            <general>
+        <admin>
+            <dashboard>
+                <mageos_extension_directory_tip>1</mageos_extension_directory_tip>
+            </dashboard>
+            <mageos_extension_directory>
                 <mode>direct</mode>
-            </general>
-        </mageos_extension_directory>
+            </mageos_extension_directory>
+        </admin>
     </default>
 </config>

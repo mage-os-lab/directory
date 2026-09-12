@@ -54,11 +54,15 @@ PackageMaven) are followed only when clicked.
 Composer resolves dependencies. The list is kept per browser tab, so a reload or a look
 at a module's details does not lose it.
 
-One setting (Stores → Configuration → Mage-OS → Extension Directory): **Direct**
-(default — admin browsers load the UI bundle and catalog straight from the directory
-host) or **Proxy** (the store's server fetches and caches the feed, revalidating
-against the 200-byte `manifest.json`, and serves the UI copy bundled with the module —
-fully same-origin for restricted networks or privacy-sensitive admins).
+Two settings, both under Stores → Configuration → Advanced → Admin. **Extension
+Directory → Mode**: **Direct** (default — admin browsers load the UI bundle and catalog
+straight from the directory host) or **Proxy** (the store's server fetches and caches
+the feed, revalidating against the 200-byte `manifest.json`, and serves the UI copy
+bundled with the module — fully same-origin for restricted networks or
+privacy-sensitive admins). **Dashboard → Show Extension Directory Tip** (default on): a
+short panel on the admin dashboard that points administrators whose role allows
+everything at the directory; its own "Hide this tip" button turns the setting off for
+everyone.
 
 ```sh
 composer require mage-os/module-extension-directory

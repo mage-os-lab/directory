@@ -1,17 +1,22 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <!--
+        Two fields and no section of their own: they join the core Advanced > Admin section and
+        inherit its permission (Magento_Config::config_admin). The tip sits with the other
+        dashboard setting; the mode gets a small group beside it.
+    -->
     <system>
-        <tab id="mageos" translate="label" sortOrder="400">
-            <label>Mage-OS</label>
-        </tab>
-        <section id="mageos_extension_directory" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-            <class>separator-top</class>
-            <label>Extension Directory</label>
-            <tab>mageos</tab>
-            <resource>MageOS_ExtensionDirectory::config</resource>
-            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-                <label>General</label>
+        <section id="admin">
+            <group id="dashboard">
+                <field id="mageos_extension_directory_tip" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+                    <label>Show Extension Directory Tip</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Shows a short panel on the admin dashboard that points administrators with full access to the Mage-OS Extension Directory (System > Extensions). The panel's own "Hide this tip" button turns this off as well.</comment>
+                </field>
+            </group>
+            <group id="mageos_extension_directory" translate="label" type="text" sortOrder="42" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Extension Directory</label>
                 <field id="mode" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
                     <label>Mode</label>
                     <source_model>MageOS\ExtensionDirectory\Model\Config\Source\Mode</source_model>
