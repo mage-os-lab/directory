@@ -270,7 +270,8 @@ with a "Show more" button rather than the whole catalog. The component's ground 
 transparent and its font inherits from the host; it ships a light and a dark palette,
 follows `prefers-color-scheme` by default, and lets a host pin one (`colorScheme`). The
 Magento admin pins light, since both admin themes are light-only, and passes
-`?scheme=light` to the detail pages it frames.
+`?embed=1&scheme=light` to the detail pages it frames — no site header inside the modal,
+and the admin's palette kept.
 
 **Why:** two ways to browse by category (a grid of links to prerendered pages, and a
 select inside the island) meant two experiences that looked alike and behaved

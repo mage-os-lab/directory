@@ -27,14 +27,34 @@ const dataAsOf = staleNotice(feed);
     <link rel="icon" href="data:," />
     <meta name="color-scheme" content="light dark" />
     <script is:inline>
-      // The palette follows the reader's OS unless the URL pins one: the
-      // Magento admin frames detail pages in its own light chrome and asks
-      // for ?scheme=light so the frame doesn't go dark on its own.
+      // A host that frames a page says so in the URL. The Magento admin
+      // frames detail pages in its own light chrome: ?scheme=light keeps the
+      // frame from going dark on its own, and ?embed=1 drops the site header,
+      // whose navigation makes no sense inside a modal that already names
+      // the page. Both are set before the body paints, and both are carried
+      // through in-page links so a related listing opened inside the frame
+      // stays framed.
       (function () {
-        var scheme = new URLSearchParams(location.search).get('scheme');
-        if (scheme === 'light' || scheme === 'dark') {
-          document.documentElement.setAttribute('data-theme', scheme);
-        }
+        var params = new URLSearchParams(location.search);
+        var scheme = params.get('scheme');
+        var embed = params.get('embed') === '1';
+        if (scheme !== 'light' && scheme !== 'dark') scheme = null;
+        if (scheme) document.documentElement.setAttribute('data-theme', scheme);
+        if (embed) document.documentElement.setAttribute('data-embed', '');
+        if (!scheme && !embed) return;
+        document.addEventListener(
+          'click',
+          function (event) {
+            var target = event.target;
+            var link = target && target.closest ? target.closest('a[href]') : null;
+            if (!link || link.origin !== location.origin) return;
+            var url = new URL(link.href);
+            if (scheme && !url.searchParams.has('scheme')) url.searchParams.set('scheme', scheme);
+            if (embed && !url.searchParams.has('embed')) url.searchParams.set('embed', '1');
+            link.href = url.href;
+          },
+          true,
+        );
       })();
     </script>
   </head>
