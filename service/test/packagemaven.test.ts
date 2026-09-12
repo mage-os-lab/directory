@@ -100,6 +100,22 @@ describe('normalizePmApiPackage', () => {
     ]);
   });
 
+  it('drops the tag-style v prefix, so a tested release still matches the latest', () => {
+    const source = normalizePmApiPackage(
+      apiPackage({
+        latest_release: { version: 'v2.7.0', date: '2026-05-14T09:30:00+00:00' },
+        test_results: { magento_version: '2.4.9', package_version: '2.7.0', phpstan_level: 6 },
+      }),
+    );
+    expect(source?.latestVersion).toBe('2.7.0');
+    // Without normalization "v2.7.0" !== "2.7.0" and the latest release would
+    // lose the Magento support its own test result earned.
+    expect(source?.supportedMagento).toEqual(['2.4.9']);
+    expect(source?.releases).toEqual([
+      { version: '2.7.0', releasedAt: '2026-05-14T09:30:00.000Z', supportedMagento: ['2.4.9'] },
+    ]);
+  });
+
   it('represents an untested package as tier null / unknown build', () => {
     const source = normalizePmApiPackage(
       apiPackage({
