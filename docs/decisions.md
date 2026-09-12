@@ -298,3 +298,36 @@ is the more useful bookmark); a fixed install threshold for "Popular" (brittle a
 corpus shifts — a percentile is self-adjusting); auto-dark in the admin (the admin chrome
 does not follow the OS, so the panel must not either).
 
+## 15. The admin learns the directory exists from its dashboard, and can say no once
+
+**Decision:** the module adds one panel above the admin dashboard — a title, one
+sentence, a "Browse the directory" button and a "Hide this tip" button — rendered only
+for accounts whose role holds the ACL root resource (`Magento_Backend::all`, the
+"Allow everything" grant). One config flag, **Show Extension Directory Tip** under
+Advanced → Admin → Dashboard (on by default), gates it for the whole installation; the
+panel's own button flips that same flag through a form-key-checked POST action that
+needs the Admin configuration section's permission, then reloads config and sends the
+admin back to the dashboard with a message naming where to turn it back on. Nothing
+else in the admin chrome advertises the directory beyond the existing System menu
+entry. The module's other setting, the direct/proxy mode, moves into the same core
+section as a small "Extension Directory" group: two fields do not earn a tab and a
+section of their own, and a merchant looks for admin behaviour under Advanced → Admin.
+
+**Why:** a merchant who installs the module (or gets it with a distribution) has no
+reason to open System → Mage-OS Extension Directory unless something tells them it is
+there, and the dashboard is the one page every admin session starts on. Restricting it
+to unrestricted roles is a proxy for "the person who decides what gets installed": a
+catalogue manager with a narrow role gains nothing from a prompt to go shopping for
+modules, and a distribution's default admin is always unrestricted. One global flag,
+rather than a per-user dismissal, is what "opt-out in admin settings" asks for and needs
+no storage of its own; the button exists so the opt-out is one click from where the
+panel is, not a trip through configuration. The ACL root resource is read from
+`Magento\Framework\Acl\RootResource` rather than hard-coded, because that is where
+Magento_Backend declares it.
+
+**Rejected:** a system message in the header (that channel is for things that are wrong —
+invalidated caches, indexers — and a permanent marketing line there would teach admins to
+ignore it); an admin-notification inbox entry (global, not role-gated, and read state is
+shared across users); a per-user dismissal (needs somewhere to keep it, and the ask was a
+setting); showing the panel to anyone who can open the directory page (the ACL for
+viewing the catalogue is deliberately broad, the decision to install is not).
