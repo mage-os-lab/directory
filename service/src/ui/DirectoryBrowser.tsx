@@ -596,8 +596,9 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   };
 
   /**
-   * The marks a module has earned, for the card's bottom corner: trusted
-   * vendor, editors' pick, high quality, popular. They are the same four facts
+   * The marks a module has earned, for the card's bottom-left corner (the
+   * install toggle holds the bottom-right): trusted vendor, editors' pick,
+   * high quality, popular. They are the same four facts
    * the "show only" chips ask about, in the same words, so what a chip narrows
    * to is what a card shows. "High quality" stands in for PackageMaven's top
    * two tiers; the tier's own name is a tooltip, because "strict checks pass"
@@ -876,6 +877,15 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                 </p>
                 {(markable || merits.length > 0) && (
                   <div class="mosd-card-foot">
+                    {merits.length > 0 && (
+                      <p class="mosd-card-badges">
+                        {merits.map((badge) => (
+                          <span key={badge.key} class={`mosd-badge mosd-badge-${badge.key}`} title={badge.title}>
+                            {badge.label}
+                          </span>
+                        ))}
+                      </p>
+                    )}
                     {markable && (
                       <p class="mosd-card-actions">
                         <button
@@ -889,15 +899,6 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                               ? '+ Mark for update'
                               : '+ Mark for install'}
                         </button>
-                      </p>
-                    )}
-                    {merits.length > 0 && (
-                      <p class="mosd-card-badges">
-                        {merits.map((badge) => (
-                          <span key={badge.key} class={`mosd-badge mosd-badge-${badge.key}`} title={badge.title}>
-                            {badge.label}
-                          </span>
-                        ))}
                       </p>
                     )}
                   </div>

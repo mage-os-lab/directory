@@ -480,7 +480,7 @@ path, one sentence, the marks it has earned, fit, installs, time since the last 
 and any risk (a trust warning or abandonment, with the maintainer's suggested
 replacement). Host-aware surfaces add a ninth, where the reader stands with it. The earned
 marks — Trusted vendor, Editors' pick, High quality, Popular — sit as badges in the card's
-bottom corner, and are the same four facts the "show only" chips ask about, in the same
+bottom-left corner, with the install toggle at the bottom-right, and are the same four facts the "show only" chips ask about, in the same
 words, so what a chip narrows to is what a card shows. PHPStan level, SemVer compliance,
 build status, stars, the release date, the licence and the `composer require` string are
 detail-page facts: each either restates the quality tier, restates a number already on

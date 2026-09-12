@@ -632,10 +632,13 @@
   font-weight: 600;
 }
 
-/* The card's last row: the reader's action on the left, and in the bottom
- * corner the marks the module has earned — trusted vendor, editors' pick,
- * high quality, popular. Pushed to the bottom so the corner is the same
- * corner on every card in a row, whatever the description's length. */
+/* The card's last row: in the bottom-left corner the marks the module has
+ * earned — trusted vendor, editors' pick, high quality, popular — and the
+ * reader's action at the bottom-right, where a primary action is expected.
+ * Pushed to the bottom so the corners are the same corners on every card in
+ * a row, whatever the description's length. The auto margin holds each side
+ * to its own edge when the other is absent, and when the row wraps on a
+ * narrow card it keeps the button at the right of its own line. */
 .mosd-card-foot {
   align-items: flex-end;
   display: flex;
@@ -647,15 +650,15 @@
 }
 
 .mosd-card-actions {
-  margin: 0;
+  margin: 0 0 0 auto;
 }
 
 .mosd-card-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  justify-content: flex-end;
-  margin: 0 0 0 auto;
+  justify-content: flex-start;
+  margin: 0;
 }
 
 /* Badges: MD assist-chip sized, tonal */

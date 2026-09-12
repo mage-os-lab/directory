@@ -358,6 +358,25 @@ describe('mountDirectory', () => {
     ]);
   });
 
+  it('puts the earned badges before the install toggle in the card footer', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, selectable: true });
+    await flush();
+
+    const cardOf = (name: string) =>
+      [...el.querySelectorAll('.mosd-card')].find((c) =>
+        c.querySelector('.mosd-card-name')!.textContent!.includes(name),
+      )!;
+    // Acme Pay earns at least one badge and is markable, so its footer holds both.
+    const foot = cardOf('acme/module-pay').querySelector('.mosd-card-foot')!;
+    const badges = foot.querySelector('.mosd-card-badges')!;
+    const actions = foot.querySelector('.mosd-card-actions')!;
+    expect([...foot.children]).toEqual([badges, actions]);
+  });
+
   it('builds the composer command and dispatches mosd:selection when marking', async () => {
     vi.stubGlobal(
       'fetch',
