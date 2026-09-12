@@ -118,6 +118,9 @@ const REDUNDANT_NAME_PHRASE = /\s*(?:[([]\s*)?\bfor\s*magento\s*2(?![a-z0-9]|\.\
 /** A separator the phrase removal can strand at either end of the name. */
 const DANGLING_SEPARATOR = /^\s*[-\u2013:_|]\s*|\s*[-\u2013:_|]\s*$/g;
 
+/** What a stripped name can be left as when it carried nothing else: a bare word. */
+const REDUNDANT_NAME_ONLY = /^(?:magento\s*2|module)$/i;
+
 function stripRedundantPrefixes(name: string): string {
   let cleaned = name;
   while (REDUNDANT_NAME_PREFIX.test(cleaned)) {
@@ -126,8 +129,12 @@ function stripRedundantPrefixes(name: string): string {
   return cleaned;
 }
 
-export function cleanDisplayName(name: string): string {
-  const trimmed = name.trim();
+/**
+ * The stripped form of an already-trimmed name — empty when the name was
+ * nothing but the redundant words ("Magento2", "Module", "for Magento 2").
+ * Shared by cleanDisplayName and isRedundantName so the two can't disagree.
+ */
+function stripRedundancy(trimmed: string): string {
   let cleaned = stripRedundantPrefixes(trimmed);
   const withoutPhrase = cleaned.replace(REDUNDANT_NAME_PHRASE, '');
   if (withoutPhrase !== cleaned) {
@@ -138,7 +145,23 @@ export function cleanDisplayName(name: string): string {
       withoutPhrase.replace(/\s+/g, ' ').trim().replace(DANGLING_SEPARATOR, '').trim(),
     );
   }
-  return cleaned || trimmed;
+  return REDUNDANT_NAME_ONLY.test(cleaned) ? '' : cleaned;
+}
+
+export function cleanDisplayName(name: string): string {
+  const trimmed = name.trim();
+  return stripRedundancy(trimmed) || trimmed;
+}
+
+/**
+ * True when a PM name is *nothing but* the redundant words, so cleaning it
+ * would leave nothing and cleanDisplayName hands back the bare word
+ * ("Magento2", "Module", "for Magento 2"). The merge step asks this to title
+ * such a card with the vendor's name instead.
+ */
+export function isRedundantName(name: string): boolean {
+  const trimmed = name.trim();
+  return trimmed.length > 0 && stripRedundancy(trimmed) === '';
 }
 
 /**

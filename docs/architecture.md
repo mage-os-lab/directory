@@ -53,7 +53,9 @@ quality signal for them rather than punishing them. The normalizer also cleans P
 human name for `displayName`, stripping redundant leading words (`Magento2`,
 `Magento 2`, `Module`, with an optional `-`/`:` separator) and the phrase
 "for Magento 2" wherever it appears, so a card title reads "Google Tag Manager"
-rather than "Magento2 Google Tag Manager for Magento 2".
+rather than "Magento2 Google Tag Manager for Magento 2". A name that is *nothing but*
+those words (PM lists a handful, e.g. `quickpay/magento2` → "Magento2") would leave the
+card titled with that bare word, so merge titles it with the vendor's name instead.
 
 When running on a manually refreshed export, staleness is a *steady state*, not a
 transient failure: the site shows a "quality data as of &lt;date&gt;" notice sourced from the

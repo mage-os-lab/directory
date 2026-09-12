@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cleanDisplayName,
   fetchPackageMavenSnapshot,
+  isRedundantName,
   normalizePmApiPackage,
   tierFromFlags,
   type PmApiPackage,
@@ -130,6 +131,30 @@ describe('cleanDisplayName', () => {
   it('never empties a name that is nothing but the phrase', () => {
     expect(cleanDisplayName('for Magento 2')).toBe('for Magento 2');
     expect(cleanDisplayName('  Magento2 for Magento 2  ')).toBe('Magento2 for Magento 2');
+  });
+});
+
+describe('isRedundantName', () => {
+  it('flags a name that is nothing but a redundant word', () => {
+    expect(isRedundantName('Magento2')).toBe(true);
+    expect(isRedundantName('  Module ')).toBe(true);
+    expect(isRedundantName('Magento 2')).toBe(true);
+  });
+
+  it('flags a name that is nothing but the "for Magento 2" phrase', () => {
+    expect(isRedundantName('for Magento 2')).toBe(true);
+    expect(isRedundantName('Magento2 for Magento 2')).toBe(true);
+  });
+
+  it('leaves a name with something left after stripping alone', () => {
+    expect(isRedundantName('Magento2 Foo')).toBe(false);
+    expect(isRedundantName('Magento2Foo')).toBe(false);
+    expect(isRedundantName('Acme Widget Manager')).toBe(false);
+  });
+
+  it('does not flag an empty name — there is nothing redundant to replace', () => {
+    expect(isRedundantName('')).toBe(false);
+    expect(isRedundantName('   ')).toBe(false);
   });
 });
 

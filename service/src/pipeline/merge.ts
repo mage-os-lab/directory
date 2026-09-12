@@ -11,6 +11,12 @@ import type { RankingConfig } from '../schema/ranking-config.js';
 import { SCHEMA_VERSION } from '../schema/common.js';
 import { compareVersions, isNewer, parseVersion } from '../shared/version.js';
 import { buildRankingContext, rankPackage } from './rank.js';
+import { isRedundantName } from './packagemaven.js';
+
+/** A vendor's human name; vendors without a trust file are named by their slug. */
+function vendorDisplayName(slug: string, file: VendorFile | undefined): string {
+  return file?.vendorName ?? slug;
+}
 
 /** Per-package GitHub extras; all nullable, failure-tolerant. */
 export interface GithubExtras {
@@ -159,7 +165,13 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
       summaryBase: {
         name: source.name,
         vendor: vendorSlug,
-        displayName: trustEntry?.displayName ?? source.displayName,
+        // A PM name that is nothing but "Magento2"/"Module"/"for Magento 2"
+        // cleans down to that bare word, so title the card with the vendor instead.
+        displayName:
+          trustEntry?.displayName ??
+          (isRedundantName(source.displayName)
+            ? vendorDisplayName(vendorSlug, vendorFile)
+            : source.displayName),
         description: source.description,
         categories: trustEntry?.categories
           ? [...trustEntry.categories].sort()
@@ -318,7 +330,7 @@ function buildVendorSummaries(
     const file = vendorBySlug.get(slug);
     return {
       slug,
-      name: file?.vendorName ?? slug,
+      name: vendorDisplayName(slug, file),
       url: file?.url ?? null,
       trustedVendor: file?.trustedVendor ?? false,
       partnerTier: file?.partnerTier ?? null,

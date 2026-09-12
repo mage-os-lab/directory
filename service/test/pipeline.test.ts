@@ -12,6 +12,8 @@ import {
   loadVendorFiles,
   vendorsDirFor,
 } from '../src/pipeline/load.js';
+import { packageMavenSnapshot } from '../src/schema/source.js';
+import { vendorFile as vendorFileSchema, type VendorFile } from '../src/schema/vendor-file.js';
 
 const rootDir = path.resolve(__dirname, '..');
 const now = new Date('2026-07-01T12:00:00.000Z');
@@ -185,6 +187,66 @@ describe('category mapping', () => {
       'devops-infrastructure', 'import-export', 'ai-automation', 'miscellaneous',
     ];
     expect(unmappedCategoryLabels(liveSlugs, categories)).toEqual([]);
+  });
+});
+
+describe('display name fallback', () => {
+  const dataDir = path.join(rootDir, 'data');
+
+  /** One in-memory package plus whatever trust files should apply to it. */
+  function merge(pkg: { name: string; displayName: string }, vendorFiles: VendorFile[]) {
+    return mergeToFeed({
+      snapshot: packageMavenSnapshot.parse({
+        schemaVersion: 1,
+        fetchedAt: now.toISOString(),
+        origin: 'fixture',
+        packages: [{ ...pkg, qualityTier: null }],
+      }),
+      snapshotStale: false,
+      vendorFiles,
+      categories: loadCategories(dataDir),
+      rankingConfig: loadRankingConfig(dataDir),
+      github: new Map(),
+      githubOk: true,
+      githubFetchedAt: now.toISOString(),
+      now,
+    });
+  }
+
+  const quickpay = vendorFileSchema.parse({
+    vendor: 'quickpay',
+    vendorName: 'QuickPay',
+    trustedVendor: true,
+  });
+
+  it('names a package whose PM name is only "Magento2" after its vendor trust file', () => {
+    const { feed } = merge({ name: 'quickpay/magento2', displayName: 'Magento2' }, [quickpay]);
+    expect(feed.packages[0]!.displayName).toBe('QuickPay');
+    // The card title and the vendor listing agree, by construction.
+    expect(feed.vendors[0]!.name).toBe('QuickPay');
+  });
+
+  it('falls back to the vendor slug when that vendor has no trust file', () => {
+    const { feed } = merge({ name: 'quickpay/magento2', displayName: 'Magento2' }, []);
+    expect(feed.packages[0]!.displayName).toBe('quickpay');
+    expect(feed.vendors[0]!.name).toBe('quickpay');
+  });
+
+  it('lets a trust-file displayName override win over the vendor fallback', () => {
+    const withOverride = vendorFileSchema.parse({
+      vendor: 'quickpay',
+      vendorName: 'QuickPay',
+      packages: { 'quickpay/magento2': { displayName: 'QuickPay Payments' } },
+    });
+    const { feed } = merge({ name: 'quickpay/magento2', displayName: 'Magento2' }, [withOverride]);
+    expect(feed.packages[0]!.displayName).toBe('QuickPay Payments');
+  });
+
+  it('leaves a real PM name untouched by the fallback', () => {
+    const { feed } = merge({ name: 'quickpay/module-checkout', displayName: 'Checkout' }, [
+      quickpay,
+    ]);
+    expect(feed.packages[0]!.displayName).toBe('Checkout');
   });
 });
 
