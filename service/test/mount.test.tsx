@@ -138,6 +138,38 @@ const flush = async () => {
   }
 };
 
+// happy-dom has no IntersectionObserver, so the near-the-end paging tests stand
+// one in: it records what was observed and hands the callback back to the test.
+class FakeIntersectionObserver {
+  observed: Element[] = [];
+  disconnected = 0;
+
+  constructor(
+    readonly callback: (entries: { isIntersecting: boolean }[]) => void,
+    readonly options?: { rootMargin?: string; root?: Element | null },
+  ) {}
+
+  observe(target: Element) {
+    this.observed.push(target);
+  }
+
+  unobserve() {}
+
+  disconnect() {
+    this.disconnected += 1;
+  }
+}
+
+const makeFakeObserver = (sink: FakeIntersectionObserver[]) =>
+  function (
+    callback: (entries: { isIntersecting: boolean }[]) => void,
+    options?: { rootMargin?: string; root?: Element | null },
+  ) {
+    const observer = new FakeIntersectionObserver(callback, options);
+    sink.push(observer);
+    return observer;
+  } as unknown as typeof IntersectionObserver;
+
 describe('mountDirectory', () => {
   let el: HTMLElement;
   let unmount: (() => void) | null = null;
@@ -600,6 +632,48 @@ describe('mountDirectory', () => {
     await flush();
     expect(el.querySelectorAll('.mosd-card')).toHaveLength(3);
     expect(el.querySelector('.mosd-btn-more')).toBeNull();
+  });
+
+  it('loads the next page on its own when the reader scrolls near the end', async () => {
+    const observers: FakeIntersectionObserver[] = [];
+    vi.stubGlobal('IntersectionObserver', makeFakeObserver(observers));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, pageSize: 2 });
+    await flush();
+
+    expect(el.querySelectorAll('.mosd-card')).toHaveLength(2);
+    expect(el.querySelector('.mosd-more-sentinel')).not.toBeNull();
+    expect(observers).toHaveLength(1);
+    expect(observers[0]!.observed).toHaveLength(1);
+
+    // No click: the sentinel coming into view is enough.
+    observers[0]!.callback([{ isIntersecting: true }]);
+    await flush();
+
+    expect(el.querySelectorAll('.mosd-card')).toHaveLength(3);
+    expect(el.querySelector('.mosd-btn-more')).toBeNull();
+    expect(el.querySelector('.mosd-more-sentinel')).toBeNull();
+    expect(observers.some((o) => o.disconnected > 0)).toBe(true);
+  });
+
+  it('loads nothing while the end of the list is still out of view', async () => {
+    const observers: FakeIntersectionObserver[] = [];
+    vi.stubGlobal('IntersectionObserver', makeFakeObserver(observers));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, pageSize: 2 });
+    await flush();
+
+    observers[0]!.callback([{ isIntersecting: false }]);
+    await flush();
+
+    expect(el.querySelectorAll('.mosd-card')).toHaveLength(2);
+    expect(el.querySelector('.mosd-btn-more')!.textContent).toBe('Show 1 more');
   });
 
   it('pins the palette only when asked', async () => {

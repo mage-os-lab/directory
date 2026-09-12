@@ -724,6 +724,12 @@
 /* Progressive disclosure: a page of cards, then a button for the next page.
  * A count beside it says how far the list goes without anyone scrolling. */
 
+/* Watched to load the next page early; invisible, and never collapses a margin. */
+.mosd-more-sentinel {
+  display: block;
+  height: 1px;
+}
+
 .mosd-more {
   align-items: center;
   display: flex;

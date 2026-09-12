@@ -251,6 +251,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   const [sort, setSort] = useState<SortKey>(props.initialFilters?.sort ?? 'recommended');
   const [showHidden, setShowHidden] = useState(false);
   const [limit, setLimit] = useState(pageSize);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   // A selectable mount picks up the list the tab already had, minus anything
   // the catalog no longer carries.
   const [marked, setMarked] = useState<Set<string>>(() => {
@@ -650,6 +651,29 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
 
   const shown = results.slice(0, limit);
   const remaining = results.length - shown.length;
+
+  // Paging happens twice over: the observer below loads the next page about a
+  // screen ahead of the sentinel, so scrolling never stops, while the "Show
+  // more" button stays the control — for keyboard users, for anything without
+  // IntersectionObserver, and as the visible statement of how much is left.
+  // The sentinel only exists while remaining > 0, so that gate is also what
+  // re-arms the effect after each page and retires it once nothing remains.
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel || remaining <= 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setLimit((current) => current + pageSize);
+        }
+      },
+      { rootMargin: '600px 0px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [remaining, pageSize]);
+
   const total = feed.packages.filter((p) => showHidden || !p.trust.hidden).length;
   const scheme = props.colorScheme ?? 'auto';
 
@@ -894,6 +918,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
           )}
         </div>
       )}
+      {remaining > 0 && <div class="mosd-more-sentinel" ref={sentinelRef} aria-hidden="true" />}
       {remaining > 0 && (
         <div class="mosd-more">
           <button
