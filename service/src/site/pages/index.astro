@@ -2,11 +2,19 @@
 import Base from '../layouts/Base.astro';
 import SearchIsland from '../components/SearchIsland.js';
 import { withBase } from '../lib/base.js';
+import {
+  POPULAR_PERCENTILE,
+  installsAtPercentile,
+  isHighQuality,
+  isPopular,
+} from '../../shared/merits.js';
 import { qualityLabel } from '../../shared/quality.js';
 import { editorialPicks, loadFeed, packageHref } from '../lib/data.js';
 
 const feed = loadFeed();
 const picks = editorialPicks(feed, 6);
+// The same floor the browse island uses, so "Popular" means one thing on the page.
+const popularFloor = installsAtPercentile(feed.packages, POPULAR_PERCENTILE);
 
 // Hero counters (PM-style): visible modules by readiness.
 const visible = feed.packages.filter((p) => !p.trust.hidden);
@@ -56,13 +64,13 @@ const vendorCount = new Set(visible.map((p) => p.vendor)).size;
               </p>
               <p class="description">{pkg.description}</p>
               <p class="meta">
-                {pkg.quality.tier && (
-                  <span class={`badge badge-${pkg.quality.tier}`}>
-                    {qualityLabel(pkg.quality.tier)}
-                  </span>
-                )}
                 <span class="badge badge-pick">Editors&rsquo; pick</span>
                 {pkg.trust.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
+                {isHighQuality(pkg) && <span class="badge badge-high-quality">High quality</span>}
+                {pkg.quality.tier === 'needs-help' && (
+                  <span class="badge badge-needs-help">{qualityLabel(pkg.quality.tier)}</span>
+                )}
+                {isPopular(pkg, popularFloor) && <span class="badge badge-popular">Popular</span>}
               </p>
             </li>
           ))}

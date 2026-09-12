@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import MiniSearch from 'minisearch';
+import {
+  POPULAR_PERCENTILE,
+  installsAtPercentile,
+  isHighQuality,
+  isPopular,
+} from '../shared/merits.js';
 import { qualityLabel } from '../shared/quality.js';
 import { compareVersions, isNewer } from '../shared/version.js';
 import type {
@@ -51,8 +57,10 @@ export const DEFAULT_PAGE_SIZE = 24;
 /** "Recently updated" means a release inside this window. */
 export const RECENT_DAYS = 365;
 
-/** "Popular" means installs at or above this percentile of the catalog. */
-export const POPULAR_PERCENTILE = 0.75;
+// The merit predicates live in src/shared so the prerendered pages agree
+// with the island; re-exported here for the tests and embedders that import
+// them from the UI.
+export { POPULAR_PERCENTILE, installsAtPercentile, isHighQuality, isPopular };
 
 export function composerCommand(entries: Array<{ name: string; version: string | null }>): string {
   const args = entries.map((e) => (e.version ? `${e.name}:^${e.version}` : e.name));
@@ -97,34 +105,12 @@ export function latestMagentoVersion(packages: PackageSummary[]): string | null 
   return newest;
 }
 
-/**
- * Install count at the given percentile of packages that report one
- * (nearest rank), or null when too few do for "popular" to mean anything.
- */
-export function installsAtPercentile(
-  packages: PackageSummary[],
-  percentile: number,
-): number | null {
-  const counts = packages
-    .map((p) => p.popularity.installs)
-    .filter((n): n is number => n !== null && n > 0)
-    .sort((a, b) => a - b);
-  if (counts.length < 4) return null;
-  const index = Math.min(counts.length - 1, Math.ceil(percentile * counts.length) - 1);
-  return counts[Math.max(0, index)]!;
-}
-
 /** Released within RECENT_DAYS of `now`. Unparseable dates are not recent. */
 export function isRecent(pkg: PackageSummary, now: number = Date.now()): boolean {
   if (pkg.latestReleasedAt === null) return false;
   const released = Date.parse(pkg.latestReleasedAt);
   if (Number.isNaN(released)) return false;
   return now - released <= RECENT_DAYS * 86_400_000;
-}
-
-/** PackageMaven found nothing wrong: the top two tiers. */
-export function isHighQuality(pkg: PackageSummary): boolean {
-  return pkg.quality.tier === 'strict-compliant' || pkg.quality.tier === 'no-errors';
 }
 
 /**
@@ -317,11 +303,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
       case 'quality':
         return isHighQuality(pkg);
       case 'popular':
-        return (
-          popularFloor !== null &&
-          pkg.popularity.installs !== null &&
-          pkg.popularity.installs >= popularFloor
-        );
+        return isPopular(pkg, popularFloor);
       case 'installed':
         return installState(pkg) !== 'not-installed';
       case 'update':
@@ -522,6 +504,39 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     return `mosd-card ${rail} mosd-is-marked${solo}`.replace(/\s+/g, ' ').trim();
   };
 
+  /**
+   * The marks a module has earned, for the card's bottom corner: trusted
+   * vendor, editors' pick, high quality, popular. They are the same four facts
+   * the "show only" chips ask about, in the same words, so what a chip narrows
+   * to is what a card shows. "High quality" stands in for PackageMaven's top
+   * two tiers; the tier's own name is a tooltip, because "strict checks pass"
+   * describes a codebase to its contributors, not a module to its buyer.
+   */
+  const meritBadges = (pkg: PackageSummary): Array<{ key: string; label: string; title: string }> => {
+    const badges: Array<{ key: string; label: string; title: string }> = [];
+    if (pkg.trust.trustedVendor) {
+      badges.push({
+        key: 'trusted',
+        label: '✓ Trusted vendor',
+        title: 'From a vendor with a sustained track record',
+      });
+    }
+    if (pkg.trust.editorialPick) {
+      badges.push({ key: 'pick', label: '★ Editors’ pick', title: 'Selected by the Mage-OS maintainers' });
+    }
+    if (isHighQuality(pkg)) {
+      badges.push({
+        key: 'high-quality',
+        label: 'High quality',
+        title: `PackageMaven found no errors: ${qualityLabel(pkg.quality.tier).toLowerCase()}`,
+      });
+    }
+    if (isPopular(pkg, popularFloor)) {
+      badges.push({ key: 'popular', label: 'Popular', title: 'Top quarter of the catalog by installs' });
+    }
+    return badges;
+  };
+
   /** The first warning, in full, plus what the maintainer suggests instead. */
   const riskLine = (pkg: PackageSummary) => {
     if (!isRisky(pkg)) return null;
@@ -677,6 +692,8 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
           // about this shop; otherwise it is a neutral note in the footer.
           const leads = fit !== null && hostAware;
           const age = releasedAgo(pkg.latestReleasedAt);
+          const markable = props.selectable && installState(pkg) !== 'installed';
+          const merits = meritBadges(pkg);
           return (
             <li key={pkg.name} class={cardClass(pkg)}>
               {leads && (
@@ -694,11 +711,6 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                   >
                     {pkg.displayName}
                   </a>
-                  <span
-                    class={`mosd-badge mosd-badge-quality mosd-badge-${pkg.quality.tier ?? 'untested'}`}
-                  >
-                    {qualityLabel(pkg.quality.tier)}
-                  </span>
                   <p class="mosd-card-name">
                     <code>{pkg.name}</code>
                   </p>
@@ -713,16 +725,12 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                   ) : (
                     <span>{vendorNames.get(pkg.vendor) ?? pkg.vendor}</span>
                   )}
-                  {pkg.trust.trustedVendor && (
-                    <span class="mosd-trust-mark">✓ Trusted vendor</span>
-                  )}
                   {pkg.trust.partnerTier && (
                     <span class="mosd-trust-partner">
                       {pkg.trust.partnerTier[0].toUpperCase() + pkg.trust.partnerTier.slice(1)}{' '}
                       partner
                     </span>
                   )}
-                  {pkg.trust.editorialPick && <span class="mosd-trust-pick">★ Editors’ pick</span>}
                 </p>
                 {riskLine(pkg)}
                 <div class="mosd-card-categories">
@@ -745,24 +753,40 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                     </span>
                   )}
                   {age !== null && <span class="mosd-stat">{age}</span>}
+                  {pkg.quality.tier === 'needs-help' && (
+                    <span class="mosd-stat mosd-stat-issues">{qualityLabel(pkg.quality.tier)}</span>
+                  )}
                   {!leads && fit !== null && (
                     <span class="mosd-card-span">{fit.text}</span>
                   )}
                 </p>
-                {props.selectable && installState(pkg) !== 'installed' && (
-                  <p class="mosd-card-actions">
-                    <button
-                      type="button"
-                      class={`mosd-mark${marked.has(pkg.name) ? ' mosd-marked' : ''}`}
-                      onClick={() => toggleMark(pkg)}
-                    >
-                      {marked.has(pkg.name)
-                        ? '✓ On install list'
-                        : installState(pkg) === 'update'
-                          ? '+ Mark for update'
-                          : '+ Mark for install'}
-                    </button>
-                  </p>
+                {(markable || merits.length > 0) && (
+                  <div class="mosd-card-foot">
+                    {markable && (
+                      <p class="mosd-card-actions">
+                        <button
+                          type="button"
+                          class={`mosd-mark${marked.has(pkg.name) ? ' mosd-marked' : ''}`}
+                          onClick={() => toggleMark(pkg)}
+                        >
+                          {marked.has(pkg.name)
+                            ? '✓ On install list'
+                            : installState(pkg) === 'update'
+                              ? '+ Mark for update'
+                              : '+ Mark for install'}
+                        </button>
+                      </p>
+                    )}
+                    {merits.length > 0 && (
+                      <p class="mosd-card-badges">
+                        {merits.map((badge) => (
+                          <span key={badge.key} class={`mosd-badge mosd-badge-${badge.key}`} title={badge.title}>
+                            {badge.label}
+                          </span>
+                        ))}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </li>
@@ -804,6 +828,11 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
           <button type="button" class="mosd-btn" onClick={clearMarks}>
             Clear
           </button>
+          <p class="mosd-tray-help">
+            Copy the command and run it in a terminal on a development copy of the store: Composer
+            installs the modules there and confirms they work together before anything reaches
+            production.
+          </p>
         </div>
       )}
     </div>
