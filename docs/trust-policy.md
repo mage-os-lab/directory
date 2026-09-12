@@ -33,6 +33,12 @@ Eligibility:
   within a reasonable window.
 - Identity verified per [Vendor identity](#vendor-identity) above.
 
+A partner tier confers no part of this. `partnerTier` and `trustedVendor` are separate
+grants against separate criteria: a partner earns the trusted badge on exactly the
+record above, like any other vendor, and a vendor with no partnership earns it on the
+same terms. They are stored as independent fields and land in separate PRs — a tier
+change never carries a badge with it.
+
 Granted or revoked only by a maintainer PR review (CODEOWNERS-guarded, same as every
 `data/vendors/**` change). Revocation for cause — e.g. an unresolved `hide` warning, or a
 pattern of unresponsiveness — must state the reason in the PR description, not just flip

@@ -86,6 +86,9 @@ the repo's issue tracker.
 
 Human-curated trust data lives in this repository as `data/vendors/<vendor>.json` —
 one file per vendor, edited by pull request. See [Vendor trust files](#vendor-trust-files).
+The overlay is universe-scoped: `data/vendors/` decorates the live PM index, and the
+invented vendors that match the fixture snapshot live separately in
+`data/fixtures/vendors/`, so example trust data can never reach a live build.
 
 ## Pipeline
 
@@ -95,7 +98,8 @@ A TypeScript script under `src/pipeline/`, run by GitHub Actions:
   `workflow_dispatch`.
 - **Stages:**
   1. Fetch the PackageMaven export and normalize it into the internal snapshot shape.
-  2. Load and validate `data/vendors/*.json`. *Malformed* trust data fails the build —
+  2. Load and validate the trust overlay for the universe being built —
+     `data/vendors/*.json` live, `data/fixtures/vendors/*.json` on a fixture run. *Malformed* trust data fails the build —
      it is our own data and CI on the PR should have caught it. A trust entry that
      references a package *absent from the current PM snapshot* is a warning, not a
      failure: the entry is skipped and reported. (PM's index moves between our runs, so
@@ -265,7 +269,9 @@ Rules, enforced by schema validation in CI:
 - Filename must equal the `vendor` field; all package keys must start with `<vendor>/`.
 - Referenced packages should exist in the PackageMaven index (trust files decorate the
   universe; they do not extend it). CI checks this against the latest published PM
-  snapshot and *fails the PR*; scheduled pipeline runs only *warn and skip* dangling
+  snapshot (`PUBLISHED_BASE_URL`) and *fails the PR*; where no published snapshot is
+  reachable yet, package references are reported *unverified* rather than failing —
+  a vendor file carrying only a tier or badge names no packages and validates either way; scheduled pipeline runs only *warn and skip* dangling
   entries, because PM's index moves between our runs and a scheduled build must not
   hard-fail on external drift.
 - Categories must exist in `data/categories.json`.
@@ -279,8 +285,14 @@ by the [trust policy](trust-policy.md).
 
 A formatter (`npm run format:vendors`) normalizes key order and sorting for clean
 diffs; CI runs it in `--check` mode and tells contributors the exact command to fix
-failures. `CODEOWNERS` on `data/vendors/**` requires maintainer review, which is how
-partner-tier changes are guarded.
+failures. `CODEOWNERS` on `/service/data/vendors/` requires maintainer review, which is
+how partner-tier changes are guarded. (CODEOWNERS patterns are repo-root anchored, and
+the data lives under `service/` — a root-relative `/data/...` entry silently matches
+nothing and gates no review.)
+
+`partnerTier` and `trustedVendor` are independent fields granted on independent
+criteria: a partnership never confers the trusted badge, and neither field is a
+prerequisite for the other. See the [trust policy](trust-policy.md#trusted-vendor).
 
 ## Ranking
 
@@ -482,7 +494,8 @@ data/                     # everything contributors edit by PR
   vendor.schema.json      # generated from src/schema, committed so editors validate trust files
   categories.json         # canonical category taxonomy + PM label mapping
   ranking.json            # tunable ranking weights
-  fixtures/               # fixture PM snapshot for dev/preview builds
+  fixtures/               # fixture PM snapshot + its matching trust overlay, for
+                          #   dev/preview builds (never loaded by a live run)
 public/
   _headers                # Cloudflare Pages headers: CORS + cache-control for /api/v1/*
 .github/workflows/

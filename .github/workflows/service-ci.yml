@@ -26,7 +26,13 @@ jobs:
       - name: Tests
         run: npm test
       - name: Validate data files (schema + cross-checks + dangling trust refs)
+        # PUBLISHED_BASE_URL lets the live trust overlay's package references
+        # be resolved against the last published PM snapshot. Unset (or
+        # unreachable) they are reported unverified, not failed — see
+        # src/pipeline/tools/validate-data.ts.
         run: npm run validate:data
+        env:
+          PUBLISHED_BASE_URL: ${{ vars.PUBLISHED_BASE_URL }}
       - name: Trust-file format check
         run: npm run format:vendors -- --check
       - name: Generated JSON Schemas are up to date

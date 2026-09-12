@@ -3,7 +3,13 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { loadCategories, loadRankingConfig, loadSnapshot, loadVendorFiles } from './load.js';
+import {
+  loadCategories,
+  loadRankingConfig,
+  loadSnapshot,
+  loadVendorFiles,
+  vendorsDirFor,
+} from './load.js';
 import { mergeToFeed } from './merge.js';
 import { emitArtifacts } from './emit.js';
 import { disabledGithubExtras, fetchGithubExtras } from './github.js';
@@ -31,7 +37,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
 
   const categories = loadCategories(dataDir);
   const rankingConfig = loadRankingConfig(dataDir);
-  const vendorFiles = loadVendorFiles(dataDir, categories);
+  const vendorFiles = loadVendorFiles(vendorsDirFor(dataDir, options.source), categories);
 
   let snapshot: PackageMavenSnapshot;
   let snapshotStale = false;
@@ -131,11 +137,7 @@ async function fetchLiveSnapshot(now: Date): Promise<{
 
   if (publishedBase) {
     try {
-      const response = await fetch(
-        new URL('/api/v1/sources/packagemaven.json', publishedBase),
-      );
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const snapshot = packageMavenSnapshot.parse(await response.json());
+      const snapshot = await fetchPublishedSnapshot(publishedBase);
       warnings.push(
         `PM fetch failed (${fetchError}); carried forward published snapshot from ${snapshot.fetchedAt}`,
       );
@@ -152,6 +154,18 @@ async function fetchLiveSnapshot(now: Date): Promise<{
     `PM fetch failed (${fetchError}) and PUBLISHED_BASE_URL is not set — nothing to carry ` +
       `forward. First-ever run? Bootstrap with --source fixture.`,
   );
+}
+
+/**
+ * The raw PM snapshot the last successful build published. It is the only
+ * copy of the real universe available outside a PM-token run, so both the
+ * stale-carry-forward path above and `validate:data` resolve trust-file
+ * package references through it.
+ */
+export async function fetchPublishedSnapshot(publishedBase: string): Promise<PackageMavenSnapshot> {
+  const response = await fetch(new URL('/api/v1/sources/packagemaven.json', publishedBase));
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return packageMavenSnapshot.parse(await response.json());
 }
 
 const isMain =
@@ -187,8 +201,12 @@ if (isMain) {
         `pipeline: emitted ${result.packageCount} packages (feed ${result.feedHash.slice(0, 12)}…)` +
           (result.stale ? ' [STALE snapshot carried forward]' : ''),
       );
-      if (!fs.existsSync(path.join(process.cwd(), 'data', 'vendors'))) {
-        console.warn('::warning::data/vendors/ does not exist yet — no trust overlay applied');
+      const vendorsDir = vendorsDirFor(path.join(process.cwd(), 'data'), source);
+      if (!fs.existsSync(vendorsDir)) {
+        console.warn(
+          `::warning::${path.relative(process.cwd(), vendorsDir)}/ does not exist yet — ` +
+            'no trust overlay applied',
+        );
       }
     })
     .catch((error) => {

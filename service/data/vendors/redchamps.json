@@ -1,0 +1,13 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "redchamps",
+  "vendorName": "Red Champs",
+  "url": "https://github.com/redchamps",
+  "trustedVendor": false,
+  "partnerTier": null,
+  "packages": {
+    "redchamps/module-clean-admin-menu": {
+      "editorialPick": true
+    }
+  }
+}

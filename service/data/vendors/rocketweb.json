@@ -1,0 +1,9 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "rocketweb",
+  "vendorName": "Rocket Web",
+  "url": "https://rocketweb.com/",
+  "trustedVendor": false,
+  "partnerTier": "bronze",
+  "packages": {}
+}

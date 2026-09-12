@@ -1,6 +1,7 @@
 /**
- * Normalize data/vendors/*.json for clean diffs: canonical key order, sorted
- * package keys and warnings, 2-space indent, trailing newline.
+ * Normalize both trust overlays (data/vendors/*.json and the fixture overlay
+ * in data/fixtures/vendors/*.json) for clean diffs: canonical key order,
+ * sorted package keys and warnings, 2-space indent, trailing newline.
  * Run: npm run format:vendors [-- --check]
  * --check exits 1 and prints the fix command instead of writing.
  */
@@ -63,32 +64,40 @@ const isMain =
 
 if (isMain) {
   const check = process.argv.includes('--check');
-  const vendorsDir = path.join(process.cwd(), 'data', 'vendors');
-  const files = fs.existsSync(vendorsDir)
-    ? fs.readdirSync(vendorsDir).filter((f) => f.endsWith('.json')).sort()
-    : [];
+  const dirs = [
+    path.join('data', 'vendors'),
+    path.join('data', 'fixtures', 'vendors'),
+  ];
 
   const unformatted: string[] = [];
-  for (const name of files) {
-    const filePath = path.join(vendorsDir, name);
-    const current = fs.readFileSync(filePath, 'utf8');
-    const formatted = formatVendorFile(JSON.parse(current));
-    if (current !== formatted) {
-      if (check) {
-        unformatted.push(name);
-      } else {
-        fs.writeFileSync(filePath, formatted);
-        console.log(`formatted data/vendors/${name}`);
+  let fileCount = 0;
+  for (const dir of dirs) {
+    const vendorsDir = path.join(process.cwd(), dir);
+    if (!fs.existsSync(vendorsDir)) continue;
+    const files = fs.readdirSync(vendorsDir).filter((f) => f.endsWith('.json')).sort();
+    fileCount += files.length;
+
+    for (const name of files) {
+      const filePath = path.join(vendorsDir, name);
+      const current = fs.readFileSync(filePath, 'utf8');
+      const formatted = formatVendorFile(JSON.parse(current));
+      if (current !== formatted) {
+        if (check) {
+          unformatted.push(`${dir}/${name}`);
+        } else {
+          fs.writeFileSync(filePath, formatted);
+          console.log(`formatted ${dir}/${name}`);
+        }
       }
     }
   }
 
   if (check && unformatted.length > 0) {
     console.error(
-      `data/vendors not canonically formatted: ${unformatted.join(', ')}\n` +
+      `trust files not canonically formatted: ${unformatted.join(', ')}\n` +
         `Fix with: npm run format:vendors`,
     );
     process.exit(1);
   }
-  console.log(check ? `format check OK (${files.length} file(s))` : `done (${files.length} file(s))`);
+  console.log(check ? `format check OK (${fileCount} file(s))` : `done (${fileCount} file(s))`);
 }

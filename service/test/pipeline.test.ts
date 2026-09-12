@@ -5,7 +5,13 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { runPipeline } from '../src/pipeline/run.js';
 import { feed as feedSchema, packageDetail } from '../src/schema/feed.js';
 import { mapCategories, mergeToFeed, unmappedCategoryLabels } from '../src/pipeline/merge.js';
-import { loadCategories, loadRankingConfig, loadSnapshot } from '../src/pipeline/load.js';
+import {
+  loadCategories,
+  loadRankingConfig,
+  loadSnapshot,
+  loadVendorFiles,
+  vendorsDirFor,
+} from '../src/pipeline/load.js';
 
 const rootDir = path.resolve(__dirname, '..');
 const now = new Date('2026-07-01T12:00:00.000Z');
@@ -130,6 +136,26 @@ describe('pipeline on fixture data', () => {
       expect(pkg.ranking.components).not.toHaveProperty('stars');
     }
   });
+});
+
+describe('trust overlay separation', () => {
+  const dataDir = path.join(rootDir, 'data');
+  const categories = loadCategories(dataDir);
+
+  it('resolves each universe to its own overlay directory', () => {
+    expect(vendorsDirFor(dataDir, 'live')).toBe(path.join(dataDir, 'vendors'));
+    expect(vendorsDirFor(dataDir, 'fixture')).toBe(path.join(dataDir, 'fixtures', 'vendors'));
+  });
+
+  it('keeps the invented fixture vendors out of the live overlay', () => {
+    const live = loadVendorFiles(vendorsDirFor(dataDir, 'live'), categories).map((f) => f.vendor);
+    const fixture = loadVendorFiles(vendorsDirFor(dataDir, 'fixture'), categories).map(
+      (f) => f.vendor,
+    );
+    expect(fixture.length).toBeGreaterThan(0);
+    expect(live.filter((vendor) => fixture.includes(vendor))).toEqual([]);
+  });
+
 });
 
 describe('category mapping', () => {

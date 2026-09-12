@@ -21,6 +21,10 @@ on:
         description: 'Max response bytes to print per request'
         required: false
         default: '60000'
+      named_packages:
+        description: 'Comma-separated packages to dump full trust signals for'
+        required: false
+        default: ''
 
 jobs:
   # End-to-end check of the real fetcher: run the pipeline in live mode
@@ -42,6 +46,17 @@ jobs:
         env:
           PACKAGE_MAVEN_TOKEN: ${{ secrets.PACKAGE_MAVEN_TOKEN }}
         run: npx tsx src/pipeline/run.ts --source live --out /tmp/pm-live-out
+      - name: Trust-overlay candidate shortlist
+        env:
+          FEED: /tmp/pm-live-out/api/v1/feed.json
+          # Packages a curation round is asking about by name; overridable via
+          # the dispatch input so a review doesn't need a commit to look one up.
+          NAMED: ${{ inputs.named_packages || 'smile/elasticsuite,smile/module-elasticsuite-core,yireo/magento2-googletagmanager2,redchamps/module-clean-admin-menu' }}
+        run: |
+          npx tsx src/pipeline/tools/trust-candidates.ts --feed "$FEED" --top 40 --packages "$NAMED"
+          echo
+          npx tsx src/pipeline/tools/trust-candidates.ts --feed "$FEED" --top 40 \
+            --vendors smile,yireo,elgentos,redchamps --min-packages 1 --detail
       - name: Summarize emitted feed
         run: |
           python3 - <<'EOF'
