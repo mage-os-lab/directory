@@ -28,6 +28,11 @@ class DirectoryConfig implements ArgumentInterface
      */
     private const STALE_AFTER = 86400;
 
+    /**
+     * A Magento release line, with the optional patch suffix Adobe appends (2.4.9, 2.4.8-p5).
+     */
+    private const RELEASE_PATTERN = '/^\d+\.\d+\.\d+(-p\d+)?$/';
+
     public function __construct(
         private readonly Config $config,
         private readonly FeedProvider $feedProvider,
@@ -69,7 +74,15 @@ class DirectoryConfig implements ArgumentInterface
             $mountConfig['installed'] = $installed;
         }
 
-        $mountConfig['magentoVersion'] = $this->productMetadata->getVersion();
+        $magentoVersion = $this->getMagentoVersion();
+        if ($magentoVersion !== null) {
+            $mountConfig['magentoVersion'] = $magentoVersion;
+
+            $distribution = $this->getDistribution();
+            if ($distribution !== null) {
+                $mountConfig['distribution'] = $distribution;
+            }
+        }
 
         // The template embeds this in a <script type="application/json"> block; encoding "<"
         // as \u003C keeps any value from ever closing that block, and it is still plain JSON.
@@ -110,6 +123,50 @@ class DirectoryConfig implements ArgumentInterface
         }
 
         return date('c', $fetchedAt);
+    }
+
+    /**
+     * The Magento release the shop runs, or null when it cannot be trusted.
+     *
+     * On Mage-OS getVersion() already answers with the Magento-equivalent release, which is
+     * exactly what the bundle wants. On a git or source install there is no metapackage to read
+     * it from, so it degrades to the root composer version ("1.0.0+no-version-set", "UNKNOWN");
+     * sending that would have every card claim it was not tested with it, so the key is dropped.
+     */
+    private function getMagentoVersion(): ?string
+    {
+        $version = (string)$this->productMetadata->getVersion();
+
+        return preg_match(self::RELEASE_PATTERN, $version) === 1 ? $version : null;
+    }
+
+    /**
+     * The distribution running the shop, for hosts that are not plain Magento.
+     *
+     * An admin on Mage-OS 3.5 has no idea what "Tested with 2.4.9" is telling them, so the
+     * bundle is handed the distribution's own name and number to label with. Only Mage-OS's
+     * concrete ProductMetadata carries these two methods - they are not on the interface, and
+     * DI may hand us an interceptor subclass - so the instance is asked rather than the type.
+     *
+     * @return array{name: string, version: string}|null
+     */
+    private function getDistribution(): ?array
+    {
+        if (
+            !method_exists($this->productMetadata, 'getDistributionName')
+            || !method_exists($this->productMetadata, 'getDistributionVersion')
+        ) {
+            return null;
+        }
+
+        $name = trim((string)$this->productMetadata->getDistributionName());
+        $version = trim((string)$this->productMetadata->getDistributionVersion());
+
+        if ($name === '' || $name === 'Magento' || preg_match(self::RELEASE_PATTERN, $version) !== 1) {
+            return null;
+        }
+
+        return ['name' => $name, 'version' => $version];
     }
 
     private function getFeedUrl(): string

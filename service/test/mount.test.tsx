@@ -468,6 +468,77 @@ describe('mountDirectory', () => {
     expect(el.textContent).not.toContain('Acme Search');
   });
 
+  it('reads a shop on a patch release as the release line PackageMaven tested', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    // PM reports base releases only; 2.4.6-p2 is a 2.4.6 shop.
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      magentoVersion: '2.4.6-p2',
+    });
+    await flush();
+
+    const fits = [...el.querySelectorAll('.mosd-card-fit')].map((f) =>
+      f.querySelector('span')!.textContent!.trim(),
+    );
+    expect(fits).toContain('v0.9.0 tested with 2.4.6-p2');
+    expect(fits).toContain('Not tested with 2.4.6-p2');
+    expect(el.querySelector('.mosd-card-fit.mosd-fit-older')).not.toBeNull();
+    expect(el.querySelector('.mosd-card-fit.mosd-fit-untested')).not.toBeNull();
+
+    const chip = el.querySelector<HTMLButtonElement>('.mosd-filter-chip.mosd-flag-tested')!;
+    expect(chip.textContent).toBe('Tested with 2.4.6-p2');
+    chip.click();
+    await flush();
+    expect(el.textContent).toContain('Acme Pay');
+    expect(el.textContent).not.toContain('Acme Search');
+    unmount();
+
+    // A patch of a fully tested line still reads as tested.
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      magentoVersion: '2.4.7-p1',
+    });
+    await flush();
+    expect(
+      [...el.querySelectorAll('.mosd-card-fit')].map((f) =>
+        f.querySelector('span')!.textContent!.trim(),
+      ),
+    ).toContain('Tested with 2.4.7-p1');
+  });
+
+  it('labels a Mage-OS shop with its own version, not the Magento one it is built on', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      magentoVersion: '2.4.6',
+      distribution: { name: 'Mage-OS', version: '3.5.0' },
+    });
+    await flush();
+
+    const chip = el.querySelector<HTMLButtonElement>('.mosd-filter-chip.mosd-flag-tested')!;
+    expect(chip.textContent).toBe('Tested with Mage-OS 3.5.0');
+
+    const fits = [...el.querySelectorAll('.mosd-card-fit')].map((f) =>
+      f.querySelector('span')!.textContent!.trim(),
+    );
+    expect(fits).toContain('v0.9.0 tested with Mage-OS 3.5.0');
+    expect(fits).toContain('Not tested with Mage-OS 3.5.0');
+    // The Magento number means nothing to a Mage-OS admin: it stays out of
+    // every label, and survives only as the tooltip's explanation.
+    for (const fit of fits) expect(fit).not.toContain('2.4.6');
+    expect(chip.textContent).not.toContain('2.4.6');
+    expect(chip.getAttribute('title')).toContain('2.4.6');
+  });
+
   it('targets the newest catalog version with the tested chip when no shop is known', async () => {
     vi.stubGlobal(
       'fetch',

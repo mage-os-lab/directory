@@ -400,9 +400,13 @@ mountDirectory(el: HTMLElement, options: {
                                    // tested-with badges, points the "tested with" chip
                                    // at it, and the install list pins the newest release
                                    // verified against it (via PackageSummary.compatibility)
+  distribution?: { name: string; version: string }; // the host's own distribution when it
+                                   // isn't Magento (e.g. Mage-OS 3.5.0); relabels every
+                                   // "tested with" with it. Ignored without magentoVersion
   colorScheme?: 'auto' | 'light' | 'dark'; // default 'auto' follows prefers-color-scheme;
                                    // pin it for hosts whose chrome has one palette
-  pageSize?: number;               // cards before "Show more" (default 24)
+  pageSize?: number;               // cards per page (default 24); the next page loads as the
+                                   // reader nears the end, with "Show more" as the fallback
 }): () => void;                    // returns unmount
 ```
 
@@ -432,7 +436,11 @@ Contract details the admin module depends on:
   (only an older release verified — the install list pins `^N`), or "not tested with X".
   Because this is PM's *empirical* test matrix, absence of a test result is never
   presented as incompatibility, and full conflict resolution is deliberately left to
-  `composer require --dry-run` on the merchant's machine.
+  `composer require --dry-run` on the merchant's machine. Matching is by release line:
+  PM tests base releases and a patch release does not change compatibility, so a shop on
+  `2.4.9-p1` matches PM's `2.4.9` results. Where the host also passes `distribution`, X is
+  the distribution's own version ("Tested with Mage-OS 3.5.0") — the number its admin
+  recognises — and the Magento release behind it appears only in the chip's tooltip.
 - The component's ground is transparent and its typography inherits from the host, so
   it sits on whichever page background and font the host has (the two Magento admin
   themes differ in both). Cards, the filter panel and the floating install tray are the

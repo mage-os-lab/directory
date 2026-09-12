@@ -9,6 +9,7 @@ import {
   isRisky,
   latestMagentoVersion,
   magentoRange,
+  releaseLine,
   releasedAgo,
 } from '../src/ui/DirectoryBrowser.js';
 import type { PackageSummary } from '../src/ui/types.js';
@@ -154,5 +155,23 @@ describe('installsAtPercentile', () => {
 
   it('declines to call anything popular in a corpus too small to rank', () => {
     expect(installsAtPercentile([10, 20, 30].map(withInstalls), 0.75)).toBeNull();
+  });
+});
+
+describe('releaseLine', () => {
+  it('reads a patch release as the base release PackageMaven tested', () => {
+    expect(releaseLine('2.4.9-p1')).toBe('2.4.9');
+  });
+
+  it('does not care how the shop cased the patch suffix', () => {
+    expect(releaseLine('2.4.8-P5')).toBe('2.4.8');
+  });
+
+  it('leaves a plain release alone', () => {
+    expect(releaseLine('2.4.9')).toBe('2.4.9');
+  });
+
+  it('leaves a pre-release alone — only -p<n> is a patch release', () => {
+    expect(releaseLine('2.4.9-beta1')).toBe('2.4.9-beta1');
   });
 });

@@ -78,11 +78,22 @@ export interface MountOptions {
    * admin module. When provided, cards get tested-with badges (from PM's
    * empirical test matrix — "not tested" never means "incompatible"), the
    * tested-with filter targets this version, and the install list pins the
-   * newest release verified against it instead of the latest.
+   * newest release verified against it instead of the latest. Matched by
+   * release line, so "2.4.9-p1" counts as a match for "2.4.9".
    */
   magentoVersion?: string;
+  /**
+   * The host's own distribution when it isn't Magento itself, e.g.
+   * `{ name: 'Mage-OS', version: '3.5.0' }`. Sent alongside magentoVersion
+   * (which then carries the Magento release that distribution is built on,
+   * the one PackageMaven tested). Every "tested with" label then names the
+   * distribution, since that is the version the admin recognises; the Magento
+   * number appears only in the chip's tooltip, as the explanation. Ignored
+   * without magentoVersion.
+   */
+  distribution?: { name: string; version: string };
   /** Palette: follow the OS ('auto', default) or pin 'light' / 'dark'. */
   colorScheme?: ColorScheme;
-  /** Cards shown before "Show more" (default 24). */
+  /** Cards per page (default 24); pages load as the reader nears the end, with "Show more" as the fallback. */
   pageSize?: number;
 }

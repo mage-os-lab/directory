@@ -241,6 +241,8 @@ MageOSDirectory.mountDirectory(el: HTMLElement, options: {
   installed?: Record<string, string>;  // composer name → installed version, from composer.lock
   selectable?: boolean;                // default false — mark-for-install toggles + command tray
   magentoVersion?: string;             // e.g. "2.4.7" — the shop's own version
+  distribution?: { name: string; version: string }; // e.g. {name:"Mage-OS", version:"3.5.0"}
+                                       // — what to call the host in version labels
   colorScheme?: 'auto' | 'light' | 'dark'; // default 'auto' follows the OS; the admin
                                        // passes 'light' because its chrome is light-only
   pageSize?: number;                   // cards before "Show more"; default 24
@@ -273,9 +275,19 @@ strip any leading `v`. Parsing the lock file directly is preferred over
 `composer show --format=json`, which needs shell access that some hosting restricts
 ([initial-scope.md](initial-scope.md)).
 
-**`magentoVersion`** — from `\Magento\Framework\App\ProductMetadataInterface::getVersion()`.
-Note Mage-OS reports its own version scheme; if it doesn't match PM's tested Magento
-versions the UI degrades gracefully to "not tested" rather than showing anything wrong.
+**`magentoVersion`** — from `\Magento\Framework\App\ProductMetadataInterface::getVersion()`,
+but only when it looks like a release (`2.4.9`, `2.4.8-p5`). A git or source install has no
+metapackage to read it from and answers `1.0.0+no-version-set` or `UNKNOWN`; the key is then
+omitted entirely rather than making every card say "Not tested with 1.0.0+no-version-set".
+On Mage-OS `getVersion()` is already the *Magento-equivalent* release (Mage-OS 3.5.0 →
+`2.4.9`), which is exactly what PM's matrix is keyed by, so it is sent as-is.
+
+**`distribution`** — the host's own name and number, from Mage-OS's `getDistributionName()`
+and `getDistributionVersion()`. Those live on the concrete `ProductMetadata` only, not on the
+interface, so the module probes the instance with `method_exists()` and leaves the key out on
+plain Magento (and whenever `magentoVersion` itself is absent, or the name is "Magento", or
+the distribution version is not a release string). It exists so the UI can say "Tested with
+Mage-OS 3.5.0" — an admin on Mage-OS 3.5 has no idea what "Tested with 2.4.9" is telling them.
 
 ### 5.4 Theming
 
@@ -368,6 +380,10 @@ Given `magentoVersion` (the shop's version), each package resolves to one of thr
 | **tested** | `supportedMagento` includes the shop's version | "Tested with 2.4.7" | `latestVersion` |
 | **older** | `compatibility[shopVersion]` exists | "v5.0.0 tested with 2.4.6" | that older version |
 | **untested** | neither | "Not tested with 2.4.6" | `latestVersion` |
+
+Matching is by release line, not by exact string: a `-pN` patch suffix on the shop side
+still matches PackageMaven's base version, so a shop on `2.4.8-p5` counts as tested against
+`2.4.8`.
 
 **Absence of a test result is never incompatibility.** PM's matrix is empirical — it
 records what was actually tested, not what is declared to work. A package with no result

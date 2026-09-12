@@ -9,10 +9,13 @@ use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeAssetRepository;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeBackendUrl;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeFeedProvider;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeInstalledPackages;
+use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeMageOsProductMetadata;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeProductMetadata;
 use MageOS\ExtensionDirectory\ViewModel\DirectoryConfig;
+use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class DirectoryConfigTest extends TestCase
@@ -110,6 +113,82 @@ final class DirectoryConfigTest extends TestCase
         self::assertTrue($mount['selectable']);
         self::assertSame('light', $mount['colorScheme'], 'The admin chrome is light-only.');
         self::assertSame('2.4.7-p3', $mount['magentoVersion']);
+        self::assertArrayNotHasKey('distribution', $mount, 'Plain Magento is not a distribution.');
+    }
+
+    public function testAMageOsHostSendsBothTheMagentoEquivalentVersionAndItsOwnName(): void
+    {
+        $viewModel = $this->viewModel([], [], new FakeMageOsProductMetadata('2.4.9', 'Mage-OS', '3.5.0'));
+
+        $mount = $this->decode($viewModel->getMountConfigJson());
+
+        self::assertSame('2.4.9', $mount['magentoVersion']);
+        self::assertSame(['name' => 'Mage-OS', 'version' => '3.5.0'], $mount['distribution']);
+    }
+
+    public function testTheDistributionIsEmittedAsAJsonObject(): void
+    {
+        $json = $this->viewModel([], [], new FakeMageOsProductMetadata())->getMountConfigJson();
+
+        $asObjects = json_decode($json);
+        self::assertInstanceOf(\stdClass::class, $asObjects->distribution);
+        self::assertSame('Mage-OS', $asObjects->distribution->name);
+        self::assertSame('3.5.0', $asObjects->distribution->version);
+    }
+
+    #[DataProvider('nonReleaseVersionProvider')]
+    public function testAVersionThatIsNotAReleaseIsNotSentAtAll(string $version): void
+    {
+        $json = $this->viewModel([], [], new FakeProductMetadata($version))->getMountConfigJson();
+
+        self::assertStringNotContainsString($version, $json);
+        self::assertArrayNotHasKey('magentoVersion', $this->decode($json));
+    }
+
+    #[DataProvider('nonReleaseVersionProvider')]
+    public function testADistributionIsNotSentWithoutAUsableMagentoVersion(string $version): void
+    {
+        $viewModel = $this->viewModel([], [], new FakeMageOsProductMetadata($version, 'Mage-OS', '3.5.0'));
+
+        $mount = $this->decode($viewModel->getMountConfigJson());
+
+        self::assertArrayNotHasKey('magentoVersion', $mount);
+        self::assertArrayNotHasKey('distribution', $mount, 'The version is the anchor for the label.');
+    }
+
+    public static function nonReleaseVersionProvider(): array
+    {
+        return [
+            'source install' => ['1.0.0+no-version-set'],
+            'unknown' => ['UNKNOWN'],
+        ];
+    }
+
+    public function testADistributionVersionThatIsNotAReleaseIsDroppedOnItsOwn(): void
+    {
+        $viewModel = $this->viewModel([], [], new FakeMageOsProductMetadata('2.4.9', 'Mage-OS', 'dev-main'));
+
+        $mount = $this->decode($viewModel->getMountConfigJson());
+
+        self::assertSame('2.4.9', $mount['magentoVersion']);
+        self::assertArrayNotHasKey('distribution', $mount);
+    }
+
+    public function testAHostThatCallsItselfMagentoIsNotReportedAsADistribution(): void
+    {
+        $viewModel = $this->viewModel([], [], new FakeMageOsProductMetadata('2.4.9', 'Magento', '2.4.9'));
+
+        $mount = $this->decode($viewModel->getMountConfigJson());
+
+        self::assertSame('2.4.9', $mount['magentoVersion']);
+        self::assertArrayNotHasKey('distribution', $mount);
+    }
+
+    public function testAnEmptyDistributionNameIsNotReported(): void
+    {
+        $viewModel = $this->viewModel([], [], new FakeMageOsProductMetadata('2.4.9', '  ', '3.5.0'));
+
+        self::assertArrayNotHasKey('distribution', $this->decode($viewModel->getMountConfigJson()));
     }
 
     public function testTheInstalledKeyIsOmittedWhenTheShopHasNothingToReport(): void
@@ -207,7 +286,7 @@ final class DirectoryConfigTest extends TestCase
     private function viewModel(
         array $configValues,
         array $installed = [],
-        ?FakeProductMetadata $productMetadata = null
+        ?ProductMetadataInterface $productMetadata = null
     ): DirectoryConfig {
         return new DirectoryConfig(
             new Config(new ArrayScopeConfig($configValues)),

@@ -30,8 +30,10 @@ export interface DirectoryBrowserProps {
   /** Enable marking packages for install and the composer-command tray. */
   selectable?: boolean;
   onSelectionChange?: (detail: SelectionDetail) => void;
-  /** The host shop's Magento/Mage-OS version (e.g. "2.4.6"). */
+  /** The host shop's Magento release, or its Mage-OS equivalent (e.g. "2.4.6"). */
   magentoVersion?: string;
+  /** The host's own distribution (e.g. Mage-OS 3.5.0), when it isn't Magento. */
+  distribution?: { name: string; version: string };
   /** Follow the OS palette ('auto', default) or pin one. */
   colorScheme?: ColorScheme;
   /** Cards shown before "Show more". */
@@ -135,6 +137,39 @@ export function latestMagentoVersion(packages: PackageSummary[]): string | null 
     }
   }
   return newest;
+}
+
+/**
+ * The base release a version belongs to: "2.4.9-p1" → "2.4.9". PackageMaven
+ * tests base releases only, and a patch release does not change a module's
+ * compatibility — so matching a host version against the test matrix compares
+ * release lines, not the exact string the shop reports.
+ */
+export function releaseLine(version: string): string {
+  return version.trim().replace(/-p\d+$/i, '');
+}
+
+/**
+ * The tested-with chip's tooltip. The label names what the reader runs; the
+ * tooltip is where the Magento release actually tested is explained — for a
+ * distribution, and for a shop on a patch release of a tested line.
+ */
+function testedChipTitle(
+  magentoVersion: string | undefined,
+  distribution: { name: string; version: string } | undefined,
+  testedTarget: string,
+): string {
+  if (magentoVersion === undefined) {
+    return `The latest release is verified against Magento ${testedTarget}, the newest version in the catalog`;
+  }
+  const line = releaseLine(magentoVersion);
+  if (distribution !== undefined) {
+    return `A release is verified against Magento ${line}, which ${distribution.name} ${distribution.version} is built on`;
+  }
+  if (line !== magentoVersion) {
+    return `A release is verified against Magento ${line}, the release your ${magentoVersion} is a patch of`;
+  }
+  return `A release is verified against your Magento ${magentoVersion}`;
 }
 
 /** Released within RECENT_DAYS of `now`. Unparseable dates are not recent. */
@@ -252,11 +287,14 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   const magentoSupport = (pkg: PackageSummary): MagentoSupport | null => {
     const magento = props.magentoVersion;
     if (!magento) return null;
-    if (pkg.supportedMagento.includes(magento)) {
+    const line = releaseLine(magento);
+    if (pkg.supportedMagento.some((version) => releaseLine(version) === line)) {
       return { state: 'tested', version: pkg.latestVersion };
     }
-    const older = pkg.compatibility[magento];
-    if (older !== undefined) return { state: 'older', version: older };
+    const older = Object.entries(pkg.compatibility).find(
+      ([version]) => releaseLine(version) === line,
+    );
+    if (older !== undefined) return { state: 'older', version: older[1] };
     return { state: 'untested' };
   };
 
@@ -286,6 +324,17 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   /** "Tested with" targets the shop's version when known, else the newest
    * version anything in the catalog was verified against. */
   const testedTarget = props.magentoVersion ?? latestMagento;
+
+  /**
+   * What every user-facing "tested with" names. A shop on a distribution sends
+   * the Magento release it is built on — the number PackageMaven tested — but
+   * an admin on Mage-OS 3.5.0 doesn't recognise it, so the labels say
+   * "Mage-OS 3.5.0" and only the chip's tooltip explains the Magento number.
+   */
+  const distribution = props.magentoVersion ? props.distribution : undefined;
+  const hostLabel = distribution
+    ? `${distribution.name} ${distribution.version}`
+    : props.magentoVersion;
   const testedWith = (pkg: PackageSummary): boolean => {
     if (props.magentoVersion) return magentoSupport(pkg)?.state !== 'untested';
     return testedTarget !== null && pkg.supportedMagento.includes(testedTarget);
@@ -304,10 +353,8 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   if (testedTarget !== null) {
     chips.push({
       flag: 'tested',
-      label: `Tested with ${testedTarget}`,
-      title: props.magentoVersion
-        ? `A release is verified against your Magento ${props.magentoVersion}`
-        : `The latest release is verified against Magento ${testedTarget}, the newest version in the catalog`,
+      label: `Tested with ${hostLabel ?? testedTarget}`,
+      title: testedChipTitle(props.magentoVersion, distribution, testedTarget),
     });
   }
   chips.push(
@@ -497,12 +544,12 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
       return span === null ? null : { tone: 'plain', text: `Magento ${span}` };
     }
     if (support.state === 'tested') {
-      return { tone: 'ok', text: `Tested with ${props.magentoVersion}` };
+      return { tone: 'ok', text: `Tested with ${hostLabel}` };
     }
     if (support.state === 'older') {
-      return { tone: 'older', text: `v${support.version} tested with ${props.magentoVersion}` };
+      return { tone: 'older', text: `v${support.version} tested with ${hostLabel}` };
     }
-    return { tone: 'untested', text: `Not tested with ${props.magentoVersion}` };
+    return { tone: 'untested', text: `Not tested with ${hostLabel}` };
   };
 
   /** Where the reader stands with the package — admin surfaces only. */

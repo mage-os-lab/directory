@@ -16,11 +16,15 @@
  *    every change dispatched as CustomEvent('mosd:selection',
  *    {detail: {packages, command}}). The list is kept in sessionStorage per
  *    tab, so a reload restores it (and dispatches it once on mount).
- *  - magentoVersion (the host shop's Magento/Mage-OS version) adds
- *    tested-with badges from PM's test matrix, points the "tested with"
- *    filter at that version, and makes the install list pin the newest
- *    release verified against it ("not tested" is never presented as
- *    "incompatible").
+ *  - magentoVersion (the host shop's Magento release, or the one its
+ *    distribution is built on) adds tested-with badges from PM's test matrix,
+ *    points the "tested with" filter at that version, and makes the install
+ *    list pin the newest release verified against it ("not tested" is never
+ *    presented as "incompatible"). Matching is by release line, so a shop on
+ *    2.4.9-p1 matches PM's 2.4.9 results. distribution ({name, version}, e.g.
+ *    Mage-OS 3.5.0) relabels every "tested with" with the version the admin
+ *    recognises, leaving the Magento number to the chip's tooltip; it is
+ *    ignored without magentoVersion.
  *  - colorScheme pins the palette ('light' | 'dark') for hosts whose chrome
  *    has only one; the default 'auto' follows prefers-color-scheme.
  *  - pageSize caps the cards rendered before a "Show more" button (24).
@@ -45,7 +49,13 @@ interface RootProps {
   options: Required<Pick<MountOptions, 'feedUrl' | 'linkMode' | 'baseUrl'>> &
     Pick<
       MountOptions,
-      'initialFilters' | 'installed' | 'selectable' | 'magentoVersion' | 'colorScheme' | 'pageSize'
+      | 'initialFilters'
+      | 'installed'
+      | 'selectable'
+      | 'magentoVersion'
+      | 'distribution'
+      | 'colorScheme'
+      | 'pageSize'
     >;
   host: HTMLElement;
 }
@@ -116,6 +126,7 @@ function Root({ options, host }: RootProps) {
       installed={options.installed}
       selectable={options.selectable}
       magentoVersion={options.magentoVersion}
+      distribution={options.distribution}
       colorScheme={options.colorScheme}
       pageSize={options.pageSize}
       onSelect={(detail: SelectDetail) => {
@@ -141,6 +152,7 @@ export function mountDirectory(el: HTMLElement, options: MountOptions = {}): () 
     installed: options.installed,
     selectable: options.selectable ?? false,
     magentoVersion: options.magentoVersion,
+    distribution: options.distribution,
     colorScheme: options.colorScheme,
     pageSize: options.pageSize,
   } as const;
