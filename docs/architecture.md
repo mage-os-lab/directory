@@ -376,7 +376,9 @@ mountDirectory(el: HTMLElement, options: {
                                    // host from composer.lock; adds Installed /
                                    // "update available" badges + an installed-state filter
   selectable?: boolean;            // default false: mark-for-install toggles + a tray
-                                   // with the copyable composer require command
+                                   // with the copyable composer require command; the
+                                   // list lives in sessionStorage, so it survives a
+                                   // reload of the tab and ends with the tab
   magentoVersion?: string;         // the host shop's Magento/Mage-OS version; adds
                                    // tested-with badges, points the "tested with" chip
                                    // at it, and the install list pins the newest release
@@ -399,6 +401,11 @@ Contract details the admin module depends on:
   composed `CustomEvent('mosd:selection', { detail: { packages: [{ name, version }],
   command } })` — `command` is the ready-to-paste
   `composer require vendor/a:^1.2 vendor/b` string (empty when the list is empty). The
+  list is kept in `sessionStorage` (key `mosd:install-list`, package names only) so a
+  reload, or a detour through a detail page, does not lose it; a mount that restores a
+  non-empty list dispatches `mosd:selection` once on mount, since the host never saw
+  that list being built. Names the current feed no longer carries are dropped, and
+  versions are pinned afresh against the feed in hand. The
   directory never installs anything itself: version detection stays client-side
   (`installed` comes from the host reading composer.lock) and the output is a command
   the merchant runs manually — consistent with the copy-the-command model on detail

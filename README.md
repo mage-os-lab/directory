@@ -51,7 +51,8 @@ PackageMaven) are followed only when clicked.
 
 **It never installs anything.** Marking modules builds a
 `composer require vendor/module:^x.y` command to copy and run on the server, where
-Composer resolves dependencies.
+Composer resolves dependencies. The list is kept per browser tab, so a reload or a look
+at a module's details does not lose it.
 
 One setting (Stores → Configuration → Mage-OS → Extension Directory): **Direct**
 (default — admin browsers load the UI bundle and catalog straight from the directory

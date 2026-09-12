@@ -14,7 +14,8 @@
  *    adds Installed/update badges and an installed-state filter; selectable
  *    adds mark-for-install toggles and a copyable composer-require tray, with
  *    every change dispatched as CustomEvent('mosd:selection',
- *    {detail: {packages, command}}).
+ *    {detail: {packages, command}}). The list is kept in sessionStorage per
+ *    tab, so a reload restores it (and dispatches it once on mount).
  *  - magentoVersion (the host shop's Magento/Mage-OS version) adds
  *    tested-with badges from PM's test matrix, points the "tested with"
  *    filter at that version, and makes the install list pin the newest
