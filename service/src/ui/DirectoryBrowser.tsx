@@ -67,6 +67,38 @@ export function composerCommand(entries: Array<{ name: string; version: string |
   return `composer require ${args.join(' ')}`;
 }
 
+/**
+ * Where a selectable mount keeps the install list between page loads. Session
+ * storage is per tab and gone when the tab closes: a reload, a filter change
+ * that the host turns into navigation, or a trip into a module's detail page
+ * and back should not cost the reader the list they were building, but a
+ * fresh tab should start clean. Only package names are kept — versions are
+ * pinned again against the feed that is current when the list is read.
+ */
+export const SELECTION_STORAGE_KEY = 'mosd:install-list';
+
+export function readStoredSelection(): string[] {
+  try {
+    if (typeof sessionStorage === 'undefined') return [];
+    const raw = sessionStorage.getItem(SELECTION_STORAGE_KEY);
+    if (raw === null) return [];
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((n): n is string => typeof n === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeStoredSelection(names: string[]): void {
+  try {
+    if (typeof sessionStorage === 'undefined') return;
+    if (names.length === 0) sessionStorage.removeItem(SELECTION_STORAGE_KEY);
+    else sessionStorage.setItem(SELECTION_STORAGE_KEY, JSON.stringify(names));
+  } catch {
+    // Storage disabled or full: the list still works for this page view.
+  }
+}
+
 const SORTS: Array<{ key: SortKey; label: string }> = [
   { key: 'recommended', label: 'Recommended' },
   { key: 'installs', label: 'Most installed' },
@@ -184,7 +216,13 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   const [sort, setSort] = useState<SortKey>(props.initialFilters?.sort ?? 'recommended');
   const [showHidden, setShowHidden] = useState(false);
   const [limit, setLimit] = useState(pageSize);
-  const [marked, setMarked] = useState<Set<string>>(new Set());
+  // A selectable mount picks up the list the tab already had, minus anything
+  // the catalog no longer carries.
+  const [marked, setMarked] = useState<Set<string>>(() => {
+    if (!props.selectable) return new Set();
+    const known = new Set(feed.packages.map((p) => p.name));
+    return new Set(readStoredSelection().filter((name) => known.has(name)));
+  });
   const [copied, setCopied] = useState(false);
 
   const categories = useMemo(
@@ -408,14 +446,19 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   const command = markedEntries.length > 0 ? composerCommand(markedEntries) : '';
 
   // Emit selection changes from an effect (not the click handler) so rapid
-  // marks can't act on a stale set; skip the initial mount's empty state.
+  // marks can't act on a stale set. On mount, an empty list is not news; a
+  // list restored from the tab is, since the host never saw it being built.
   const emittedOnce = useRef(false);
   useEffect(() => {
     if (!emittedOnce.current) {
       emittedOnce.current = true;
-      return;
+      if (marked.size === 0) return;
     }
     props.onSelectionChange?.({ packages: markedEntries, command });
+  }, [marked]);
+
+  useEffect(() => {
+    if (props.selectable) writeStoredSelection([...marked]);
   }, [marked]);
 
   const toggleMark = (pkg: PackageSummary) => {

@@ -148,6 +148,7 @@ describe('mountDirectory', () => {
   });
 
   afterEach(() => {
+    sessionStorage.clear();
     unmount?.();
     unmount = null;
     el.remove();
@@ -372,6 +373,73 @@ describe('mountDirectory', () => {
     await flush();
     expect(el.querySelector('.mosd-tray')).toBeNull();
     expect(selections[2]).toEqual({ packages: [], command: '' });
+  });
+
+  it('keeps the install list across a reload of the tab, minus what the catalog lost', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const selections: unknown[] = [];
+    el.addEventListener('mosd:selection', (event) =>
+      selections.push((event as CustomEvent).detail),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, selectable: true });
+    await flush();
+
+    const buttons = [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')];
+    buttons[0].click();
+    await flush();
+    buttons[1].click();
+    await flush();
+    expect(JSON.parse(sessionStorage.getItem('mosd:install-list')!)).toEqual([
+      'acme/module-pay',
+      'acme/module-search',
+    ]);
+
+    // "Reload": a fresh mount in the same tab, with the tab meanwhile holding
+    // a name the catalog no longer carries.
+    unmount();
+    sessionStorage.setItem(
+      'mosd:install-list',
+      JSON.stringify(['acme/module-pay', 'gone/module-retired']),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, selectable: true });
+    await flush();
+
+    expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(
+      'composer require acme/module-pay:^1.0.0',
+    );
+    expect(el.querySelectorAll('.mosd-mark.mosd-marked')).toHaveLength(1);
+    // The restored list is announced once on mount, since the host never saw it built.
+    expect(selections.at(-1)).toEqual({
+      packages: [{ name: 'acme/module-pay', version: '1.0.0' }],
+      command: 'composer require acme/module-pay:^1.0.0',
+    });
+    expect(JSON.parse(sessionStorage.getItem('mosd:install-list')!)).toEqual(['acme/module-pay']);
+
+    // Clear empties the tab's copy as well.
+    (el.querySelector('.mosd-tray .mosd-btn:not(.mosd-btn-primary)') as HTMLButtonElement).click();
+    await flush();
+    expect(sessionStorage.getItem('mosd:install-list')).toBeNull();
+  });
+
+  it('leaves the tab\'s install list alone on a mount that cannot select', async () => {
+    sessionStorage.setItem('mosd:install-list', JSON.stringify(['acme/module-pay']));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const selections: unknown[] = [];
+    el.addEventListener('mosd:selection', (event) =>
+      selections.push((event as CustomEvent).detail),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+
+    expect(el.querySelector('.mosd-tray')).toBeNull();
+    expect(selections).toEqual([]);
+    expect(JSON.parse(sessionStorage.getItem('mosd:install-list')!)).toEqual(['acme/module-pay']);
   });
 
   it('shows tested-with badges for the host Magento version', async () => {
