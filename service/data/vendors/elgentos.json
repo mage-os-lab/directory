@@ -1,0 +1,13 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "elgentos",
+  "vendorName": "elgentos",
+  "url": "https://elgentos.nl/",
+  "trustedVendor": false,
+  "partnerTier": null,
+  "packages": {
+    "elgentos/regenerate-catalog-urls": {
+      "editorialPick": true
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "avstudnitz",
+  "vendorName": "Andreas von Studnitz",
+  "url": "https://github.com/avstudnitz",
+  "trustedVendor": false,
+  "partnerTier": null,
+  "packages": {
+    "avstudnitz/scopehint2": {
+      "editorialPick": true
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "webshopapps",
+  "vendorName": "WebShopApps",
+  "url": "https://github.com/webshopapps",
+  "trustedVendor": false,
+  "partnerTier": null,
+  "packages": {
+    "webshopapps/module-matrixrate": {
+      "editorialPick": true
+    }
+  }
+}
