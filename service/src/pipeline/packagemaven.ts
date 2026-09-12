@@ -98,6 +98,50 @@ export function parseLicense(license: string | null): string[] | null {
 }
 
 /**
+ * PM's human name often repeats what the directory context already says
+ * ("Magento2 Google Tag Manager", "Module Scope Hint"). Strip those leading
+ * words — repeatedly, and only as standalone prefixes followed by whitespace or
+ * a separator — so card titles read "Google Tag Manager" / "Scope Hint". The
+ * rest of the name is left exactly as it arrived, and a name that is nothing
+ * but a prefix ("Magento2") is returned untouched rather than emptied.
+ */
+const REDUNDANT_NAME_PREFIX = /^(?:magento\s*2|module)(?:\s*[-\u2013:_|]\s*|\s+)(?=\S)/i;
+
+/**
+ * The same redundancy also shows up as a trailing or mid-name phrase ("Google
+ * Tag Manager for Magento 2", "Foo (for Magento 2) - Pro"), optionally wrapped
+ * in parentheses or brackets. Matched as whole words only, so a version suffix
+ * ("for Magento 2.4") or a longer number ("for Magento 25") is left alone.
+ */
+const REDUNDANT_NAME_PHRASE = /\s*(?:[([]\s*)?\bfor\s*magento\s*2(?![a-z0-9]|\.\d)(?:\s*[)\]])?/gi;
+
+/** A separator the phrase removal can strand at either end of the name. */
+const DANGLING_SEPARATOR = /^\s*[-\u2013:_|]\s*|\s*[-\u2013:_|]\s*$/g;
+
+function stripRedundantPrefixes(name: string): string {
+  let cleaned = name;
+  while (REDUNDANT_NAME_PREFIX.test(cleaned)) {
+    cleaned = cleaned.replace(REDUNDANT_NAME_PREFIX, '');
+  }
+  return cleaned;
+}
+
+export function cleanDisplayName(name: string): string {
+  const trimmed = name.trim();
+  let cleaned = stripRedundantPrefixes(trimmed);
+  const withoutPhrase = cleaned.replace(REDUNDANT_NAME_PHRASE, '');
+  if (withoutPhrase !== cleaned) {
+    // Only tidy when the phrase actually went, so an untouched name keeps the
+    // internal spacing and separators it legitimately carries. Dropping the
+    // phrase can also expose a fresh prefix ("for Magento 2 - Module Foo").
+    cleaned = stripRedundantPrefixes(
+      withoutPhrase.replace(/\s+/g, ' ').trim().replace(DANGLING_SEPARATOR, '').trim(),
+    );
+  }
+  return cleaned || trimmed;
+}
+
+/**
  * Normalize one PM API package into the internal source shape.
  *
  * PM's test results describe one (package_version, magento_version) pair, and
@@ -136,7 +180,7 @@ export function normalizePmApiPackage(raw: unknown): SourcePackage | null {
 
   const candidate = {
     name: pkg.composer_name.toLowerCase(),
-    displayName: pkg.name?.trim() || pkg.composer_name,
+    displayName: cleanDisplayName(pkg.name ?? '') || pkg.composer_name,
     description: pkg.description ?? '',
     rawCategories: pkg.categories.map((c) => c.slug),
     repositoryUrl: validUrl(pkg.repository_url),

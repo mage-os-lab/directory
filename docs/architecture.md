@@ -49,7 +49,11 @@ path now fetches it directly (`src/pipeline/packagemaven.ts`: paginated
 the same internal snapshot shape (`origin: 'live' | 'manual' | 'fixture'`). One
 consequence of the API's shape: PM reports *untested* packages
 (no quality flags yet), represented as `quality.tier: null` — ranking omits the
-quality signal for them rather than punishing them.
+quality signal for them rather than punishing them. The normalizer also cleans PM's
+human name for `displayName`, stripping redundant leading words (`Magento2`,
+`Magento 2`, `Module`, with an optional `-`/`:` separator) and the phrase
+"for Magento 2" wherever it appears, so a card title reads "Google Tag Manager"
+rather than "Magento2 Google Tag Manager for Magento 2".
 
 When running on a manually refreshed export, staleness is a *steady state*, not a
 transient failure: the site shows a "quality data as of &lt;date&gt;" notice sourced from the
@@ -170,7 +174,7 @@ interface Feed {
 interface PackageSummary {
   name: string;                   // "acme/module-widget" (Packagist name)
   vendor: string;
-  displayName: string;            // trust-file override → PM friendly name
+  displayName: string;            // trust-file override → PM friendly name (prefix-cleaned)
   description: string;
   categories: string[];           // canonical slugs; trust-file override wins
   repositoryUrl: string | null;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cleanDisplayName,
   fetchPackageMavenSnapshot,
   normalizePmApiPackage,
   tierFromFlags,
@@ -51,6 +52,84 @@ describe('tierFromFlags', () => {
     expect(tierFromFlags(flags(false, false, true, false))).toBe('ready-to-install');
     expect(tierFromFlags(flags(false, false, false, true))).toBe('needs-help');
     expect(tierFromFlags(flags(false, false, false, false))).toBeNull();
+  });
+});
+
+describe('cleanDisplayName', () => {
+  it('drops a redundant leading Magento2 / Module word', () => {
+    expect(cleanDisplayName('Magento2 Google Tag Manager')).toBe('Google Tag Manager');
+    expect(cleanDisplayName('Magento 2 Foo')).toBe('Foo');
+    expect(cleanDisplayName('Module Foo')).toBe('Foo');
+  });
+
+  it('strips repeated prefixes regardless of case', () => {
+    expect(cleanDisplayName('magento2 module foo')).toBe('foo');
+    expect(cleanDisplayName('Magento2 Module Scope Hint')).toBe('Scope Hint');
+  });
+
+  it('accepts a separator between the prefix and the name', () => {
+    expect(cleanDisplayName('Magento2 - Foo')).toBe('Foo');
+    expect(cleanDisplayName('Magento2: Foo')).toBe('Foo');
+    expect(cleanDisplayName('Module | Foo')).toBe('Foo');
+  });
+
+  it('only strips whole standalone words', () => {
+    expect(cleanDisplayName('Magento2Foo')).toBe('Magento2Foo');
+    expect(cleanDisplayName('Modules Manager')).toBe('Modules Manager');
+    expect(cleanDisplayName('Foo Magento2')).toBe('Foo Magento2');
+  });
+
+  it('never empties a name that is nothing but a prefix', () => {
+    expect(cleanDisplayName('Magento2')).toBe('Magento2');
+    expect(cleanDisplayName('  Module  ')).toBe('Module');
+  });
+
+  it('leaves the rest of the name and its trimmed edges alone', () => {
+    expect(cleanDisplayName('  Magento2  Google  Tag Manager  ')).toBe('Google  Tag Manager');
+  });
+
+  it('drops a trailing "for Magento 2"', () => {
+    expect(cleanDisplayName('Google Tag Manager for Magento 2')).toBe('Google Tag Manager');
+    expect(cleanDisplayName('Google Tag Manager for Magento2')).toBe('Google Tag Manager');
+  });
+
+  it('drops the phrase when it is wrapped in parentheses or brackets', () => {
+    expect(cleanDisplayName('Foo (for Magento 2)')).toBe('Foo');
+    expect(cleanDisplayName('Foo [for Magento 2]')).toBe('Foo');
+    expect(cleanDisplayName('Foo (for Magento 2) - Pro')).toBe('Foo - Pro');
+  });
+
+  it('drops the phrase mid-name and tidies the spacing around it', () => {
+    expect(cleanDisplayName('Foo for Magento 2 - Pro')).toBe('Foo - Pro');
+    expect(cleanDisplayName('Foo for Magento 2 Pro')).toBe('Foo Pro');
+  });
+
+  it('drops a separator the phrase strands at either end', () => {
+    expect(cleanDisplayName('Foo - for Magento 2')).toBe('Foo');
+    expect(cleanDisplayName('for Magento 2 - Foo')).toBe('Foo');
+    expect(cleanDisplayName('Foo: for Magento 2')).toBe('Foo');
+  });
+
+  it('strips the phrase and the leading prefix together', () => {
+    expect(cleanDisplayName('Magento2 Foo for Magento 2')).toBe('Foo');
+    expect(cleanDisplayName('for Magento 2 - Module Foo')).toBe('Foo');
+  });
+
+  it('matches the phrase whatever its case', () => {
+    expect(cleanDisplayName('Foo FOR MAGENTO 2')).toBe('Foo');
+    expect(cleanDisplayName('Foo For Magento 2')).toBe('Foo');
+    expect(cleanDisplayName('Foo for magento2')).toBe('Foo');
+  });
+
+  it('leaves a version suffix or a longer number alone', () => {
+    expect(cleanDisplayName('Foo for Magento 2.4')).toBe('Foo for Magento 2.4');
+    expect(cleanDisplayName('Foo for Magento 25')).toBe('Foo for Magento 25');
+    expect(cleanDisplayName('Metafor Magento 2 Tools')).toBe('Metafor Magento 2 Tools');
+  });
+
+  it('never empties a name that is nothing but the phrase', () => {
+    expect(cleanDisplayName('for Magento 2')).toBe('for Magento 2');
+    expect(cleanDisplayName('  Magento2 for Magento 2  ')).toBe('Magento2 for Magento 2');
   });
 });
 
@@ -135,6 +214,11 @@ describe('normalizePmApiPackage', () => {
       supportedMagento: [],
       releases: [],
     });
+  });
+
+  it('strips a redundant prefix from the display name', () => {
+    const source = normalizePmApiPackage(apiPackage({ name: 'Magento2 Widget Manager' }));
+    expect(source?.displayName).toBe('Widget Manager');
   });
 
   it('falls back to the composer name when the display name is missing', () => {
