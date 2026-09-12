@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  POPULAR_PERCENTILE,
   installsAtPercentile,
   installsLabel,
   isHighQuality,
@@ -128,6 +129,10 @@ describe('latestMagentoVersion', () => {
 describe('isPopular', () => {
   const withInstalls = (installs: number | null) =>
     pkg({ popularity: { installs, githubStars: null } });
+
+  it('popular means the top 15% of the catalog by installs', () => {
+    expect(POPULAR_PERCENTILE).toBe(0.85);
+  });
 
   it('is installs at or above the floor, and never without a floor', () => {
     expect(isPopular(withInstalls(60), 60)).toBe(true);

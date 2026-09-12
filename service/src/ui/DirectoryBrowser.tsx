@@ -318,7 +318,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     chips.push({
       flag: 'popular',
       label: 'Popular',
-      title: `Top quarter of the catalog by installs (${installsLabel(popularFloor)}+)`,
+      title: `Top 15% of the catalog by installs (${installsLabel(popularFloor)}+)`,
     });
   }
   if (installed) {
@@ -575,7 +575,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
       });
     }
     if (isPopular(pkg, popularFloor)) {
-      badges.push({ key: 'popular', label: 'Popular', title: 'Top quarter of the catalog by installs' });
+      badges.push({ key: 'popular', label: 'Popular', title: 'Top 15% of the catalog by installs' });
     }
     return badges;
   };

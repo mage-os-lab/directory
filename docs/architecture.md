@@ -449,10 +449,11 @@ Contract details the admin module depends on:
 time, and the chips on each card are the same control); "show only" chips that each
 answer one shortlisting question and combine with AND — Trusted vendor, Editors' picks,
 Tested with &lt;version&gt;, Recently updated (a release in the last 12 months), High
-quality (PackageMaven's top two tiers), Popular (top quarter of the catalog by installs),
+quality (PackageMaven's top two tiers), Popular (top 15% of the catalog by installs),
 plus Installed and Update available where the host supplied `installed`; sort
-(recommended by ranking score, installs, stars, recency, name); a page of 24 cards with
-"Show more"; README on detail pages; vendor pages. Quality tier is not a filter of its
+(recommended by ranking score, installs, stars, recency, name); pages of 24 cards that
+load as the reader nears the end, with "Show more" as the fallback; README on detail
+pages; vendor pages. Quality tier is not a filter of its
 own — "Known issues" is not something anyone narrows *to* — and a card names only the
 tiers that change a shortlist: the top two as a High quality badge, `needs-help` as a
 "Known issues" note; the full tier lives on the detail page. "Tested with" targets the

@@ -9,7 +9,7 @@
 import type { PackageSummary } from '../schema/feed.js';
 
 /** "Popular" means installs at or above this percentile of the catalog. */
-export const POPULAR_PERCENTILE = 0.75;
+export const POPULAR_PERCENTILE = 0.85;
 
 /** PackageMaven found nothing wrong: the top two tiers. */
 export function isHighQuality(pkg: PackageSummary): boolean {
