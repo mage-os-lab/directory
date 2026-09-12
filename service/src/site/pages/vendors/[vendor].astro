@@ -1,6 +1,12 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { loadFeed, packageHref, packagesForVendor } from '../../lib/data.js';
+import {
+  POPULAR_PERCENTILE,
+  installsAtPercentile,
+  isHighQuality,
+  isPopular,
+} from '../../../shared/merits.js';
 import { qualityLabel } from '../../../shared/quality.js';
 
 export function getStaticPaths() {
@@ -14,6 +20,8 @@ export function getStaticPaths() {
 const { vendor } = Astro.props;
 const feed = loadFeed();
 const packages = packagesForVendor(feed, vendor.slug);
+// The same floor the browse island uses, so "Popular" means one thing on the site.
+const popularFloor = installsAtPercentile(feed.packages, POPULAR_PERCENTILE);
 
 ---
 
@@ -44,10 +52,12 @@ const packages = packagesForVendor(feed, vendor.slug);
             </p>
             <p class="description">{pkg.description}</p>
             <p class="meta">
-              <span class={`badge badge-${pkg.quality.tier ?? 'untested'}`}>
-                {qualityLabel(pkg.quality.tier)}
-              </span>
               {pkg.trust.editorialPick && <span class="badge badge-pick">Editors&rsquo; pick</span>}
+              {isHighQuality(pkg) && <span class="badge badge-high-quality">High quality</span>}
+              {pkg.quality.tier === 'needs-help' && (
+                <span class="badge badge-needs-help">{qualityLabel(pkg.quality.tier)}</span>
+              )}
+              {isPopular(pkg, popularFloor) && <span class="badge badge-popular">Popular</span>}
               {pkg.popularity.installs !== null && (
                 <span class="stat">{pkg.popularity.installs.toLocaleString()} installs</span>
               )}

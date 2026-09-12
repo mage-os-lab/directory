@@ -32,17 +32,9 @@
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #fdf5e7);
   --mosd-risk: var(--mosd-theme-risk, #a52626);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #fdeeee);
-  /* Quality tiers, PackageMaven's four plus "not assessed". */
-  --mosd-q-strict-bg: #d5f2dc;
-  --mosd-q-strict-fg: #1e6b34;
-  --mosd-q-clean-bg: #d7e9fb;
-  --mosd-q-clean-fg: #135ba1;
-  --mosd-q-installs-bg: #fdf0c2;
-  --mosd-q-installs-fg: #7a5d00;
-  --mosd-q-issues-bg: #fadcdc;
-  --mosd-q-issues-fg: #a52626;
-  --mosd-q-none-bg: #ececec;
-  --mosd-q-none-fg: #5f5f5f;
+  /* The High quality badge: PackageMaven's top two tiers, one tint. */
+  --mosd-quality-bg: #d7e9fb;
+  --mosd-quality-fg: #135ba1;
   --mosd-shadow-color: 0 0 0;
   --mosd-elevation-1: 0 1px 2px rgb(var(--mosd-shadow-color) / 0.1),
     0 1px 3px 1px rgb(var(--mosd-shadow-color) / 0.06);
@@ -76,16 +68,8 @@
     --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
     --mosd-risk: var(--mosd-theme-risk, #ff8585);
     --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
-    --mosd-q-strict-bg: #1b3a26;
-    --mosd-q-strict-fg: #8ee0a8;
-    --mosd-q-clean-bg: #1a2f47;
-    --mosd-q-clean-fg: #8fc4f5;
-    --mosd-q-installs-bg: #3a3011;
-    --mosd-q-installs-fg: #f0d271;
-    --mosd-q-issues-bg: #42201f;
-    --mosd-q-issues-fg: #ff9d9d;
-    --mosd-q-none-bg: #333238;
-    --mosd-q-none-fg: #b5b2bb;
+    --mosd-quality-bg: #1a2f47;
+    --mosd-quality-fg: #8fc4f5;
     --mosd-shadow-color: 0 0 0;
     color-scheme: dark;
   }
@@ -105,16 +89,8 @@
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
   --mosd-risk: var(--mosd-theme-risk, #ff8585);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
-  --mosd-q-strict-bg: #1b3a26;
-  --mosd-q-strict-fg: #8ee0a8;
-  --mosd-q-clean-bg: #1a2f47;
-  --mosd-q-clean-fg: #8fc4f5;
-  --mosd-q-installs-bg: #3a3011;
-  --mosd-q-installs-fg: #f0d271;
-  --mosd-q-issues-bg: #42201f;
-  --mosd-q-issues-fg: #ff9d9d;
-  --mosd-q-none-bg: #333238;
-  --mosd-q-none-fg: #b5b2bb;
+  --mosd-quality-bg: #1a2f47;
+  --mosd-quality-fg: #8fc4f5;
   --mosd-shadow-color: 0 0 0;
   color-scheme: dark;
 }
@@ -494,16 +470,9 @@
 }
 
 .mosd-card-head {
-  align-items: start;
-  display: grid;
-  gap: 2px 10px;
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.mosd-card-head > .mosd-badge {
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .mosd-card-title {
@@ -526,7 +495,6 @@
  * wraps at the slash rather than trailing off into an ellipsis. */
 .mosd-card-name {
   color: var(--mosd-fg-muted);
-  grid-column: 1 / -1;
   margin: 0;
   overflow-wrap: anywhere;
 }
@@ -544,8 +512,8 @@
   overflow: hidden;
 }
 
-/* One line for "who is behind this": the vendor and every trust mark it has
- * earned, instead of three more entries in the badge queue. */
+/* One line for "who is behind this": the vendor, and the partner tier where
+ * there is one. The earned marks (trusted, pick) are badges in the foot. */
 .mosd-card-vendor {
   align-items: center;
   color: var(--mosd-fg-muted);
@@ -572,9 +540,6 @@
   content: '·';
   margin-left: 7px;
 }
-
-.mosd-trust-mark { color: var(--mosd-ok); font-weight: 600; }
-.mosd-trust-pick { color: var(--mosd-accent); font-weight: 600; }
 
 /* The card already carries the risk tint and rail, so the message needs no
  * box of its own — it only needs to be the one red thing on the card. */
@@ -659,8 +624,38 @@
   white-space: nowrap;
 }
 
+/* "Known issues" is the one tier a card still names: it is the only one that
+ * changes a shortlist, and it is a caution, not a risk, so it takes the warn
+ * tone rather than the red reserved for warnings and abandonment. */
+.mosd-stat-issues {
+  color: var(--mosd-warn);
+  font-weight: 600;
+}
+
+/* The card's last row: the reader's action on the left, and in the bottom
+ * corner the marks the module has earned — trusted vendor, editors' pick,
+ * high quality, popular. Pushed to the bottom so the corner is the same
+ * corner on every card in a row, whatever the description's length. */
+.mosd-card-foot {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
 .mosd-card-actions {
-  margin: 10px 0 0;
+  margin: 0;
+}
+
+.mosd-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+  margin: 0 0 0 auto;
 }
 
 /* Badges: MD assist-chip sized, tonal */
@@ -676,15 +671,13 @@
   white-space: nowrap;
 }
 
-.mosd-badge-quality {
-  font-size: 11px;
-}
-
-.mosd-badge-strict-compliant { background: var(--mosd-q-strict-bg); color: var(--mosd-q-strict-fg); }
-.mosd-badge-no-errors { background: var(--mosd-q-clean-bg); color: var(--mosd-q-clean-fg); }
-.mosd-badge-ready-to-install { background: var(--mosd-q-installs-bg); color: var(--mosd-q-installs-fg); }
-.mosd-badge-needs-help { background: var(--mosd-q-issues-bg); color: var(--mosd-q-issues-fg); }
-.mosd-badge-untested { background: var(--mosd-q-none-bg); color: var(--mosd-q-none-fg); }
+/* The four earned marks, each in the tone it already has elsewhere: trusted
+ * shares the verified green, the pick the accent, high quality its own tint,
+ * and popular the plain soft fill — a count, not a verdict. */
+.mosd-badge-trusted { background: var(--mosd-ok-soft); color: var(--mosd-ok); }
+.mosd-badge-pick { background: var(--mosd-accent-soft); color: var(--mosd-accent); }
+.mosd-badge-high-quality { background: var(--mosd-quality-bg); color: var(--mosd-quality-fg); }
+.mosd-badge-popular { color: var(--mosd-fg); }
 
 /* Empty, loading and error states share one quiet, centred voice. */
 
@@ -808,6 +801,16 @@
   overflow-x: auto;
   padding: 8px 10px;
   white-space: nowrap;
+}
+
+/* What "Copy" is for: a full-width line under the command, so the tray says
+ * where the command goes next and nobody takes it for an install button. */
+.mosd-tray-help {
+  color: var(--mosd-fg-muted);
+  flex-basis: 100%;
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin: 0;
 }
 
 .mosd-btn {

@@ -344,6 +344,8 @@ html[data-embed] .site-header {
 .badge-ready-to-install { --badge: #997404; }
 .badge-needs-help { --badge: #c92a2a; }
 .badge-untested { --badge: #495057; }
+/* The earned marks on listing cards; "Popular" keeps the plain badge tone. */
+.badge-high-quality { --badge: #1971c2; }
 .badge-pick { --badge: #b34f00; }
 .badge-trusted { --badge: #14735c; }
 .badge-warning { --badge: #c92a2a; }

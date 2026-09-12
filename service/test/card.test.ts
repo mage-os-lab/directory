@@ -3,6 +3,7 @@ import {
   installsAtPercentile,
   installsLabel,
   isHighQuality,
+  isPopular,
   isRecent,
   isRisky,
   latestMagentoVersion,
@@ -121,6 +122,18 @@ describe('latestMagentoVersion', () => {
 
   it('is null when nothing has been tested', () => {
     expect(latestMagentoVersion([pkg({ supportedMagento: [] })])).toBeNull();
+  });
+});
+
+describe('isPopular', () => {
+  const withInstalls = (installs: number | null) =>
+    pkg({ popularity: { installs, githubStars: null } });
+
+  it('is installs at or above the floor, and never without a floor', () => {
+    expect(isPopular(withInstalls(60), 60)).toBe(true);
+    expect(isPopular(withInstalls(59), 60)).toBe(false);
+    expect(isPopular(withInstalls(null), 60)).toBe(false);
+    expect(isPopular(withInstalls(1000), null)).toBe(false);
   });
 });
 

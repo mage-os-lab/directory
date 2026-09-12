@@ -260,6 +260,36 @@ describe('mountDirectory', () => {
     expect(el.querySelectorAll('.mosd-card')).toHaveLength(3);
   });
 
+  it('badges the marks a module has earned in the card foot, and leaves the tier off', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+
+    const cardOf = (name: string) =>
+      [...el.querySelectorAll('.mosd-card')].find((c) =>
+        c.querySelector('.mosd-card-name')!.textContent!.includes(name),
+      )!;
+    const badgesOf = (name: string) =>
+      [...cardOf(name).querySelectorAll('.mosd-card-badges .mosd-badge')].map((b) => b.textContent);
+
+    // Trusted vendor and High quality read exactly as the chips of the same
+    // name; too few packages report installs here for anything to be Popular.
+    expect(badgesOf('acme/module-pay')).toEqual(['✓ Trusted vendor', 'High quality']);
+    // Nothing earned, nothing shown — not an empty row.
+    expect(cardOf('module-legacy').querySelector('.mosd-card-badges')).toBeNull();
+    // PackageMaven's tier names describe code to its contributors, not a
+    // module to its buyer: a tooltip on the badge, not text on the card.
+    expect(el.textContent).not.toContain('No errors found');
+    expect(el.textContent).not.toContain('Not assessed yet');
+    expect(
+      cardOf('acme/module-pay').querySelector('.mosd-badge-high-quality')!.getAttribute('title'),
+    ).toBe('PackageMaven found no errors: no errors found');
+    expect(el.querySelector('.mosd-badge-quality')).toBeNull();
+  });
+
   it('marks a card as selected without hiding the rail underneath it', async () => {
     vi.stubGlobal(
       'fetch',
@@ -318,6 +348,10 @@ describe('mountDirectory', () => {
 
     expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(
       'composer require acme/module-pay:^1.0.0 acme/module-search:^2.1.0',
+    );
+    // The tray says where the command goes next, so "Copy" is not taken for "Install".
+    expect(el.querySelector('.mosd-tray-help')!.textContent).toContain(
+      'development copy of the store',
     );
     expect(selections).toEqual([
       {
