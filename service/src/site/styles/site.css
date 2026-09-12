@@ -102,6 +102,12 @@ h3 {
   line-height: 1.25;
 }
 
+/* Framed by a host (?embed=1): the host's chrome names the page, so the
+ * site's own header and navigation stay out of the frame. */
+html[data-embed] .site-header {
+  display: none;
+}
+
 .site-header {
   border-bottom: 1px solid var(--border);
 }
@@ -338,6 +344,8 @@ h3 {
 .badge-ready-to-install { --badge: #997404; }
 .badge-needs-help { --badge: #c92a2a; }
 .badge-untested { --badge: #495057; }
+/* The earned marks on listing cards; "Popular" keeps the plain badge tone. */
+.badge-high-quality { --badge: #1971c2; }
 .badge-pick { --badge: #b34f00; }
 .badge-trusted { --badge: #14735c; }
 .badge-warning { --badge: #c92a2a; }

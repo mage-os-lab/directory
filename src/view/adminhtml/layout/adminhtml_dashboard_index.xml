@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="MageOS_ExtensionDirectory::css/dashboard-cta.css"/>
+    </head>
+    <body>
+        <!--
+            Above the dashboard proper rather than inside it: the core dashboard template renders
+            only the children it names, so a block added to it would never be printed.
+        -->
+        <referenceContainer name="content">
+            <block class="Magento\Backend\Block\Template"
+                   name="mageos.extension.directory.cta"
+                   template="MageOS_ExtensionDirectory::dashboard/cta.phtml"
+                   before="dashboard">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">MageOS\ExtensionDirectory\ViewModel\DashboardCta</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

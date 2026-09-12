@@ -68,7 +68,9 @@ export interface MountOptions {
   /**
    * Enable the install list: cards get a "mark for install/update" toggle and
    * a tray shows the composer require command (copyable); every change
-   * dispatches mosd:selection on the mount element.
+   * dispatches mosd:selection on the mount element. The list is kept in
+   * sessionStorage, so it survives a reload of the tab and ends with the tab;
+   * a mount that restores a non-empty list dispatches mosd:selection once.
    */
   selectable?: boolean;
   /**

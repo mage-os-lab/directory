@@ -148,6 +148,7 @@ describe('mountDirectory', () => {
   });
 
   afterEach(() => {
+    sessionStorage.clear();
     unmount?.();
     unmount = null;
     el.remove();
@@ -260,6 +261,36 @@ describe('mountDirectory', () => {
     expect(el.querySelectorAll('.mosd-card')).toHaveLength(3);
   });
 
+  it('badges the marks a module has earned in the card foot, and leaves the tier off', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+
+    const cardOf = (name: string) =>
+      [...el.querySelectorAll('.mosd-card')].find((c) =>
+        c.querySelector('.mosd-card-name')!.textContent!.includes(name),
+      )!;
+    const badgesOf = (name: string) =>
+      [...cardOf(name).querySelectorAll('.mosd-card-badges .mosd-badge')].map((b) => b.textContent);
+
+    // Trusted vendor and High quality read exactly as the chips of the same
+    // name; too few packages report installs here for anything to be Popular.
+    expect(badgesOf('acme/module-pay')).toEqual(['✓ Trusted vendor', 'High quality']);
+    // Nothing earned, nothing shown — not an empty row.
+    expect(cardOf('module-legacy').querySelector('.mosd-card-badges')).toBeNull();
+    // PackageMaven's tier names describe code to its contributors, not a
+    // module to its buyer: a tooltip on the badge, not text on the card.
+    expect(el.textContent).not.toContain('No errors found');
+    expect(el.textContent).not.toContain('Not assessed yet');
+    expect(
+      cardOf('acme/module-pay').querySelector('.mosd-badge-high-quality')!.getAttribute('title'),
+    ).toBe('PackageMaven found no errors: no errors found');
+    expect(el.querySelector('.mosd-badge-quality')).toBeNull();
+  });
+
   it('marks a card as selected without hiding the rail underneath it', async () => {
     vi.stubGlobal(
       'fetch',
@@ -319,6 +350,10 @@ describe('mountDirectory', () => {
     expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(
       'composer require acme/module-pay:^1.0.0 acme/module-search:^2.1.0',
     );
+    // The tray says where the command goes next, so "Copy" is not taken for "Install".
+    expect(el.querySelector('.mosd-tray-help')!.textContent).toContain(
+      'development copy of the store',
+    );
     expect(selections).toEqual([
       {
         packages: [{ name: 'acme/module-pay', version: '1.0.0' }],
@@ -338,6 +373,73 @@ describe('mountDirectory', () => {
     await flush();
     expect(el.querySelector('.mosd-tray')).toBeNull();
     expect(selections[2]).toEqual({ packages: [], command: '' });
+  });
+
+  it('keeps the install list across a reload of the tab, minus what the catalog lost', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const selections: unknown[] = [];
+    el.addEventListener('mosd:selection', (event) =>
+      selections.push((event as CustomEvent).detail),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, selectable: true });
+    await flush();
+
+    const buttons = [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')];
+    buttons[0].click();
+    await flush();
+    buttons[1].click();
+    await flush();
+    expect(JSON.parse(sessionStorage.getItem('mosd:install-list')!)).toEqual([
+      'acme/module-pay',
+      'acme/module-search',
+    ]);
+
+    // "Reload": a fresh mount in the same tab, with the tab meanwhile holding
+    // a name the catalog no longer carries.
+    unmount();
+    sessionStorage.setItem(
+      'mosd:install-list',
+      JSON.stringify(['acme/module-pay', 'gone/module-retired']),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, selectable: true });
+    await flush();
+
+    expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(
+      'composer require acme/module-pay:^1.0.0',
+    );
+    expect(el.querySelectorAll('.mosd-mark.mosd-marked')).toHaveLength(1);
+    // The restored list is announced once on mount, since the host never saw it built.
+    expect(selections.at(-1)).toEqual({
+      packages: [{ name: 'acme/module-pay', version: '1.0.0' }],
+      command: 'composer require acme/module-pay:^1.0.0',
+    });
+    expect(JSON.parse(sessionStorage.getItem('mosd:install-list')!)).toEqual(['acme/module-pay']);
+
+    // Clear empties the tab's copy as well.
+    (el.querySelector('.mosd-tray .mosd-btn:not(.mosd-btn-primary)') as HTMLButtonElement).click();
+    await flush();
+    expect(sessionStorage.getItem('mosd:install-list')).toBeNull();
+  });
+
+  it('leaves the tab\'s install list alone on a mount that cannot select', async () => {
+    sessionStorage.setItem('mosd:install-list', JSON.stringify(['acme/module-pay']));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const selections: unknown[] = [];
+    el.addEventListener('mosd:selection', (event) =>
+      selections.push((event as CustomEvent).detail),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+
+    expect(el.querySelector('.mosd-tray')).toBeNull();
+    expect(selections).toEqual([]);
+    expect(JSON.parse(sessionStorage.getItem('mosd:install-list')!)).toEqual(['acme/module-pay']);
   });
 
   it('shows tested-with badges for the host Magento version', async () => {

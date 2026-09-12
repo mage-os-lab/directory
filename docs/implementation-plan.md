@@ -68,11 +68,11 @@ by default**, each independently switchable to remote via system config.
 | Framework | `magento/framework ^103.0`, `magento/module-backend ^102.0` (Magento/Mage-OS 2.4.4+) |
 | License | OSL-3.0 |
 | Route | frontName `mageos_directory` |
-| ACL | `MageOS_ExtensionDirectory::directory` (page), `MageOS_ExtensionDirectory::config` (system config) |
+| ACL | `MageOS_ExtensionDirectory::directory` (page); the settings inherit `Magento_Config::config_admin` from the core Admin section they join |
 | Menu | System → "Mage-OS Extension Directory" |
 | Cache type | `mageos_extension_directory` |
 
-## System configuration (`mageos_extension_directory/general/*`)
+## System configuration (`admin/mageos_extension_directory/*`, `admin/dashboard/*`)
 
 | Path | Type | Default | Meaning |
 |---|---|---|---|

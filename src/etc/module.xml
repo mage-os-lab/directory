@@ -4,6 +4,8 @@
     <module name="MageOS_ExtensionDirectory">
         <sequence>
             <module name="Magento_Backend"/>
+            <!-- Owns the System > Extensions menu section this module's entry sits in. -->
+            <module name="Magento_Integration"/>
         </sequence>
     </module>
 </config>

@@ -96,15 +96,19 @@ $initJs = <<<JS
     }
 
     /**
-     * The admin chrome has one palette, so the framed detail page is told to keep it rather
-     * than follow the reader's OS setting on its own.
+     * The framed detail page is told it is framed: it drops its own site header, since the
+     * modal already names the page and the site's navigation makes no sense inside it, and it
+     * keeps the admin's one palette rather than following the reader's OS setting. A page
+     * opened in its own tab (no RequireJS) is asked for neither.
      */
-    function detailPageUrl(packageUrl) {
-        if (config.colorScheme !== 'light' && config.colorScheme !== 'dark') {
-            return packageUrl;
+    function framedDetailPageUrl(packageUrl) {
+        var params = 'embed=1';
+
+        if (config.colorScheme === 'light' || config.colorScheme === 'dark') {
+            params += '&scheme=' + config.colorScheme;
         }
 
-        return packageUrl + (packageUrl.indexOf('?') === -1 ? '?' : '&') + 'scheme=' + config.colorScheme;
+        return packageUrl + (packageUrl.indexOf('?') === -1 ? '?' : '&') + params;
     }
 
     // linkMode 'event': the bundle never navigates, so opening the detail page is up to us.
@@ -114,13 +118,13 @@ $initJs = <<<JS
         var detail = event.detail;
 
         if (typeof require !== 'function') {
-            window.open(detailPageUrl(detail.packageUrl), '_blank', 'noopener');
+            window.open(detail.packageUrl, '_blank', 'noopener');
 
             return;
         }
 
         withDetailModal(function (instance) {
-            instance.frame.setAttribute('src', detailPageUrl(detail.packageUrl));
+            instance.frame.setAttribute('src', framedDetailPageUrl(detail.packageUrl));
             instance.element.modal('setTitle', escapeHtml(detail.name));
             instance.element.modal('openModal');
         });

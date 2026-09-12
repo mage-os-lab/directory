@@ -39,7 +39,7 @@ service/data/vendors/*.json (trust overlay, by PR) ─┘               (src/, t
 ## The admin module
 
 The module renders the same browse/search UI inside the Magento admin
-(**System → Mage-OS Extension Directory**) — one list with search, category chips,
+(**System → Extensions → Extension Directory**) — one list with search, category chips,
 one-click filters (trusted vendor, editors' picks, tested with your version, recently
 updated, high quality, popular) and a page of cards at a time — enriched with what only
 the shop knows:
@@ -51,13 +51,18 @@ PackageMaven) are followed only when clicked.
 
 **It never installs anything.** Marking modules builds a
 `composer require vendor/module:^x.y` command to copy and run on the server, where
-Composer resolves dependencies.
+Composer resolves dependencies. The list is kept per browser tab, so a reload or a look
+at a module's details does not lose it.
 
-One setting (Stores → Configuration → Mage-OS → Extension Directory): **Direct**
-(default — admin browsers load the UI bundle and catalog straight from the directory
-host) or **Proxy** (the store's server fetches and caches the feed, revalidating
-against the 200-byte `manifest.json`, and serves the UI copy bundled with the module —
-fully same-origin for restricted networks or privacy-sensitive admins).
+Two settings, both under Stores → Configuration → Advanced → Admin. **Extension
+Directory → Mode**: **Direct** (default — admin browsers load the UI bundle and catalog
+straight from the directory host) or **Proxy** (the store's server fetches and caches
+the feed, revalidating against the 200-byte `manifest.json`, and serves the UI copy
+bundled with the module — fully same-origin for restricted networks or
+privacy-sensitive admins). **Dashboard → Show Extension Directory Tip** (default on): a
+short panel on the admin dashboard that points administrators whose role allows
+everything at the directory; its own "Hide this tip" button turns the setting off for
+everyone.
 
 ```sh
 composer require mage-os/module-extension-directory

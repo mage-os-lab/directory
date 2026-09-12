@@ -388,7 +388,9 @@ mountDirectory(el: HTMLElement, options: {
                                    // host from composer.lock; adds Installed /
                                    // "update available" badges + an installed-state filter
   selectable?: boolean;            // default false: mark-for-install toggles + a tray
-                                   // with the copyable composer require command
+                                   // with the copyable composer require command; the
+                                   // list lives in sessionStorage, so it survives a
+                                   // reload of the tab and ends with the tab
   magentoVersion?: string;         // the host shop's Magento/Mage-OS version; adds
                                    // tested-with badges, points the "tested with" chip
                                    // at it, and the install list pins the newest release
@@ -411,6 +413,11 @@ Contract details the admin module depends on:
   composed `CustomEvent('mosd:selection', { detail: { packages: [{ name, version }],
   command } })` — `command` is the ready-to-paste
   `composer require vendor/a:^1.2 vendor/b` string (empty when the list is empty). The
+  list is kept in `sessionStorage` (key `mosd:install-list`, package names only) so a
+  reload, or a detour through a detail page, does not lose it; a mount that restores a
+  non-empty list dispatches `mosd:selection` once on mount, since the host never saw
+  that list being built. Names the current feed no longer carries are dropped, and
+  versions are pinned afresh against the feed in hand. The
   directory never installs anything itself: version detection stays client-side
   (`installed` comes from the host reading composer.lock) and the output is a command
   the merchant runs manually — consistent with the copy-the-command model on detail
@@ -440,9 +447,11 @@ Tested with &lt;version&gt;, Recently updated (a release in the last 12 months),
 quality (PackageMaven's top two tiers), Popular (top quarter of the catalog by installs),
 plus Installed and Update available where the host supplied `installed`; sort
 (recommended by ranking score, installs, stars, recency, name); a page of 24 cards with
-"Show more"; README on detail pages; vendor pages. Quality tier is still shown on every
-card but is no longer a filter of its own: "Known issues" is not something anyone narrows
-*to*. "Tested with" targets the shop's own version where an embed passes
+"Show more"; README on detail pages; vendor pages. Quality tier is not a filter of its
+own — "Known issues" is not something anyone narrows *to* — and a card names only the
+tiers that change a shortlist: the top two as a High quality badge, `needs-help` as a
+"Known issues" note; the full tier lives on the detail page. "Tested with" targets the
+shop's own version where an embed passes
 `magentoVersion`, and otherwise the newest Magento version anything in the catalog has
 been verified against. When the feed reports a stale or manually refreshed source, the UI
 shows a visible "quality data as of &lt;date&gt;" notice — stale data must never present
@@ -451,15 +460,20 @@ consecutive snapshots.
 
 **What a browse card carries.** A card is the shortlist test — open this one, or scroll
 past — so it answers eight questions and leaves the rest to the detail page: name, package
-path, one sentence, one quality verdict, fit, installs, time since the last release, and
-any risk (a trust warning or abandonment, with the maintainer's suggested replacement).
-Host-aware surfaces add a ninth, where the reader stands with it. PHPStan level, SemVer
-compliance, build status, stars, the release date, the licence and the `composer require`
-string are detail-page facts: each either restates the quality tier, restates a number
-already on the card, or decides nothing at browse time. Quality tiers are shown in the
-words a person choosing a module would use (`strict-compliant` reads as "Strict checks
-pass", `needs-help` as "Known issues") from `src/shared/quality.ts`, which the island and
-the prerendered pages share so one vocabulary reaches the reader everywhere.
+path, one sentence, the marks it has earned, fit, installs, time since the last release,
+and any risk (a trust warning or abandonment, with the maintainer's suggested
+replacement). Host-aware surfaces add a ninth, where the reader stands with it. The earned
+marks — Trusted vendor, Editors' pick, High quality, Popular — sit as badges in the card's
+bottom corner, and are the same four facts the "show only" chips ask about, in the same
+words, so what a chip narrows to is what a card shows. PHPStan level, SemVer compliance,
+build status, stars, the release date, the licence and the `composer require` string are
+detail-page facts: each either restates the quality tier, restates a number already on
+the card, or decides nothing at browse time. Where a tier is named, it is in the words a
+person choosing a module would use (`strict-compliant` reads as "Strict checks pass",
+`needs-help` as "Known issues") from `src/shared/quality.ts`, which the island and the
+prerendered pages share so one vocabulary reaches the reader everywhere; on the card the
+top two tiers are folded into "High quality", and the tier's own name is that badge's
+tooltip.
 
 **How state reaches the reader.** Installed, update-available and at-risk are each carried
 three ways at once — a 3px rail on the card's left edge, a tint on the card surface, and

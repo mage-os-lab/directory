@@ -38,7 +38,7 @@ final class ConfigTest extends TestCase
 
     public function testTheModeIsReadFromItsDocumentedConfigPath(): void
     {
-        $config = $this->config(['mageos_extension_directory/general/mode' => 'proxy']);
+        $config = $this->config(['admin/mageos_extension_directory/mode' => 'proxy']);
 
         self::assertSame(Config::MODE_PROXY, $config->getMode());
         self::assertTrue($config->isProxy());
@@ -61,6 +61,23 @@ final class ConfigTest extends TestCase
         self::assertSame(Config::CACHE_TTL, $config->getCacheTtl());
         self::assertSame(10, $config->getHttpTimeout());
         self::assertSame(Config::HTTP_TIMEOUT, $config->getHttpTimeout());
+    }
+
+    public function testTheDashboardTipFollowsItsFlag(): void
+    {
+        self::assertTrue($this->config([Config::XML_PATH_DASHBOARD_CTA => '1'])->isDashboardCtaEnabled());
+        self::assertFalse($this->config([Config::XML_PATH_DASHBOARD_CTA => '0'])->isDashboardCtaEnabled());
+        self::assertFalse($this->config([Config::XML_PATH_DASHBOARD_CTA => ''])->isDashboardCtaEnabled());
+        // The shipped default of "on" lives in etc/config.xml, not here: no stored value reads as off.
+        self::assertFalse($this->config([])->isDashboardCtaEnabled());
+    }
+
+    public function testTheDashboardTipIsReadFromItsDocumentedConfigPath(): void
+    {
+        self::assertSame('admin/dashboard/mageos_extension_directory_tip', Config::XML_PATH_DASHBOARD_CTA);
+        self::assertTrue(
+            $this->config(['admin/dashboard/mageos_extension_directory_tip' => '1'])->isDashboardCtaEnabled()
+        );
     }
 
     /**

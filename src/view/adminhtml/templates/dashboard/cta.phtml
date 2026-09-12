@@ -1,0 +1,38 @@
+<?php
+/**
+ * Dashboard panel pointing unrestricted administrators at the directory.
+ *
+ * Who sees it and where its buttons go is the view model's business; the template only says it.
+ * The buttons borrow the admin's own action classes so they match whichever admin theme is active.
+ *
+ * @var \Magento\Backend\Block\Template $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+declare(strict_types=1);
+
+/** @var \MageOS\ExtensionDirectory\ViewModel\DashboardCta $viewModel */
+$viewModel = $block->getData('view_model');
+
+if (!$viewModel->isVisible()) {
+    return;
+}
+?>
+<div class="mageos-directory-cta" role="region" aria-label="<?= $escaper->escapeHtmlAttr(__('Mage-OS Extension Directory')) ?>">
+    <div class="mageos-directory-cta-text">
+        <strong class="mageos-directory-cta-title"><?= $escaper->escapeHtml(__('Add to your store with confidence')) ?></strong>
+        <p class="mageos-directory-cta-body">
+            <?= $escaper->escapeHtml(
+                __('The Extension Directory is a catalog of free, open-source modules, each checked against real Magento versions, with the vendors the Mage-OS maintainers vouch for marked as trusted. Browse it here, shortlist what fits your version, and hand your developer the install command. Nothing is installed from this admin.')
+            ) ?>
+        </p>
+    </div>
+    <div class="mageos-directory-cta-actions">
+        <a class="action-primary" href="<?= $escaper->escapeUrl($viewModel->getDirectoryUrl()) ?>">
+            <?= $escaper->escapeHtml(__('Browse the directory')) ?>
+        </a>
+        <form method="post" action="<?= $escaper->escapeUrl($viewModel->getDismissUrl()) ?>" class="mageos-directory-cta-dismiss">
+            <input type="hidden" name="form_key" value="<?= $escaper->escapeHtmlAttr($block->getFormKey()) ?>">
+            <button type="submit" class="action-tertiary"><?= $escaper->escapeHtml(__('Hide this tip')) ?></button>
+        </form>
+    </div>
+</div>

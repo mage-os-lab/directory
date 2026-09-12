@@ -1,0 +1,45 @@
+/*
+ * The dashboard tip (see templates/dashboard/cta.phtml). Layout only: the buttons are the admin's
+ * own action-primary and action-tertiary, so colour and shape follow the active admin theme, and
+ * the accent rail is the one colour the panel commits to.
+ */
+.mageos-directory-cta {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e3e3e3;
+    border-left: 4px solid #eb5202;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    justify-content: space-between;
+    margin: 0 0 24px;
+    padding: 16px 20px;
+}
+
+.mageos-directory-cta-text {
+    flex: 1 1 32em;
+    max-width: 64em;
+}
+
+.mageos-directory-cta-title {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0 0 4px;
+}
+
+.mageos-directory-cta-body {
+    margin: 0;
+}
+
+.mageos-directory-cta-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.mageos-directory-cta-dismiss {
+    display: inline;
+    margin: 0;
+}
