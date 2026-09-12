@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { sourcePackage, type PackageMavenSnapshot, type SourcePackage } from '../schema/source.js';
 import type { QualityTier } from '../schema/common.js';
+import { normalizeVersion } from '../shared/version.js';
 
 /**
  * PackageMaven API client + normalizer (see docs/packagemaven-api-evaluation.md
@@ -103,6 +104,8 @@ export function parseLicense(license: string | null): string[] | null {
  * the tested version can lag the latest release — so the pair becomes a row in
  * the per-release matrix attributed to the *tested* version, and the latest
  * release only claims Magento support when it is the version that was tested.
+ * Versions lose their tag-style "v" prefix here, so that equality holds
+ * whichever form each field arrived in and the feed carries one form.
  * Returns null for records that don't survive schema validation (the caller
  * warns and skips; one bad upstream record must not fail the run).
  */
@@ -111,9 +114,14 @@ export function normalizePmApiPackage(raw: unknown): SourcePackage | null {
   if (!parsed.success) return null;
   const pkg = parsed.data;
 
-  const latestVersion = pkg.latest_release.version;
+  const latestVersion =
+    pkg.latest_release.version === null ? null : normalizeVersion(pkg.latest_release.version);
   const latestReleasedAt = toIso(pkg.latest_release.date);
-  const { magento_version: testedMagento, package_version: testedVersion } = pkg.test_results;
+  const testedMagento = pkg.test_results.magento_version;
+  const testedVersion =
+    pkg.test_results.package_version === null
+      ? null
+      : normalizeVersion(pkg.test_results.package_version);
 
   const releases =
     testedVersion && testedMagento

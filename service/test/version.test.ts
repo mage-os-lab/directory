@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { compareVersions, isNewer } from '../src/shared/version.js';
+import { compareVersions, isNewer, normalizeVersion } from '../src/shared/version.js';
+
+describe('normalizeVersion', () => {
+  it('drops the tag-style prefix and surrounding space, and nothing else', () => {
+    expect(normalizeVersion('v2.7.0')).toBe('2.7.0');
+    expect(normalizeVersion(' V1.0.0-beta1 ')).toBe('1.0.0-beta1');
+    expect(normalizeVersion('2.7.0')).toBe('2.7.0');
+    expect(normalizeVersion('dev-main')).toBe('dev-main');
+  });
+});
 
 describe('isNewer', () => {
   it('compares numeric segments', () => {
