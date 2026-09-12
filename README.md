@@ -39,7 +39,7 @@ service/data/vendors/*.json (trust overlay, by PR) ─┘               (src/, t
 ## The admin module
 
 The module renders the same browse/search UI inside the Magento admin
-(**System → Mage-OS Extension Directory**) — one list with search, category chips,
+(**System → Extensions → Extension Directory**) — one list with search, category chips,
 one-click filters (trusted vendor, editors' picks, tested with your version, recently
 updated, high quality, popular) and a page of cards at a time — enriched with what only
 the shop knows:

@@ -314,7 +314,7 @@ section as a small "Extension Directory" group: two fields do not earn a tab and
 section of their own, and a merchant looks for admin behaviour under Advanced → Admin.
 
 **Why:** a merchant who installs the module (or gets it with a distribution) has no
-reason to open System → Mage-OS Extension Directory unless something tells them it is
+reason to open System → Extensions → Extension Directory unless something tells them it is
 there, and the dashboard is the one page every admin session starts on. Restricting it
 to unrestricted roles is a proxy for "the person who decides what gets installed": a
 catalogue manager with a narrow role gains nothing from a prompt to go shopping for

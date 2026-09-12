@@ -2,12 +2,13 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
     <menu>
+        <!-- System > Extensions, beside Integrations; the section is Magento_Integration's. -->
         <add id="MageOS_ExtensionDirectory::directory"
-             title="Mage-OS Extension Directory"
+             title="Extension Directory"
              translate="title"
              module="MageOS_ExtensionDirectory"
-             parent="Magento_Backend::system"
-             sortOrder="45"
+             parent="Magento_Integration::system_extensions"
+             sortOrder="20"
              action="mageos_directory/directory/index"
              resource="MageOS_ExtensionDirectory::directory"/>
     </menu>
