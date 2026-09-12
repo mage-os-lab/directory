@@ -99,13 +99,18 @@ export function parseLicense(license: string | null): string[] | null {
 
 /**
  * PM's human name often repeats what the directory context already says
- * ("Magento2 Google Tag Manager", "Module Scope Hint"). Strip those leading
- * words — repeatedly, and only as standalone prefixes followed by whitespace or
- * a separator — so card titles read "Google Tag Manager" / "Scope Hint". The
- * rest of the name is left exactly as it arrived, and a name that is nothing
- * but a prefix ("Magento2") is returned untouched rather than emptied.
+ * ("Magento2 Google Tag Manager", "Module Scope Hint", "Magento 2 module for
+ * Klarna"). Strip those leading words — repeatedly, and only as standalone
+ * prefixes followed by whitespace or a separator — so card titles read "Google
+ * Tag Manager" / "Scope Hint" / "Klarna". "Module for" is one prefix, not two,
+ * so the "for" goes with the "module" instead of surviving as " for Klarna";
+ * a bare "module" is left alone when only "for" follows it, so that name stays
+ * whole for the nothing-but-a-prefix check below. The rest of the name is left
+ * exactly as it arrived, and a name that is nothing but a prefix ("Magento2")
+ * is returned untouched rather than emptied.
  */
-const REDUNDANT_NAME_PREFIX = /^(?:magento\s*2|module)(?:\s*[-\u2013:_|]\s*|\s+)(?=\S)/i;
+const REDUNDANT_NAME_PREFIX =
+  /^(?:magento\s*2|module\s+for|module(?!\s+for\s*$))(?:\s*[-\u2013:_|]\s*|\s+)(?=\S)/i;
 
 /**
  * The same redundancy also shows up as a trailing or mid-name phrase ("Google
@@ -119,7 +124,7 @@ const REDUNDANT_NAME_PHRASE = /\s*(?:[([]\s*)?\bfor\s*magento\s*2(?![a-z0-9]|\.\
 const DANGLING_SEPARATOR = /^\s*[-\u2013:_|]\s*|\s*[-\u2013:_|]\s*$/g;
 
 /** What a stripped name can be left as when it carried nothing else: a bare word. */
-const REDUNDANT_NAME_ONLY = /^(?:magento\s*2|module)$/i;
+const REDUNDANT_NAME_ONLY = /^(?:magento\s*2|module(?:\s+for)?)$/i;
 
 function stripRedundantPrefixes(name: string): string {
   let cleaned = name;

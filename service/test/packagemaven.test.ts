@@ -63,6 +63,18 @@ describe('cleanDisplayName', () => {
     expect(cleanDisplayName('Module Foo')).toBe('Foo');
   });
 
+  it('drops a leading "Module for" as one prefix, keeping the "for" out of the title', () => {
+    expect(cleanDisplayName('Module for Klarna')).toBe('Klarna');
+    expect(cleanDisplayName('Magento 2 module for Klarna')).toBe('Klarna');
+    expect(cleanDisplayName('Magento2 Module For Klarna Payments')).toBe('Klarna Payments');
+    expect(cleanDisplayName('Module for: Klarna')).toBe('Klarna');
+  });
+
+  it('keeps "for" when it is part of the name rather than the prefix', () => {
+    expect(cleanDisplayName('Module Foreign Exchange')).toBe('Foreign Exchange');
+    expect(cleanDisplayName('Module Forms')).toBe('Forms');
+  });
+
   it('strips repeated prefixes regardless of case', () => {
     expect(cleanDisplayName('magento2 module foo')).toBe('foo');
     expect(cleanDisplayName('Magento2 Module Scope Hint')).toBe('Scope Hint');
@@ -83,6 +95,7 @@ describe('cleanDisplayName', () => {
   it('never empties a name that is nothing but a prefix', () => {
     expect(cleanDisplayName('Magento2')).toBe('Magento2');
     expect(cleanDisplayName('  Module  ')).toBe('Module');
+    expect(cleanDisplayName('Module for')).toBe('Module for');
   });
 
   it('leaves the rest of the name and its trimmed edges alone', () => {
@@ -139,6 +152,7 @@ describe('isRedundantName', () => {
     expect(isRedundantName('Magento2')).toBe(true);
     expect(isRedundantName('  Module ')).toBe(true);
     expect(isRedundantName('Magento 2')).toBe(true);
+    expect(isRedundantName('Magento 2 module for')).toBe(true);
   });
 
   it('flags a name that is nothing but the "for Magento 2" phrase', () => {
