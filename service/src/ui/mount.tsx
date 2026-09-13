@@ -3,8 +3,10 @@
  * Magento admin module consumes. See docs/architecture.md "Site and
  * embeddable UI" for the specified behavior:
  *  - linkMode 'event': selecting a package dispatches a bubbling, composed
- *    CustomEvent('mosd:select', {detail: {name, vendor, packageUrl}}) on the
- *    mount element instead of navigating.
+ *    CustomEvent('mosd:select', {detail: {name, vendor, packageUrl,
+ *    installState, markable, marked}}) on the mount element instead of
+ *    navigating; the last three let the host offer the same mark toggle
+ *    wherever it shows the package.
  *  - Feed fetch failure renders a retryable error state and dispatches
  *    CustomEvent('mosd:error'); mountDirectory never throws asynchronously.
  *  - shadow: true (default) renders into an open Shadow DOM with the styles
@@ -15,7 +17,11 @@
  *    adds mark-for-install toggles and a copyable composer-require tray, with
  *    every change dispatched as CustomEvent('mosd:selection',
  *    {detail: {packages, command}}). The list is kept in sessionStorage per
- *    tab, so a reload restores it (and dispatches it once on mount).
+ *    tab, so a reload restores it (and dispatches it once on mount). The host
+ *    can change the list itself by dispatching CustomEvent('mosd:mark',
+ *    {detail: {name, marked?}}) on the mount element — toggle, or set — under
+ *    the same rules as the card's own toggle; the result comes back as
+ *    mosd:selection.
  *  - magentoVersion (the host shop's Magento release, or the one its
  *    distribution is built on) adds tested-with badges from PM's test matrix,
  *    points the "tested with" filter at that version, and makes the install
@@ -35,6 +41,7 @@ import { DirectoryBrowser } from './DirectoryBrowser.js';
 import type {
   ColorScheme,
   Feed,
+  MarkDetail,
   MountOptions,
   SelectDetail,
   SelectionDetail,
@@ -129,6 +136,7 @@ function Root({ options, host }: RootProps) {
       distribution={options.distribution}
       colorScheme={options.colorScheme}
       pageSize={options.pageSize}
+      markSource={host}
       onSelect={(detail: SelectDetail) => {
         host.dispatchEvent(
           new CustomEvent('mosd:select', { bubbles: true, composed: true, detail }),
@@ -178,4 +186,4 @@ export function mountDirectory(el: HTMLElement, options: MountOptions = {}): () 
   };
 }
 
-export type { MountOptions, SelectDetail };
+export type { MarkDetail, MountOptions, SelectDetail, SelectionDetail };

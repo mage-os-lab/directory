@@ -40,10 +40,34 @@ export interface DirectoryFilters {
  */
 export type ColorScheme = 'auto' | 'light' | 'dark';
 
+/** How a package relates to the host's composer.lock, when the host supplied one. */
+export type InstallState = 'not-installed' | 'installed' | 'update';
+
 export interface SelectDetail {
   name: string;
   vendor: string;
   packageUrl: string;
+  /**
+   * The install-list state of the selected package, so a host that shows the
+   * package elsewhere (a detail modal, say) can offer the same mark toggle
+   * there. `markable` is false on a mount that cannot select and for a
+   * package the shop already has at its target version.
+   */
+  installState: InstallState;
+  markable: boolean;
+  marked: boolean;
+}
+
+/**
+ * Detail of the mosd:mark event a host dispatches *on* the mount element to
+ * change the install list from outside the bundle: toggle when `marked` is
+ * omitted, else set. Ignored unless the mount is selectable and the package
+ * is in the catalog and not already installed; every change it does make is
+ * announced through mosd:selection like any other.
+ */
+export interface MarkDetail {
+  name: string;
+  marked?: boolean;
 }
 
 /** Detail of the mosd:selection event: the current install list. */

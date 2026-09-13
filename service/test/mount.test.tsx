@@ -214,8 +214,105 @@ describe('mountDirectory', () => {
     link.click();
 
     expect(selected).toEqual([
-      { name: 'acme/module-pay', vendor: 'acme', packageUrl: '/packages/acme/module-pay/' },
+      {
+        name: 'acme/module-pay',
+        vendor: 'acme',
+        packageUrl: '/packages/acme/module-pay/',
+        installState: 'not-installed',
+        markable: false,
+        marked: false,
+      },
     ]);
+  });
+
+  it('tells the host in mosd:select whether the package can be, and is, marked', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      linkMode: 'event',
+      shadow: false,
+      selectable: true,
+      installed: { 'acme/module-search': '2.1.0' },
+    });
+    await flush();
+
+    const selected: Array<Record<string, unknown>> = [];
+    el.addEventListener('mosd:select', (event) => selected.push((event as CustomEvent).detail));
+    const titles = [...el.querySelectorAll<HTMLAnchorElement>('.mosd-card-title')];
+    const pay = titles.find((a) => a.textContent === 'Acme Pay')!;
+    const search = titles.find((a) => a.textContent === 'Acme Search')!;
+
+    pay.click();
+    el.querySelector<HTMLButtonElement>('.mosd-mark')!.click();
+    await flush();
+    pay.click();
+    search.click();
+
+    expect(selected.map((d) => [d.name, d.installState, d.markable, d.marked])).toEqual([
+      ['acme/module-pay', 'not-installed', true, false],
+      ['acme/module-pay', 'not-installed', true, true],
+      ['acme/module-search', 'installed', false, false],
+    ]);
+  });
+
+  it('lets the host mark and unmark through mosd:mark, announcing each change', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const selections: Array<{ packages: Array<{ name: string }> }> = [];
+    el.addEventListener('mosd:selection', (event) =>
+      selections.push((event as CustomEvent).detail),
+    );
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      selectable: true,
+      installed: { 'acme/module-search': '2.1.0' },
+    });
+    await flush();
+
+    const mark = (detail: Record<string, unknown>) =>
+      el.dispatchEvent(new CustomEvent('mosd:mark', { detail }));
+
+    mark({ name: 'acme/module-pay' }); // toggle on
+    await flush();
+    expect(el.querySelector('.mosd-mark.mosd-marked')).not.toBeNull();
+    mark({ name: 'acme/module-pay', marked: true }); // set on: already on, no change
+    await flush();
+    mark({ name: 'acme/module-search' }); // installed: ignored
+    mark({ name: 'nobody/module-missing' }); // unknown: ignored
+    await flush();
+    mark({ name: 'acme/module-pay', marked: false }); // set off
+    await flush();
+
+    expect(selections.map((s) => s.packages.map((p) => p.name))).toEqual([
+      ['acme/module-pay'],
+      [],
+    ]);
+    expect(el.querySelector('.mosd-mark.mosd-marked')).toBeNull();
+  });
+
+  it('ignores mosd:mark on a mount that cannot select', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const selections: unknown[] = [];
+    el.addEventListener('mosd:selection', (event) =>
+      selections.push((event as CustomEvent).detail),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+
+    el.dispatchEvent(new CustomEvent('mosd:mark', { detail: { name: 'acme/module-pay' } }));
+    await flush();
+
+    expect(selections).toEqual([]);
+    expect(sessionStorage.getItem('mosd:install-list')).toBeNull();
   });
 
   it('renders a retryable error state and dispatches mosd:error on fetch failure', async () => {

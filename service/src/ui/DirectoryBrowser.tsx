@@ -13,6 +13,8 @@ import type {
   DirectoryFilters,
   Feed,
   FilterFlag,
+  InstallState,
+  MarkDetail,
   PackageSummary,
   SelectDetail,
   SelectionDetail,
@@ -30,6 +32,8 @@ export interface DirectoryBrowserProps {
   /** Enable marking packages for install and the composer-command tray. */
   selectable?: boolean;
   onSelectionChange?: (detail: SelectionDetail) => void;
+  /** Where a host dispatches mosd:mark to change the install list from outside (the mount element). */
+  markSource?: EventTarget;
   /** The host shop's Magento release, or its Mage-OS equivalent (e.g. "2.4.6"). */
   magentoVersion?: string;
   /** The host's own distribution (e.g. Mage-OS 3.5.0), when it isn't Magento. */
@@ -51,8 +55,6 @@ type MagentoSupport =
   | { state: 'tested'; version: string | null }
   | { state: 'older'; version: string }
   | { state: 'untested' };
-
-type InstallState = 'not-installed' | 'installed' | 'update';
 
 export const DEFAULT_PAGE_SIZE = 24;
 
@@ -481,10 +483,20 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     setFlags(new Set());
   };
 
+  const markable = (pkg: PackageSummary): boolean =>
+    props.selectable === true && installState(pkg) !== 'installed';
+
   const select = (event: Event, pkg: PackageSummary) => {
     if (linkMode === 'event') {
       event.preventDefault();
-      props.onSelect?.({ name: pkg.name, vendor: pkg.vendor, packageUrl: packageUrl(baseUrl, pkg) });
+      props.onSelect?.({
+        name: pkg.name,
+        vendor: pkg.vendor,
+        packageUrl: packageUrl(baseUrl, pkg),
+        installState: installState(pkg),
+        markable: markable(pkg),
+        marked: marked.has(pkg.name),
+      });
     }
   };
 
@@ -509,15 +521,35 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     if (props.selectable) writeStoredSelection([...marked]);
   }, [marked]);
 
-  const toggleMark = (pkg: PackageSummary) => {
+  const toggleMark = (pkg: PackageSummary, to?: boolean) => {
     setMarked((prev) => {
+      const on = to ?? !prev.has(pkg.name);
+      // Setting a state the list already has is not a change, so nothing is announced.
+      if (on === prev.has(pkg.name)) return prev;
       const next = new Set(prev);
-      if (next.has(pkg.name)) next.delete(pkg.name);
-      else next.add(pkg.name);
+      if (on) next.add(pkg.name);
+      else next.delete(pkg.name);
       return next;
     });
     setCopied(false);
   };
+
+  // A host can mark from outside the bundle (a detail modal's own button) by
+  // dispatching mosd:mark on the mount element. The same rules as the card's
+  // toggle apply, so an installed package or an unknown name is a no-op.
+  const markSource = props.markSource;
+  useEffect(() => {
+    if (!markSource || !props.selectable) return;
+    const onMark = (event: Event) => {
+      const detail = (event as CustomEvent<MarkDetail>).detail;
+      if (!detail || typeof detail.name !== 'string') return;
+      const pkg = feed.packages.find((p) => p.name === detail.name);
+      if (!pkg || !markable(pkg)) return;
+      toggleMark(pkg, typeof detail.marked === 'boolean' ? detail.marked : undefined);
+    };
+    markSource.addEventListener('mosd:mark', onMark);
+    return () => markSource.removeEventListener('mosd:mark', onMark);
+  }, [markSource, props.selectable, feed, installed, props.magentoVersion]);
 
   const clearMarks = () => {
     setMarked(new Set());
@@ -807,7 +839,6 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
           // about this shop; otherwise it is a neutral note in the footer.
           const leads = fit !== null && hostAware;
           const age = releasedAgo(pkg.latestReleasedAt);
-          const markable = props.selectable && installState(pkg) !== 'installed';
           const merits = meritBadges(pkg);
           return (
             <li key={pkg.name} class={cardClass(pkg)}>
@@ -875,7 +906,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                     <span class="mosd-card-span">{fit.text}</span>
                   )}
                 </p>
-                {(markable || merits.length > 0) && (
+                {(markable(pkg) || merits.length > 0) && (
                   <div class="mosd-card-foot">
                     {merits.length > 0 && (
                       <p class="mosd-card-badges">
@@ -886,7 +917,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                         ))}
                       </p>
                     )}
-                    {markable && (
+                    {markable(pkg) && (
                       <p class="mosd-card-actions">
                         <button
                           type="button"

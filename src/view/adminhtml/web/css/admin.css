@@ -59,3 +59,13 @@
     height: calc(100vh - 190px);
     width: 100%;
 }
+
+/*
+ * The header's mark toggle. It is the admin's own action-secondary, and "on the list" borrows
+ * the accent the card's own toggle uses for the same state, so both read as one control.
+ */
+.mageos-extension-directory-modal .mageos-extension-directory-mark.mageos-extension-directory-marked {
+    background: #eb5202;
+    border-color: #eb5202;
+    color: #fff;
+}

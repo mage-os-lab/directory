@@ -20,6 +20,9 @@ $loadFailureMessage = $escaper->escapeJs(
     (string)__('The directory UI failed to load. Check that this browser can reach the script, then reload the page.')
 );
 $detailFrameTitle = $escaper->escapeJs((string)__('Module details'));
+$markInstallLabel = $escaper->escapeJs((string)__('Mark for install'));
+$markUpdateLabel = $escaper->escapeJs((string)__('Mark for update'));
+$markedLabel = $escaper->escapeJs((string)__('On install list'));
 
 $initJs = <<<JS
 (function () {
@@ -28,7 +31,10 @@ $initJs = <<<JS
     var host = document.getElementById('mageos-extension-directory'),
         configElement = document.getElementById('mageos-extension-directory-config'),
         config,
-        detailModal;
+        detailModal,
+        // The package the detail modal shows, as mosd:select described it; its marked flag is
+        // kept current from mosd:selection so the modal's button always reads like the card's.
+        current = null;
 
     if (!host || !configElement) {
         return;
@@ -59,6 +65,34 @@ $initJs = <<<JS
     }
 
     /**
+     * The modal's top-right button is the card's mark toggle, for the package on show. It is
+     * hidden for a package that cannot be marked (already installed at its target version, or
+     * a mount without an install list), and its label follows the list.
+     */
+    function renderMarkButton() {
+        var button = detailModal && detailModal.markButton;
+
+        if (!button) {
+            return;
+        }
+
+        if (!current || !current.markable) {
+            button.hidden = true;
+
+            return;
+        }
+
+        button.hidden = false;
+        button.classList.toggle('mageos-extension-directory-marked', current.marked);
+        button.setAttribute('aria-pressed', current.marked ? 'true' : 'false');
+        button.firstElementChild.textContent = current.marked
+            ? '\u2713 {$markedLabel}'
+            : current.installState === 'update'
+                ? '+ {$markUpdateLabel}'
+                : '+ {$markInstallLabel}';
+    }
+
+    /**
      * Builds the modal on first use, then hands the same one back for every later package.
      */
     function withDetailModal(callback) {
@@ -69,7 +103,7 @@ $initJs = <<<JS
         }
 
         require(['jquery', 'Magento_Ui/js/modal/modal'], function (\$, modal) {
-            var wrapper, frame;
+            var wrapper, frame, aside;
 
             if (!detailModal) {
                 wrapper = document.createElement('div');
@@ -82,12 +116,28 @@ $initJs = <<<JS
                     type: 'slide',
                     modalClass: 'mageos-extension-directory-modal',
                     title: '',
-                    buttons: []
+                    // The slide modal renders its buttons in the header's top-right corner.
+                    // The bundle owns the install list, so the click is handed to it as
+                    // mosd:mark and the label waits for the mosd:selection that answers.
+                    buttons: [{
+                        text: '',
+                        'class': 'action-secondary mageos-extension-directory-mark',
+                        click: function () {
+                            if (current && current.markable) {
+                                host.dispatchEvent(new CustomEvent('mosd:mark', {
+                                    detail: {name: current.name}
+                                }));
+                            }
+                        }
+                    }]
                 }, \$(wrapper));
+
+                aside = wrapper.closest('.mageos-extension-directory-modal');
 
                 detailModal = {
                     element: \$(wrapper),
-                    frame: frame
+                    frame: frame,
+                    markButton: aside ? aside.querySelector('.mageos-extension-directory-mark') : null
                 };
             }
 
@@ -123,11 +173,27 @@ $initJs = <<<JS
             return;
         }
 
+        current = detail;
+
         withDetailModal(function (instance) {
             instance.frame.setAttribute('src', framedDetailPageUrl(detail.packageUrl));
             instance.element.modal('setTitle', escapeHtml(detail.name));
+            renderMarkButton();
             instance.element.modal('openModal');
         });
+    });
+
+    // The list changed — from the modal's button or a card behind it — so the button on show
+    // follows. The bundle is the source of truth; the modal never keeps its own copy.
+    host.addEventListener('mosd:selection', function (event) {
+        if (!current) {
+            return;
+        }
+
+        current.marked = event.detail.packages.some(function (entry) {
+            return entry.name === current.name;
+        });
+        renderMarkButton();
     });
 
     MageOSDirectory.mountDirectory(host, config);
