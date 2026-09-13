@@ -49,7 +49,7 @@ final class ConfigTest extends TestCase
         $baseUrl = $this->config([])->getBaseUrl();
 
         self::assertSame(Config::BASE_URL, $baseUrl);
-        self::assertSame('https://rhoerr.github.io/mage-os.directory', $baseUrl);
+        self::assertSame('https://directory.mage-os.org', $baseUrl);
         self::assertSame(rtrim($baseUrl, '/'), $baseUrl);
     }
 

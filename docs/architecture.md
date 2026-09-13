@@ -603,9 +603,10 @@ check honest instead of pinned at the edge. File-count headroom is not a concern
 Pages' direct-upload limit is 20,000 files, and ~1,100 packages (a detail JSON + a
 prerendered page each, plus site chrome) lands well under 3,500.
 
-Ships under the project's `*.pages.dev` URL initially; moving to a `mage-os.org`
-subdomain later is a custom-domain attachment in Cloudflare plus the Astro `site`
-config change.
+The canonical host is `directory.mage-os.org`, a custom domain attached to the
+Cloudflare Pages project (`mage-os-directory`). It is the one origin admin browsers and
+the module's proxy talk to: the Astro `site` config, the module's `Config::BASE_URL`,
+and `src/etc/csp_whitelist.xml` all name it and nothing else.
 
 ## Standing risks
 

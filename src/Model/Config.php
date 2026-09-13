@@ -27,7 +27,7 @@ class Config
     /**
      * Directory origin, without a trailing slash.
      */
-    public const BASE_URL = 'https://rhoerr.github.io/mage-os.directory';
+    public const BASE_URL = 'https://directory.mage-os.org';
 
     /**
      * Seconds before the cached feed is revalidated against manifest.json. The catalog is

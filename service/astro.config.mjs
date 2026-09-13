@@ -6,9 +6,9 @@ export default defineConfig({
   srcDir: 'src/site',
   output: 'static',
   outDir: 'dist',
-  // Overridable so fallback hosts (e.g. GitHub Pages project sites, which
-  // serve from /<repo>/) can build with the right origin and subpath.
-  site: process.env.SITE_URL || 'https://mage-os-directory.pages.dev',
+  // The canonical host; overridable so preview builds on another origin (or a
+  // subpath) get the right absolute URLs.
+  site: process.env.SITE_URL || 'https://directory.mage-os.org',
   base: process.env.BASE_PATH || '/',
   integrations: [preact()],
   build: {

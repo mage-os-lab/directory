@@ -124,17 +124,19 @@ hiding are explicit, auditable acts recorded in the trust files — never silent
 ## 9. Cloudflare Pages, deployed from GitHub Actions
 
 **Decision:** host on Cloudflare Pages, with the GitHub Actions pipeline doing a
-wrangler direct upload of the built site + JSON artifacts. Ship under `*.pages.dev`;
-move to a `mage-os.org` subdomain when infrastructure/branding is settled (custom-domain
-attachment + one config change).
+wrangler direct upload of the built site + JSON artifacts, served from
+`directory.mage-os.org` — a custom domain on the Pages project, and the only host named
+in the Astro config, the module's `Config::BASE_URL`, and its CSP whitelist.
 
 **Why:** Mage-OS already runs on Cloudflare, so this matches existing infrastructure
 and ops knowledge. Direct upload keeps the build in Actions, where the cron schedule
 and external data fetches live; Cloudflare's git-integration builds can't do that. Free
-tier, global CDN, and the later domain move is trivial with the feed contract unaffected.
+tier and global CDN. Serving under the Mage-OS domain rather than the `*.pages.dev`
+origin keeps one public host in the feed contract, the module constant, and CSP.
 
-**Rejected:** GitHub Pages (works, but adds a second hosting platform to operate when
-the rest of the infrastructure is on Cloudflare).
+**Rejected:** GitHub Pages (used briefly as a bootstrap fallback before the Cloudflare
+secrets existed, since removed: a second hosting platform to operate when the rest of
+the infrastructure is on Cloudflare).
 
 ## 10. Trust actions are governed, evidenced, and disputable
 
