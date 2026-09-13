@@ -91,8 +91,9 @@ the field silently; the PR itself is the audit trail.
 
 ## Reporting a malicious or dangerous package
 
-- Public intake: a GitHub issue template for security reports, plus a security contact
-  email for reports that shouldn't be public before triage.
+- Public intake: a GitHub issue template for security reports; reports that shouldn't
+  be public before triage go through the repository's private security advisories
+  (Security → Report a vulnerability), readable only by maintainers.
 - Expedited process: for credible evidence of malware, a backdoor, or active supply-chain
   compromise, a maintainer may merge a `hide` warning immediately, skipping the standard
   notification window, and notify the vendor in parallel rather than beforehand. Normal

@@ -2,8 +2,9 @@ name: PackageMaven API probe
 
 # Temporary evaluation harness: fetches PackageMaven API endpoints from an
 # Actions runner (which holds PACKAGE_MAVEN_TOKEN) and prints responses to the
-# job log so the API can be compared against docs/packagemaven-data-contract.md.
-# Manual-only; remove once the real fetcher integration lands.
+# job log so the API can be compared against the field mapping in
+# docs/architecture.md. Manual-only; remove once a scheduled live pipeline run
+# has succeeded end to end.
 
 on:
   push:
@@ -84,7 +85,7 @@ jobs:
           set -u
           # Paths come from the dispatch input or, on push, from the committed list.
           PATHS="${INPUT_PATHS:-$(grep -v '^#' .github/pm-probe-paths.txt | tr '\n' ' ')}"
-          UA="mage-os-directory-eval (github.com/rhoerr/mage-os.directory; rhoerr@users.noreply.github.com)"
+          UA="mage-os-directory-eval (github.com/mage-os-lab/directory)"
           for p in $PATHS; do
             url="https://package-maven.com${p}"
             echo "===================================================================="

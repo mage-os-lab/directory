@@ -5,14 +5,15 @@ There is no running backend service. A scheduled GitHub Actions job aggregates p
 data into versioned JSON artifacts, and those artifacts are published together with a
 prerendered website on Cloudflare Pages. The JSON feed *is* the public API.
 
-This document is the implementation reference for v1. The reasoning behind the major
+This document is the implementation reference for the service (`service/`) and the
+contract the admin module (`src/`) builds against. The reasoning behind the major
 choices is recorded in [decisions.md](decisions.md).
 
 ## Data flow
 
 ```
-PackageMaven export ─┐
-                     ├─→ pipeline (GitHub Actions, daily + on data merge)
+PackageMaven API ────┐
+                     ├─→ pipeline (GitHub Actions, daily + on push to service/)
 GitHub API ──────────┤      fetch → merge trust data → rank → validate → emit
                      │
 data/vendors/*.json ─┘
@@ -28,44 +29,73 @@ data/vendors/*.json ─┘
 
 ### PackageMaven (structural backbone)
 
-[PackageMaven](https://package-maven.com/) is the sole structural source for v1. It
-already indexes ~750 Magento 2 modules, aggregates their Packagist metadata, and —
-critically — **tests each module against real Magento versions**, producing quality tiers,
-PHPStan levels, and build status. Consuming its results means compatibility comes from
-actual test outcomes rather than from parsing Composer version constraints.
+[PackageMaven](https://package-maven.com/) is the sole structural source. It indexes
+~1,100 Magento 2 modules, aggregates their Packagist metadata, and — critically —
+**tests each module against real Magento versions**, producing quality tiers, PHPStan
+levels, and build status. Consuming its results means compatibility comes from actual
+test outcomes rather than from parsing Composer version constraints.
 
 The directory's universe is exactly PackageMaven's index. Getting listed in the directory
 means publishing on Packagist and submitting to PackageMaven (via the "Submit a Module"
-form on its site); a contributor-facing `how-to-get-listed` guide is part of milestone M3.
+form on its site); the site's `/how-to-get-listed/` page walks vendors through it.
 
-The fields the pipeline needs from PM are specified in
-[packagemaven-data-contract.md](packagemaven-data-contract.md).
+**The API.** PM exposes a read-only REST API at `https://package-maven.com/api/v1`
+(spec: [`/api/v1/openapi.json`](https://package-maven.com/api/v1/openapi.json), the only
+unauthenticated endpoint). Everything else needs a bearer token issued by the PM team,
+held as the `PACKAGE_MAVEN_TOKEN` repository secret (`PM_API_URL` overrides the base URL
+for testing). The fetcher (`src/pipeline/packagemaven.ts`) sweeps `GET /packages` at
+`per_page=100` — about 11 requests per run against a limit of 60 requests/minute, with
+`429`/`Retry-After` honoured — plus `GET /categories`, and normalizes the result into the
+internal snapshot shape (`src/schema/source.ts`, `origin: 'live' | 'fixture'`).
+Only publicly visible packages are returned; hidden packages 404.
 
-**Status (2026-07, updated):** PM shipped a real bearer-token REST API months ahead of
-the expected timeline — see [packagemaven-api-evaluation.md](packagemaven-api-evaluation.md)
-for the endpoint/field details and how it maps onto the contract. The pipeline's live
-path now fetches it directly (`src/pipeline/packagemaven.ts`: paginated
-`/packages` sweep, ~11 requests/run, `PACKAGE_MAVEN_TOKEN` secret), normalizing into
-the same internal snapshot shape (`origin: 'live' | 'manual' | 'fixture'`). One
-consequence of the API's shape: PM reports *untested* packages
-(no quality flags yet), represented as `quality.tier: null` — ranking omits the
-quality signal for them rather than punishing them. The normalizer also cleans PM's
-human name for `displayName`, stripping redundant leading words (`Magento2`,
-`Magento 2`, `Module`, with an optional `-`/`:` separator) and the phrase
-"for Magento 2" wherever it appears, so a card title reads "Google Tag Manager"
-rather than "Magento2 Google Tag Manager for Magento 2". A name that is *nothing but*
-those words (PM lists a handful, e.g. `quickpay/magento2` → "Magento2") would leave the
-card titled with that bare word, so merge titles it with the vendor's name instead.
+Field mapping, PM → snapshot:
 
-When running on a manually refreshed export, staleness is a *steady state*, not a
-transient failure: the site shows a "quality data as of &lt;date&gt;" notice sourced from the
-snapshot's `fetchedAt` rather than the transient-failure warning path described under
-[Pipeline](#pipeline).
+| Snapshot field | PM field | Notes |
+|---|---|---|
+| `name` | `composer_name` | join key |
+| `displayName` | `name` | nullable; falls back to `composer_name`, then prefix-cleaned (below) |
+| `description`, `repositoryUrl` | `description`, `repository_url` | nullable |
+| `rawCategories` | `categories[].slug` | stable slugs; mapped to canonical slugs via `data/categories.json`, unmapped slugs raise a pipeline warning |
+| `latestVersion`, `latestReleasedAt` | `latest_release.{version,date}` | |
+| `quality.tier` | `quality.{strict_compliant,no_errors,build_works,needs_help}` | tiered flags: first true wins in that order; all false → `null` (not yet tested) |
+| `quality.phpstanLevel` | `test_results.phpstan_level` | `-1..9`; `-1` = fails at level 0; `null` = untested |
+| `quality.buildStatus` | derived | `build_works` → passing, `needs_help` → failing, else unknown |
+| `quality.semver` | `semver.{status, compliance_percent}` | SemVer compliance of released versions; display-only, not a ranking signal |
+| `releases[]` | `test_results.{package_version, magento_version}` | one `(release, Magento version)` pair per package — see below |
+| `abandoned`, `abandonedReplacement` | `abandoned.{is_abandoned, replacement}` | |
+| `license` | `license` | SPDX, comma-separated when dual-licensed; split into an array |
+| `popularity.installs`, `popularity.githubStars` | `stats.installs`, `stats.stars` | PM's stars fill in when the GitHub fetch is off or rate-limited |
+| `links.packagemaven`, `links.packagist` | `links.web`, `links.packagist` | PM pages live at `package-maven.com/<vendor>/<package>` — always use the reported URL |
 
-**Contingency:** if PM's export turns out to lack specific fields (license, monthly
-downloads, abandoned flag), a thin per-package Packagist lookup can be added as a
-supplementary source. It is deliberately *not* part of v1 — one structural source keeps
-the pipeline simple and reliable.
+Two properties of PM's data shape the rest of the system:
+
+- **Untested is a state.** PM lists packages it has not tested yet (no quality flags,
+  null test results). They carry `quality.tier: null`, ranking omits the quality
+  signal for them rather than punishing them, the UI shows "Not yet tested", and hero
+  counters exclude them.
+- **One tested pair per package, and it may lag the latest release.**
+  `test_results.package_version` can differ from `latest_release.version`, so quality
+  and compatibility describe the *tested* release. The normalizer emits the tested pair
+  as a single `releases[]` row rather than stamping it onto the latest release; a full
+  per-release matrix from PM would slot into the same field without schema changes.
+  Absence of a test result is never presented as incompatibility.
+
+**Display names.** The normalizer cleans PM's human name for `displayName`, stripping
+redundant leading words (`Magento2`, `Magento 2`, `Module`, with an optional `-`/`:`
+separator) and the phrase "for Magento 2" wherever it appears, so a card title reads
+"Google Tag Manager" rather than "Magento2 Google Tag Manager for Magento 2". A name
+that is *nothing but* those words (e.g. `quickpay/magento2` → "Magento2") is titled
+with the vendor's name instead.
+
+**Terms.** PM's API spec carries its data-ownership and attribution terms: any use,
+redistribution, or display of the data must attribute package-maven.com as the source
+and, when displaying a package, link its original Packagist page. The directory
+republishes only the fields above, as an open feed with the attribution carried in the
+feed's `sources` metadata and on every package view; it never scrapes the PM site, and
+fetches once per pipeline run with a descriptive User-Agent. The arrangement is
+revocable in either direction — if PM withdraws access, the pipeline carries forward
+the last snapshot as stale (see [Pipeline](#pipeline)) until a replacement source exists.
 
 ### GitHub (presentation extras, failure-tolerant)
 
@@ -74,15 +104,17 @@ the pipeline simple and reliable.
   parses Markdown — using ETag-conditional requests (steady-state daily runs are
   almost all 304s, which don't count against the rate limit). One request per
   *repository*, so a monorepo's packages share it.
-- **Stars** as a popularity signal, fetched in batched GraphQL queries.
+- **Stars** as a popularity signal, fetched in batched GraphQL queries. PackageMaven
+  reports its own star counts too, and they fill in wherever the GitHub fetch is off,
+  rate-limited, or fails.
 
 Both are nullable. A GitHub failure never fails the build; affected packages simply
-render without a README or star count. Non-GitHub repositories get no README/stars in v1.
+render without a README or star count. Non-GitHub repositories get no README.
 
 Because Actions runners are ephemeral, the ETag cache (a `{repo → etag, body}` map) is
 persisted between runs with `actions/cache` (keyed with restore-keys so any prior cache
 seeds the next run). Cache eviction just means one cold run. A `GITHUB_TOKEN`/PAT is
-**required** in CI — 750 repos doesn't fit in the unauthenticated 60 req/hr limit; rate
+**required** in CI — ~1,100 repos doesn't fit in the unauthenticated 60 req/hr limit; rate
 limit exhaustion mid-run degrades to null READMEs/stars for the remainder, never a
 retry loop or build failure. READMEs are republished under the package's own
 open-source license with a link back to the source; takedown requests are honored via
@@ -104,7 +136,7 @@ A TypeScript script under `src/pipeline/`, run by GitHub Actions:
   pipeline, site, or UI source — the site and the embeddable bundle are built from all of
   it), and manual `workflow_dispatch`.
 - **Stages:**
-  1. Fetch the PackageMaven export and normalize it into the internal snapshot shape.
+  1. Fetch the PackageMaven API and normalize it into the internal snapshot shape.
   2. Load and validate the trust overlay for the universe being built —
      `data/vendors/*.json` live, `data/fixtures/vendors/*.json` on a fixture run. *Malformed* trust data fails the build —
      it is our own data and CI on the PR should have caught it. A trust entry that
@@ -155,8 +187,8 @@ Versioning: the `/api/v1/` path prefix plus a `schemaVersion` field inside each 
 A breaking schema change publishes `/api/v2/` alongside v1 for a deprecation window.
 (Vendor trust files are deliberately *not* versioned this way — they live in this repo,
 so a breaking format change is one migration PR across `data/vendors/`.) READMEs live
-only in the per-package detail files so the feed stays small (roughly 1 MB raw /
-~200 KB gzipped at 750 packages).
+only in the per-package detail files so the feed stays small (roughly 1.5 MB raw /
+~300 KB gzipped at ~1,100 packages).
 
 ## Feed schema (sketch)
 
@@ -344,7 +376,7 @@ live in `data/ranking.json` so curators can tune ranking with a one-file PR:
   One caveat: installs/stars normalization is corpus-relative, so a package's score can
   drift when *other* packages change — acceptable at daily cadence, and diagnosable from
   the published components.
-- Known gaming vector, accepted for v1: no-op releases refresh the freshness signal
+- Known gaming vector, accepted: no-op releases refresh the freshness signal
   (15% weight, and quality tier still dominates). Revisit if abused.
 
 ## Site and embeddable UI
@@ -375,8 +407,8 @@ mechanical rather than clever.
 `directory-ui.js` (ES) / `directory-ui.iife.js` (classic script, global
 `MageOSDirectory`) + `directory-ui.css` (only needed for `shadow: false` embedders —
 shadow mounts inline the styles). The build lands in `public/embed/`, so every deploy
-publishes it at `/embed/*` on the directory's own origin — that URL is what the future
-admin module loads. It exposes:
+publishes it at `/embed/*` on the directory's own origin — that URL is what the admin
+module loads in Direct mode (Proxy mode serves the copy vendored in `src/`). It exposes:
 
 ```ts
 mountDirectory(el: HTMLElement, options: {
@@ -415,8 +447,11 @@ mountDirectory(el: HTMLElement, options: {
 Contract details the admin module depends on:
 
 - `linkMode: 'event'` — selecting a package dispatches a bubbling, composed
-  `CustomEvent('mosd:select', { detail: { name, vendor, packageUrl } })` on the mount
-  element instead of navigating; `packageUrl` is the canonical detail-page URL.
+  `CustomEvent('mosd:select', { detail: { name, vendor, packageUrl, installState,
+  markable, marked } })` on the mount element instead of navigating; `packageUrl` is
+  the canonical detail-page URL, and the last three describe the package's place on
+  the install list so the host can offer the same mark toggle wherever it shows the
+  package (the admin's detail modal puts one in its header).
 - Feed fetch failure renders a retryable error state inside the component and
   dispatches `CustomEvent('mosd:error', { detail: { message } })`; it never throws out
   of `mountDirectory`.
@@ -428,7 +463,11 @@ Contract details the admin module depends on:
   reload, or a detour through a detail page, does not lose it; a mount that restores a
   non-empty list dispatches `mosd:selection` once on mount, since the host never saw
   that list being built. Names the current feed no longer carries are dropped, and
-  versions are pinned afresh against the feed in hand. The
+  versions are pinned afresh against the feed in hand. The host can change the list
+  from outside the bundle by dispatching `CustomEvent('mosd:mark', { detail: { name,
+  marked? } })` on the mount element — a toggle when `marked` is omitted, a set
+  otherwise — under the same rules as the card's toggle (selectable mount, package in
+  the catalog, not already installed); the result is announced as `mosd:selection`. The
   directory never installs anything itself: version detection stays client-side
   (`installed` comes from the host reading composer.lock) and the output is a command
   the merchant runs manually — consistent with the copy-the-command model on detail
@@ -469,10 +508,8 @@ tiers that change a shortlist: the top two as a High quality badge, `needs-help`
 "Known issues" note; the full tier lives on the detail page. "Tested with" targets the
 shop's own version where an embed passes
 `magentoVersion`, and otherwise the newest Magento version anything in the catalog has
-been verified against. When the feed reports a stale or manually refreshed source, the UI
-shows a visible "quality data as of &lt;date&gt;" notice — stale data must never present
-as live. Deferred, cheap to add later: a "recently added" page / RSS feed diffed from
-consecutive snapshots.
+been verified against. When the feed reports a stale source, the UI shows a visible
+"quality data as of &lt;date&gt;" notice — stale data must never present as live.
 
 **What a browse card carries.** A card is the shortlist test — open this one, or scroll
 past — so it answers eight questions and leaves the rest to the detail page: name, package
@@ -504,41 +541,45 @@ public site. It covers the metrics that matter early — page views per package/
 referrers — and gives PM's author concrete referral numbers, which is part of the
 pitch. Copy-to-clipboard and outbound-click counters can be layered on later if needed.
 
-## Repository layout (planned)
+## Repository layout
 
-One npm package — no workspaces, no monorepo tooling:
+The repository root is the Composer package for the admin module; the service is a
+single npm package under `service/` — no workspaces, no monorepo tooling:
 
 ```
-package.json              # single package; scripts: pipeline, build, test, format:vendors
-astro.config.mjs          # srcDir set to src/site
-vite.ui.config.ts         # library-mode build for the embeddable bundle
-tsconfig.json             # one tsconfig; pipeline runs under tsx, site under astro check —
-                          # a deliberate simplicity trade-off over per-target configs
-src/
-  site/                   # Astro site (pages incl. 404.astro, layouts, island wrapper)
-  ui/                     # pure Preact browse/search component + mountDirectory entry
-  pipeline/               # pipeline entry + source fetchers + merge/rank/emit + dev tools
-  schema/                 # Zod schemas shared by pipeline, site, and CI
-data/                     # everything contributors edit by PR
-  vendors/<vendor>.json   # vendor trust files (the trust overlay)
-  vendor.schema.json      # generated from src/schema, committed so editors validate trust files
-  categories.json         # canonical category taxonomy + PM label mapping
-  ranking.json            # tunable ranking weights
-  fixtures/               # fixture PM snapshot + its matching trust overlay, for
-                          #   dev/preview builds (never loaded by a live run)
-public/
-  _headers                # Cloudflare Pages headers: CORS + cache-control for /api/v1/*
+composer.json             # mage-os/module-extension-directory, PSR-4 → src/
+src/                      # the Magento admin module (MageOS_ExtensionDirectory)
+  view/adminhtml/web/js/  #   incl. the vendored copy of directory-ui.iife.js
+dev/tests/unit/           # hermetic PHPUnit suite against committed framework stubs
+service/
+  package.json            # scripts: pipeline, build, build:ui, test, format:vendors
+  astro.config.mjs        # srcDir set to src/site
+  vite.ui.config.ts       # library-mode build for the embeddable bundle
+  tsconfig.json           # one tsconfig; pipeline runs under tsx, site under astro check
+  src/
+    site/                 # Astro site (pages incl. 404.astro, layouts, island wrapper)
+    ui/                   # pure Preact browse/search component + mountDirectory entry
+    pipeline/             # pipeline entry + source fetchers + merge/rank/emit + dev tools
+    schema/               # Zod schemas shared by pipeline, site, and CI
+    shared/               # vocabulary shared by the island and prerendered pages
+  data/                   # everything contributors edit by PR
+    vendors/<vendor>.json #   vendor trust files (the trust overlay)
+    vendor.schema.json    #   generated from src/schema, committed so editors validate trust files
+    categories.json       #   canonical category taxonomy + PM slug mapping
+    ranking.json          #   tunable ranking weights
+    fixtures/             #   fixture PM snapshot + its matching trust overlay, for
+                          #     dev/preview builds (never loaded by a live run)
+  public/
+    _headers              # Cloudflare Pages headers: CORS + cache-control for /api/v1/*
 .github/workflows/
-  build-deploy.yml        # cron + data pushes + manual → build, deploy to Cloudflare Pages
-  ci.yml                  # PRs: typecheck, tests, trust-file validate + format check, build smoke
+  build-deploy.yml        # cron + service pushes + manual → build, deploy to Cloudflare Pages
+  service-ci.yml          # PRs: typecheck, tests, trust-file validate + format check, build smoke
+  module-ci.yml           # PRs: PHP unit suite, dist-archive allowlist, bundle-sync guard
 docs/
 ```
 
-The category taxonomy (`data/categories.json`) is owned by the maintainers: it maps
-PM's raw category labels onto a small canonical slug set, defines the fallback
-category for unmapped labels, and changes by ordinary PR. Renaming a slug is a
-breaking change for trust files that reference it, so CI validates those references —
-a rename PR must update every affected vendor file to pass.
+Paths elsewhere in this document (`src/pipeline/…`, `data/vendors/…`) are relative to
+`service/` unless they name the module.
 
 ## Hosting
 
@@ -559,57 +600,37 @@ A `public/_headers` file configures response headers Pages doesn't set by defaul
 CORS-open `/api/v1/*` is what lets the embeddable bundle fetch the feed from a
 merchant's admin-panel origin; the short max-age keeps `manifest.json`'s freshness
 check honest instead of pinned at the edge. File-count headroom is not a concern:
-Pages' direct-upload limit is 20,000 files, and 750 packages (a detail JSON + a
-prerendered page each, plus site chrome) lands well under 2,500.
+Pages' direct-upload limit is 20,000 files, and ~1,100 packages (a detail JSON + a
+prerendered page each, plus site chrome) lands well under 3,500.
 
 Ships under the project's `*.pages.dev` URL initially; moving to a `mage-os.org`
 subdomain later is a custom-domain attachment in Cloudflare plus the Astro `site`
 config change.
 
-## Milestones
+## Standing risks
 
-PackageMaven outreach has landed positively (contract sent; their API is months out),
-so the integration milestone is split: launch gates on *data*, not on PM's API.
-
-- **M0 — Scaffold:** package setup, Zod schemas, generated vendor-file JSON Schema, seed
-  data files (categories, ranking weights), CI skeleton. *Done when:* `npm test` is green.
-- **M1 — Pipeline on fixture data:** full pipeline running against a committed fixture
-  snapshot. *Done when:* a valid, deterministic `/api/v1/` output is produced and
-  snapshot-tested.
-- **M2 — Site + island:** all routes, prerendered detail pages, embeddable bundle,
-  Cloudflare Pages deploy live. *Done when:* search/filter/sort works on the fixture feed
-  and the bundle mounts on a bare HTML demo page.
-- **M3 — Trust-file CI:** trust-file loading, formatter, CI jobs, CODEOWNERS, contributor
-  docs, 3–5 real vendor files. *Done when:* a malformed vendor-file PR fails with a
-  readable error and a valid merge auto-redeploys.
-- **M4a — PackageMaven data, any delivery** *(gated on PM providing a first export)*:
-  normalize whatever PM shares — manual dump, stable URL, repo drop — into the snapshot
-  shape; universe switches from fixture to real data; "data as of" notice wired up.
-  *Done when:* the live site serves PM-derived quality tiers with correct attribution.
-- **M5 — Launch** *(gated on M4a)*: ranking tuning with curators, custom-domain prep,
-  polish, announce — with the data-refresh cadence disclosed on-site.
-- **M4b — Automated PM integration** *(gated on PM's API/export automation, months
-  out)*: swap the manual drop for a fetch at pipeline cadence; delete the "manual
-  refresh" caveats. Deliberately *after* launch.
-
-## Risks
-
-1. **PM data doesn't materialize** — still the launch-gating risk, though smaller now:
-   PM's author is on board and the ask has been reduced to "any machine-readable
-   export, manually refreshed" (M4a). Mitigation: the source interface is pluggable, so
-   the worst case admits a Packagist-based fallback (losing quality tiers) or a
-   self-hosted analyzer later.
-2. **Manual-refresh staleness** — until M4b, data is only as fresh as PM's last export.
-   Mitigated by the on-site "data as of" notice and a disclosed cadence; the trap to
-   avoid is presenting months-old quality tiers as live.
-3. **GitHub rate limits** on cold-cache README fetches — mitigated by the
-   `actions/cache`-persisted ETag cache, GraphQL batching for stars, and a required
-   token in CI; exhaustion degrades to null READMEs rather than failing.
-4. **README content is third-party HTML** — strict sanitization allowlist at build time;
+1. **PackageMaven dependency** — quality tiers and compatibility come from one external
+   source. Mitigations: the pipeline carries the last snapshot forward as `stale` when a
+   fetch fails, the site discloses staleness, and the source interface is pluggable,
+   so a loss of access admits a Packagist-based fallback (losing quality tiers) or a
+   self-hosted analyzer.
+2. **GitHub rate limits** on cold-cache README fetches — mitigated by the
+   `actions/cache`-persisted ETag cache, GraphQL batching for stars, PM's own star
+   counts as the fallback, and a required token in CI; exhaustion degrades to null
+   READMEs rather than failing.
+3. **README content is third-party HTML** — strict sanitization allowlist at build time;
    the `hide` warning severity is the kill switch for abusive packages, with an
    expedited process defined in the [trust policy](trust-policy.md).
-5. **Trust data as reputational surface** — warnings are public claims about vendors'
+4. **Trust data as reputational surface** — warnings are public claims about vendors'
    software. Mitigated by the evidence requirement, vendor notification window, and
    dispute process in the trust policy.
-6. **Stale detail URLs** when packages leave the index — accepted in v1 (daily rebuild
-   prunes files; the site ships a custom 404 page).
+5. **Stale detail URLs** when packages leave the index — accepted (daily rebuild prunes
+   files; the site ships a custom 404 page).
+
+## Open questions
+
+- Whether PM's SemVer verdict should contribute to ranking — a curator decision; it is
+  display-only today.
+- Whether PM can expose per-release / multi-Magento test results, which would fill
+  `releases[]` and `compatibility` and make version pinning in the admin module more
+  than a one-entry lookup.

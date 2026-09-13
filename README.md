@@ -105,18 +105,14 @@ After changing `service/src/ui/**`, rebuild and re-vendor the bundle
 
 ## Documentation
 
-- **[Architecture](docs/architecture.md)** — data flow, pipeline, feed schema, vendor
-  trust file format, ranking model, site/UI design, milestones, risks.
+- **[Architecture](docs/architecture.md)** — data flow, the PackageMaven API and its
+  field mapping, pipeline, feed schema, vendor trust file format, ranking model,
+  site/UI design and the embed contract, hosting, standing risks.
 - **[Decision log](docs/decisions.md)** — what was chosen, why, and what was rejected.
 - **[Trust policy](docs/trust-policy.md)** — who gets badges, how warnings work, how
   disputes and malicious-package reports are handled.
-- **[Admin module handoff](docs/magento-admin-module-handoff.md)** — the contract the
-  module is built against (endpoints, data shapes, embed API, attribution).
-- **[Module implementation plan](docs/implementation-plan.md)** — the module's design
-  and validation record.
-- **[PackageMaven data contract](docs/packagemaven-data-contract.md)** — the
-  data-access proposal shared with PackageMaven's author.
-- [Initial scoping notes](docs/initial-scope.md) — historical; superseded by the above.
+- **[Updating the vendored UI bundle](docs/updating-the-bundle.md)** — the rebuild
+  procedure and the checks CI cannot make.
 - Original discussion: [mage-os-lab discussion #3](https://github.com/orgs/mage-os-lab/discussions/3)
 
 ## Data attribution

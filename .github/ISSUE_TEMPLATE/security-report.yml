@@ -9,8 +9,9 @@ body:
     attributes:
       value: >-
         If the details should not be public before triage (e.g. an
-        unpatched vulnerability), do not file this issue — email the
-        maintainers instead: rhoerr@users.noreply.github.com. See
+        unpatched vulnerability), do not file this issue — open a private
+        security advisory on this repository instead (Security → Report a
+        vulnerability), which only maintainers can read. See
         [docs/trust-policy.md](../../docs/trust-policy.md) for how reports
         are handled.
   - type: input

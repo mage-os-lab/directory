@@ -22,14 +22,14 @@ cp public/embed/directory-ui.iife.js ../src/view/adminhtml/web/js/directory-ui.i
 ```
 
 Commit the rebuilt file together with the source change — one atomic commit, which is
-the point of the monorepo ([decision 12](decisions.md#12-one-repository-for-the-service-and-the-admin-module)).
+the point of the monorepo ([decision 11](decisions.md#11-one-repository-for-the-service-and-the-admin-module)).
 
 ## Checks that still need a human
 
-1. `schemaVersion` is still `1` — a bump is a breaking change
-   ([handoff §10.6](magento-admin-module-handoff.md)).
-2. The `mountDirectory` options and `mosd:select` / `mosd:selection` / `mosd:error`
-   event contract are unchanged (`service/src/ui/mount.tsx`,
+1. `schemaVersion` is still `1` — a bump is a breaking change; the module checks it
+   and should degrade gracefully rather than misrender a future v2.
+2. The `mountDirectory` options and `mosd:select` / `mosd:selection` / `mosd:error` /
+   `mosd:mark` event contract are unchanged (`service/src/ui/mount.tsx`,
    `service/test/mount.test.tsx`), or the module's template/tests are updated in the
    same commit.
 3. Whether the bundle now renders the PackageMaven/Packagist attribution itself. Until

@@ -11,8 +11,8 @@ import {
  * The normalized PackageMaven source record — the shape the PM fetcher emits
  * after normalizing whatever delivery format PM provides (export file, API,
  * or a manually shared snapshot). This is the pipeline's internal contract
- * with its structural source; docs/packagemaven-data-contract.md is the
- * human-readable version sent to PM.
+ * with its structural source; the PM → snapshot field mapping is documented
+ * under "PackageMaven" in docs/architecture.md.
  */
 /** One row of PM's per-release test matrix. */
 export const sourceRelease = z.object({

@@ -4,8 +4,9 @@ import type { QualityTier } from '../schema/common.js';
 import { normalizeVersion } from '../shared/version.js';
 
 /**
- * PackageMaven API client + normalizer (see docs/packagemaven-api-evaluation.md
- * and docs/packagemaven-openapi.json for the upstream contract).
+ * PackageMaven API client + normalizer. The upstream contract is PM's public spec
+ * at https://package-maven.com/api/v1/openapi.json; the field mapping is documented
+ * under "PackageMaven" in docs/architecture.md.
  *
  * The API is paginated (`per_page` max 100) and bearer-token authenticated;
  * responses are rate-limited to 60/minute — a full sweep of ~1100 packages is
@@ -14,7 +15,7 @@ import { normalizeVersion } from '../shared/version.js';
  */
 
 export const DEFAULT_PM_API_URL = 'https://package-maven.com/api/v1';
-const USER_AGENT = 'mage-os-extension-directory-pipeline (github.com/rhoerr/mage-os.directory)';
+const USER_AGENT = 'mage-os-extension-directory-pipeline (github.com/mage-os-lab/directory)';
 const PER_PAGE = 100;
 /** Hard stop for pagination — ~10× today's corpus; a moving last_page can't loop us forever. */
 const MAX_PAGES = 120;

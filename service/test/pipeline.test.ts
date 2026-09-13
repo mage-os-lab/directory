@@ -177,7 +177,7 @@ describe('category mapping', () => {
     expect(
       unmappedCategoryLabels(['payments', 'brand-new-pm-category', 'brand-new-pm-category'], categories),
     ).toEqual(['brand-new-pm-category']);
-    // Every live PM slug (as of docs/packagemaven-openapi.json) is mapped.
+    // Every live PM slug (per PM's /categories endpoint) is mapped.
     const liveSlugs = [
       'administration-backend', 'developer-tools', 'catalog-management',
       'performance-optimization', 'seo-urls', 'checkout-payments',

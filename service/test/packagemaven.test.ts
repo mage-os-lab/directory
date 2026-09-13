@@ -11,7 +11,7 @@ import { packageMavenSnapshot } from '../src/schema/source.js';
 
 const now = new Date('2026-07-10T00:00:00.000Z');
 
-/** A realistic PM API record (see docs/packagemaven-openapi.json). */
+/** A realistic PM API record, per https://package-maven.com/api/v1/openapi.json. */
 function apiPackage(overrides: Partial<PmApiPackage> = {}): PmApiPackage {
   return {
     composer_name: 'acme/module-widget',

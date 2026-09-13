@@ -1,11 +1,11 @@
 # Decision log
 
-Short ADR-style records of the architecture decisions for v1, in rough order of
+Short ADR-style records of the architecture decisions, in rough order of
 significance. Full design context lives in [architecture.md](architecture.md).
 
 ## 1. Static pipeline + static site, no running server
 
-**Decision:** v1 is a GitHub Actions pipeline emitting versioned JSON artifacts, published
+**Decision:** a GitHub Actions pipeline emits versioned JSON artifacts, published
 with a prerendered Astro site on Cloudflare Pages. The JSON feed is the public API.
 
 **Why:** the catalog changes at most daily; nothing requires request-time computation.
@@ -18,8 +18,8 @@ scale); serverless functions (still more moving parts than static files).
 
 ## 2. PackageMaven as the sole structural data source
 
-**Decision:** PackageMaven's export is the only structural source in v1. Its index *is*
-the directory's universe. Packagist is not fetched.
+**Decision:** PackageMaven's API is the only structural source. Its index *is* the
+directory's universe. Packagist is not fetched.
 
 **Why:** PM already aggregates the Packagist metadata we'd otherwise fetch ourselves, and
 adds what Packagist can't provide: real install/compile/PHPStan/PHPCS test results
@@ -29,24 +29,16 @@ Composer version constraints — and halves the number of external systems the p
 depends on. One source, one failure mode, one data shape.
 
 **Consequences:** getting listed in the directory means getting indexed by PackageMaven;
-securing reliable access to PM data (see [packagemaven-data-contract.md](packagemaven-data-contract.md))
-is the launch gate; outreach to PM's author is the day-one critical path.
-
-**Contingency:** if PM's export lacks specific fields (license, downloads, abandoned
-flag) or access falls through, a per-package Packagist lookup can be added behind the
-same source interface — deliberately excluded from v1 for simplicity.
+reliable access to PM data is a hard dependency (the API, its field mapping, and the
+terms of use are documented under [PackageMaven](architecture.md#packagemaven-structural-backbone)
+in architecture.md).
 
 **Rejected:** Packagist as backbone + PM as enrichment (two sources to join, constraint
 parsing required, more failure modes); all of Packagist as the universe (unvetted
-packages would swamp quality signals).
-
-**Amended 2026-08-19:** the contingency above is moot — PM added `license` and
-`abandoned` (with suggested replacement) to the API at our request, plus an
-unrequested SemVer-compliance verdict, and wrote
-redistribution-with-attribution terms into the API spec itself (attribution to
-package-maven.com plus each package's Packagist page). See
-[packagemaven-api-evaluation.md](packagemaven-api-evaluation.md). The
-per-Packagist-lookup fallback stays rejected.
+packages would swamp quality signals); a per-package Packagist lookup as a
+supplementary source for fields PM lacks (PM carries license, abandoned status, and a
+SemVer verdict, and its spec grants redistribution with attribution — there is nothing
+left to backfill).
 
 ## 3. Curated universe with a PR-based trust overlay
 
@@ -129,33 +121,7 @@ per-component breakdown published in the feed.
 package ranked here?" is always answerable from the published data. Deranking and
 hiding are explicit, auditable acts recorded in the trust files — never silent.
 
-## 9. Launch gated on PackageMaven *data*, not PackageMaven's API
-
-**Decision:** the public launch waits until real PM data is in the feed (milestone
-M4a) — but "PM data" means *any machine-readable delivery*, including a manually
-regenerated export at whatever cadence PM's author finds convenient. Automated
-integration against a PM API (M4b) deliberately happens *after* launch.
-
-**Why:** quality signals are the directory's core value proposition; launching with
-"quality: pending" on every package would undercut it. But gating on PM's API would
-tie the launch to PM's engineering timeline — and as of 2026-07 that timeline is
-months out, while PM's author is already willing to collaborate (contract sent, he
-asked for specifics). The pipeline normalizes any delivery mechanism into the same
-internal snapshot (`origin: live | manual | fixture`), and the site discloses the
-refresh cadence with a "data as of" notice, so a manual export is an honest launch
-basis rather than a compromise.
-
-**Amended after review:** originally "launch gated on M4 (live PM integration)" as a
-single monolithic milestone; split into M4a/M4b when PM's positive-but-slow timeline
-made API-or-nothing gating needlessly expensive.
-
-**Amended 2026-07-10:** PM shipped a real API months early (see
-[packagemaven-api-evaluation.md](packagemaven-api-evaluation.md)), so M4a and M4b
-collapsed back into one milestone: the pipeline's live path fetches the API directly
-and the manual-export machinery was never needed. The principle stands — launch gates
-on real PM data in the feed — but the delivery mechanism question is settled.
-
-## 10. Cloudflare Pages, deployed from GitHub Actions
+## 9. Cloudflare Pages, deployed from GitHub Actions
 
 **Decision:** host on Cloudflare Pages, with the GitHub Actions pipeline doing a
 wrangler direct upload of the built site + JSON artifacts. Ship under `*.pages.dev`;
@@ -170,7 +136,7 @@ tier, global CDN, and the later domain move is trivial with the feed contract un
 **Rejected:** GitHub Pages (works, but adds a second hosting platform to operate when
 the rest of the infrastructure is on Cloudflare).
 
-## 11. Trust actions are governed, evidenced, and disputable
+## 10. Trust actions are governed, evidenced, and disputable
 
 **Decision:** trust-file powers (trusted-vendor badges, partner tiers, editorial picks,
 warnings) operate under a published [trust policy](trust-policy.md): vendor identity is
@@ -190,7 +156,7 @@ hoc in public. Cheap to write down now, expensive to improvise later.
 requiring evidence for `info`-severity notes too (friction disproportionate to a badge
 that carries no penalty).
 
-## 12. One repository for the service and the admin module
+## 11. One repository for the service and the admin module
 
 **Decision:** the Magento admin module lives in this repository: `src/` holds the
 module (the Composer package `mage-os/module-extension-directory` is packaged from the
@@ -209,7 +175,7 @@ module, and both test suites in a single reviewable change) and turns bundle syn
 a CI invariant. Ownership of both halves is unified today, which is the condition that
 makes this cheap.
 
-**Amends:** decision 6's assumption (and the handoff's open decision 3) that the module
+**Amends:** decision 6's assumption that the module
 would live in a separate repository. The decoupling that actually matters — the bundle
 staying framework-agnostic behind the `mountDirectory` contract — is unchanged; it is a
 property of the code boundary, not the repository boundary.
@@ -223,7 +189,7 @@ machinery to run than the problem deserves while one group maintains both); a
 `composer.json` inside `src/` with a Packagist path hack (Packagist has no
 subdirectory-package support).
 
-## 13. The browse card answers eight questions and defers the rest
+## 12. The browse card answers eight questions and defers the rest
 
 **Decision:** the card in `src/ui/` carries name, package path, one sentence, one quality
 verdict, fit, installs, time since the last release, and any risk — plus, where the host
@@ -256,7 +222,7 @@ is the problem being fixed, and colour-only encoding fails for the same reason);
 per-card composer commands (the admin's tray already builds one from the install list,
 and detail pages carry the single-package form).
 
-## 14. One list, a few filters that matter, and a page at a time
+## 13. One list, a few filters that matter, and a page at a time
 
 **Decision:** browsing by category is a filter on the single directory list, not a
 second listing: the home page's category grid and the prerendered `/categories/<slug>/`
@@ -298,7 +264,7 @@ is the more useful bookmark); a fixed install threshold for "Popular" (brittle a
 corpus shifts — a percentile is self-adjusting); auto-dark in the admin (the admin chrome
 does not follow the OS, so the panel must not either).
 
-## 15. The admin learns the directory exists from its dashboard, and can say no once
+## 14. The admin learns the directory exists from its dashboard, and can say no once
 
 **Decision:** the module adds one panel above the admin dashboard — a title, one
 sentence, a "Browse the directory" button and a "Hide this tip" button — rendered only
