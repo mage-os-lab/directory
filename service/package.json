@@ -7,7 +7,7 @@
   "license": "OSL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rhoerr/mage-os.directory.git"
+    "url": "https://github.com/mage-os-lab/directory.git"
   },
   "engines": {
     "node": ">=22"

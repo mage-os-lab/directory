@@ -17,7 +17,7 @@ import { sanitizeReadme } from './readme.js';
  */
 
 export const DEFAULT_GITHUB_API_URL = 'https://api.github.com';
-const USER_AGENT = 'mage-os-extension-directory-pipeline (github.com/rhoerr/mage-os.directory)';
+const USER_AGENT = 'mage-os-extension-directory-pipeline (github.com/mage-os-lab/directory)';
 const API_VERSION = '2022-11-28';
 /** Repos fetched in parallel. Well under GitHub's concurrency guidance, and
  * enough to keep a cold ~1100-repo run in the low minutes. */
