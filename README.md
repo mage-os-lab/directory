@@ -2,7 +2,38 @@
 
 A trustworthy catalog for discovering quality open source modules for Mage-OS /
 Magento — a public website, an open JSON feed, and a Magento admin module, all built
-from one repository:
+from one repository.
+
+![The Mage-OS Extension Directory in the Magento admin: search, filter chips and a page of package cards, with installed and version-fit badges](https://raw.githubusercontent.com/mage-os-lab/directory/main/docs/images/admin-directory.png)
+
+## Install the admin module
+
+Requires PHP 8.1+ and Magento 2.4 / Mage-OS (`magento/framework` ^103.0). From the
+Magento root:
+
+```sh
+composer require mage-os/module-extension-directory
+bin/magento setup:upgrade
+```
+
+In production mode, finish with:
+
+```sh
+bin/magento setup:di:compile
+bin/magento setup:static-content:deploy
+bin/magento cache:flush
+```
+
+Then open **System → Extensions → Extension Directory** in the admin. There is nothing
+to configure — the module ships working defaults, and it never installs anything on your
+server. Admin roles other than the full-access one need the **Mage-OS Extension
+Directory** ACL resource (System → Permissions → User Roles).
+
+To update, `composer update mage-os/module-extension-directory` and re-run the commands
+above; to remove it, `composer remove mage-os/module-extension-directory` followed by
+`bin/magento setup:upgrade`.
+
+## What's in this repository
 
 | Where | What |
 |---|---|
@@ -63,11 +94,6 @@ privacy-sensitive admins). **Dashboard → Show Extension Directory Tip** (defau
 short panel on the admin dashboard that points administrators whose role allows
 everything at the directory; its own "Hide this tip" button turns the setting off for
 everyone.
-
-```sh
-composer require mage-os/module-extension-directory
-bin/magento module:enable MageOS_ExtensionDirectory && bin/magento setup:upgrade
-```
 
 The Composer package is this repository's root; `.gitattributes` strips everything
 except `composer.json`, `LICENSE`, `README.md`, and `src/` from dist archives, and CI
