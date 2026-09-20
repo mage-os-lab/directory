@@ -134,8 +134,17 @@ describe('pipeline on fixture data', () => {
       if (pkg.popularity.installs === null) {
         expect(pkg.ranking.components).not.toHaveProperty('installs');
       }
-      // GitHub fetch is disabled on fixture builds — stars never contribute.
-      expect(pkg.ranking.components).not.toHaveProperty('stars');
+      // GitHub fetch is disabled on fixture builds, so the stars signal can
+      // only come from PM's own reported count. A known zero still scores
+      // (as zero) — only an unknown count drops the signal and redistributes
+      // its weight.
+      if (pkg.popularity.githubStars === null) {
+        expect(pkg.ranking.components).not.toHaveProperty('stars');
+      } else if (pkg.popularity.githubStars === 0) {
+        expect(pkg.ranking.components['stars']).toBe(0);
+      } else {
+        expect(pkg.ranking.components['stars']).toBeGreaterThan(0);
+      }
     }
   });
 });

@@ -206,10 +206,13 @@ export function releasedAgo(iso: string | null, now: number = Date.now()): strin
   return `updated ${years} year${years === 1 ? '' : 's'} ago`;
 }
 
-/** Install counts are scale, not accounting: 9.8k reads faster than 9,847. */
-export function installsLabel(installs: number): string {
-  if (installs < 1000) return String(installs);
-  const thousands = installs / 1000;
+/**
+ * Counts on a card are scale, not accounting: 9.8k reads faster than 9,847.
+ * Shared by installs and stars so the two read as the same kind of number.
+ */
+export function countLabel(count: number): string {
+  if (count < 1000) return String(count);
+  const thousands = count / 1000;
   const rounded = thousands >= 10 ? String(Math.round(thousands)) : thousands.toFixed(1);
   return `${rounded.replace(/\.0$/, '')}k`;
 }
@@ -368,7 +371,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     chips.push({
       flag: 'popular',
       label: 'Popular',
-      title: `Top 15% of the catalog by installs (${installsLabel(popularFloor)}+)`,
+      title: `Top 15% of the catalog by installs (${countLabel(popularFloor)}+)`,
     });
   }
   if (installed) {
@@ -895,7 +898,13 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                 <p class="mosd-card-stats">
                   {pkg.popularity.installs !== null && (
                     <span class="mosd-stat">
-                      <strong>{installsLabel(pkg.popularity.installs)}</strong> installs
+                      <strong>{countLabel(pkg.popularity.installs)}</strong> installs
+                    </span>
+                  )}
+                  {pkg.popularity.githubStars !== null && pkg.popularity.githubStars > 0 && (
+                    <span class="mosd-stat" title="GitHub stars">
+                      <span class="mosd-star" aria-hidden="true">★</span>{' '}
+                      <strong>{countLabel(pkg.popularity.githubStars)}</strong> stars
                     </span>
                   )}
                   {age !== null && <span class="mosd-stat">{age}</span>}

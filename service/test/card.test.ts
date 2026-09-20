@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   POPULAR_PERCENTILE,
+  countLabel,
   installsAtPercentile,
-  installsLabel,
   isHighQuality,
   isPopular,
   isRecent,
@@ -56,14 +56,20 @@ describe('releasedAgo', () => {
   });
 });
 
-describe('installsLabel', () => {
+describe('countLabel', () => {
   it('shows scale, not accounting', () => {
-    expect(installsLabel(0)).toBe('0');
-    expect(installsLabel(940)).toBe('940');
-    expect(installsLabel(1000)).toBe('1k');
-    expect(installsLabel(8700)).toBe('8.7k');
-    expect(installsLabel(9847)).toBe('9.8k');
-    expect(installsLabel(25_400)).toBe('25k');
+    expect(countLabel(0)).toBe('0');
+    expect(countLabel(940)).toBe('940');
+    expect(countLabel(1000)).toBe('1k');
+    expect(countLabel(8700)).toBe('8.7k');
+    expect(countLabel(9847)).toBe('9.8k');
+    expect(countLabel(25_400)).toBe('25k');
+  });
+
+  it('reads the same for a star count, which is usually the small kind', () => {
+    expect(countLabel(3)).toBe('3');
+    expect(countLabel(142)).toBe('142');
+    expect(countLabel(1480)).toBe('1.5k');
   });
 });
 

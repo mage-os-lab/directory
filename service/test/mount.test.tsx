@@ -55,7 +55,7 @@ const feed: Feed = {
         deranked: false,
         hidden: false,
       },
-      popularity: { installs: 100, githubStars: null },
+      popularity: { installs: 100, githubStars: 142 },
       ranking: { score: 0.7, components: { qualityTier: 0.8 } },
     },
     {
@@ -86,7 +86,7 @@ const feed: Feed = {
         deranked: false,
         hidden: false,
       },
-      popularity: { installs: 20, githubStars: null },
+      popularity: { installs: 20, githubStars: 0 },
       ranking: { score: 0.3, components: { qualityTier: 0.4 } },
     },
     {
@@ -418,6 +418,28 @@ describe('mountDirectory', () => {
       cardOf('acme/module-pay').querySelector('.mosd-badge-high-quality')!.getAttribute('title'),
     ).toBe('PackageMaven found no errors: no errors found');
     expect(el.querySelector('.mosd-badge-quality')).toBeNull();
+  });
+
+  it('shows the star count the "Most starred" sort ranks on, and nothing when there is none', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+
+    const statsOf = (name: string) =>
+      [...el.querySelectorAll('.mosd-card')]
+        .find((c) => c.querySelector('.mosd-card-name')!.textContent!.includes(name))!
+        .querySelector('.mosd-card-stats')!
+        .textContent!.replace(/\s+/g, ' ')
+        .trim();
+
+    expect(statsOf('acme/module-pay')).toContain('★ 142 stars');
+    // Zero stars and unknown stars both mean "no evidence here" — neither
+    // earns a column on the card.
+    expect(statsOf('acme/module-search')).not.toContain('stars');
+    expect(statsOf('acme/module-legacy')).not.toContain('stars');
   });
 
   it('marks a card as selected without hiding the rail underneath it', async () => {
