@@ -43,6 +43,16 @@
           "minimum": 0,
           "maximum": 1
         },
+        "recentInstalls": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "momentum": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
         "stars": {
           "type": "number",
           "minimum": 0,
@@ -56,6 +66,8 @@
         "qualityTier",
         "freshness",
         "installs",
+        "recentInstalls",
+        "momentum",
         "stars"
       ]
     },
@@ -114,6 +126,10 @@
       "exclusiveMinimum": 0,
       "exclusiveMaximum": 1
     },
+    "momentumCeiling": {
+      "type": "number",
+      "exclusiveMinimum": 1
+    },
     "penalties": {
       "type": "object",
       "properties": {
@@ -141,6 +157,7 @@
     "partnerTierValues",
     "freshnessHalfLifeDays",
     "popularityPercentile",
+    "momentumCeiling",
     "penalties"
   ]
 }

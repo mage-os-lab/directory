@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "fetchedAt": "2026-07-01T06:00:00.000Z",
+  "origin": "fixture",
+  "packages": [
+    {
+      "name": "brightloom/module-email-marketing",
+      "totalDownloads": 430,
+      "monthlyDownloads": 193,
+      "dailyDownloads": 6,
+      "createdAt": "2026-03-02",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "brightloom/module-seo-toolkit",
+      "totalDownloads": 9800,
+      "monthlyDownloads": 580,
+      "dailyDownloads": 19,
+      "createdAt": "2022-06-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "brightloom/module-social-share",
+      "totalDownloads": 3100,
+      "monthlyDownloads": 145,
+      "dailyDownloads": 5,
+      "createdAt": "2023-10-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "castlegate/module-checkout-suite",
+      "totalDownloads": 5600,
+      "monthlyDownloads": 224,
+      "dailyDownloads": 7,
+      "createdAt": "2022-10-01",
+      "fetchedAt": "2026-06-28T06:00:00.000Z"
+    },
+    {
+      "name": "castlegate/module-fraud-shield",
+      "totalDownloads": 1800,
+      "monthlyDownloads": 1800,
+      "dailyDownloads": 60,
+      "createdAt": "2026-04-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "castlegate/module-payment-gateway",
+      "totalDownloads": 21000,
+      "monthlyDownloads": 700,
+      "dailyDownloads": 23,
+      "createdAt": null,
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "driftwood/module-customer-segments",
+      "totalDownloads": 620,
+      "monthlyDownloads": 211,
+      "dailyDownloads": 7,
+      "createdAt": "2025-08-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "driftwood/module-loyalty-points",
+      "totalDownloads": 3900,
+      "monthlyDownloads": 42,
+      "dailyDownloads": 1,
+      "createdAt": "2021-10-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "driftwood/module-wishlist-plus",
+      "totalDownloads": 1450,
+      "monthlyDownloads": 39,
+      "dailyDownloads": 1,
+      "createdAt": "2021-07-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "ferrousbyte/module-api-logger",
+      "totalDownloads": 2200,
+      "monthlyDownloads": 296,
+      "dailyDownloads": 10,
+      "createdAt": "2024-05-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "ferrousbyte/module-erp-connector",
+      "totalDownloads": 12500,
+      "monthlyDownloads": 938,
+      "dailyDownloads": 31,
+      "createdAt": "2024-10-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "ferrousbyte/module-graphql-extensions",
+      "totalDownloads": 560,
+      "monthlyDownloads": 18,
+      "dailyDownloads": 1,
+      "createdAt": "2023-06-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "ferrousbyte/module-webhook-dispatcher",
+      "totalDownloads": 1650,
+      "monthlyDownloads": 275,
+      "dailyDownloads": 9,
+      "createdAt": "2026-04-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "ironclasp/module-address-validation",
+      "totalDownloads": 2700,
+      "monthlyDownloads": 99,
+      "dailyDownloads": 3,
+      "createdAt": "2020-10-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "ironclasp/module-carrier-freightline",
+      "totalDownloads": 5100,
+      "monthlyDownloads": 222,
+      "dailyDownloads": 7,
+      "createdAt": "2024-07-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "ironclasp/module-checkout-fields",
+      "totalDownloads": 1950,
+      "monthlyDownloads": 24,
+      "dailyDownloads": 1,
+      "createdAt": "2023-10-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "ironclasp/module-multi-carrier",
+      "totalDownloads": 340,
+      "monthlyDownloads": 8,
+      "dailyDownloads": 0,
+      "createdAt": "2023-07-02",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "lumenpath/module-cache-warmer",
+      "totalDownloads": 8100,
+      "monthlyDownloads": 221,
+      "dailyDownloads": 7,
+      "createdAt": "2021-11-30",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "lumenpath/module-cli-toolkit",
+      "totalDownloads": 75,
+      "monthlyDownloads": 1,
+      "dailyDownloads": 0,
+      "createdAt": "2022-06-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "northware/module-invoice-pdf",
+      "totalDownloads": 180,
+      "monthlyDownloads": 2,
+      "dailyDownloads": 0,
+      "createdAt": "2020-09-30",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "northware/module-order-export",
+      "totalDownloads": 24800,
+      "monthlyDownloads": 24800,
+      "dailyDownloads": 827,
+      "createdAt": "2026-04-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "northware/module-order-sync",
+      "totalDownloads": 1250,
+      "monthlyDownloads": 46,
+      "dailyDownloads": 2,
+      "createdAt": "2019-12-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "northware/module-returns-manager",
+      "totalDownloads": 3400,
+      "monthlyDownloads": 136,
+      "dailyDownloads": 5,
+      "createdAt": "2019-10-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "northware/module-shipping-rules",
+      "totalDownloads": 8700,
+      "monthlyDownloads": 311,
+      "dailyDownloads": 10,
+      "createdAt": "2021-10-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "pixelforge/magento2-image-optimizer",
+      "totalDownloads": 15200,
+      "monthlyDownloads": 334,
+      "dailyDownloads": 11,
+      "createdAt": "2019-08-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "pixelforge/magento2-lazy-load",
+      "totalDownloads": 6300,
+      "monthlyDownloads": 93,
+      "dailyDownloads": 3,
+      "createdAt": "2023-09-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "pixelforge/magento2-video-gallery",
+      "totalDownloads": 780,
+      "monthlyDownloads": 12,
+      "dailyDownloads": 0,
+      "createdAt": "2023-05-02",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "pixelforge/module-catalog-swatches",
+      "totalDownloads": 940,
+      "monthlyDownloads": 69,
+      "dailyDownloads": 2,
+      "createdAt": "2022-12-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "pixelforge/module-category-banners",
+      "totalDownloads": 95,
+      "monthlyDownloads": 85,
+      "dailyDownloads": 3,
+      "createdAt": "2026-05-02",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "pixelforge/module-product-badges",
+      "totalDownloads": 2100,
+      "monthlyDownloads": 2100,
+      "dailyDownloads": 70,
+      "createdAt": "2026-04-01",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "quillstack/module-admin-notes",
+      "totalDownloads": 4300,
+      "monthlyDownloads": 188,
+      "dailyDownloads": 6,
+      "createdAt": "2020-07-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "quillstack/module-audit-log",
+      "totalDownloads": 7600,
+      "monthlyDownloads": 380,
+      "dailyDownloads": 13,
+      "createdAt": "2022-12-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "quillstack/module-permission-manager",
+      "totalDownloads": 890,
+      "monthlyDownloads": 11,
+      "dailyDownloads": 0,
+      "createdAt": "2021-10-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "quillstack/module-sales-reports",
+      "totalDownloads": 1100,
+      "monthlyDownloads": 65,
+      "dailyDownloads": 2,
+      "createdAt": "2021-12-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "wrenfield/module-inventory-forecast",
+      "totalDownloads": 4700,
+      "monthlyDownloads": 2272,
+      "dailyDownloads": 76,
+      "createdAt": "2025-12-31",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    },
+    {
+      "name": "wrenfield/module-marketplace-sync",
+      "totalDownloads": 1300,
+      "monthlyDownloads": 36,
+      "dailyDownloads": 1,
+      "createdAt": "2021-09-30",
+      "fetchedAt": "2026-07-01T06:00:00.000Z"
+    }
+  ]
+}

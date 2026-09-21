@@ -49,6 +49,24 @@ export const packagePopularity = z.object({
   githubStars: z.number().int().nullable(),
 });
 
+/**
+ * Packagist download activity — what the package is doing *now*, as opposed
+ * to `popularity.installs`, which is its lifetime. Null when Packagist had
+ * nothing for the package this run and nothing recent to carry forward.
+ */
+export const packageActivity = z.object({
+  /** Downloads in the trailing 30 days. */
+  monthlyDownloads: z.number().int().min(0),
+  /**
+   * Recent downloads against the package's own lifetime average, on a
+   * corpus-relative 0..1 scale: 0.5 is typical growth, 1 the configured
+   * ceiling above it. Null when the package's age is unknown. See rank.ts.
+   */
+  momentum: z.number().min(0).max(1).nullable(),
+  /** True when these counters were carried forward from an earlier run. */
+  stale: z.boolean(),
+});
+
 export const packageRanking = z.object({
   /** Final score, 0..1. */
   score: z.number().min(0).max(1),
@@ -85,6 +103,7 @@ export const packageSummary = z.object({
   quality: packageQuality,
   trust: packageTrust,
   popularity: packagePopularity,
+  activity: packageActivity.nullable(),
   ranking: packageRanking,
 });
 export type PackageSummary = z.infer<typeof packageSummary>;

@@ -47,11 +47,12 @@ data into versioned static JSON, and publishes it together with a prerendered ca
 site. The JSON feed *is* the public API.
 
 ```
-PackageMaven export ─┐
-                     ├─→ daily pipeline → /api/v1/*.json → static site + embeddable UI
-GitHub (READMEs/★) ──┤                                          │
-                     │                                          └─→ Magento admin module
-service/data/vendors/*.json (trust overlay, by PR) ─┘               (src/, this repo)
+PackageMaven export ───┐
+GitHub (READMEs/★) ────┤
+                       ├─→ daily pipeline → /api/v1/*.json → static site + embeddable UI
+Packagist (downloads) ─┤                                     │
+trust overlay (by PR) ─┘                                     └─→ Magento admin module
+                                                                 (src/, this repo)
 ```
 
 - **[PackageMaven](https://package-maven.com/)** is the structural data backbone: it
@@ -60,12 +61,16 @@ service/data/vendors/*.json (trust overlay, by PR) ─┘               (src/, t
   The directory's universe is PackageMaven's index, with full attribution and links
   back. Package metadata originates from [Packagist](https://packagist.org/).
 - **GitHub** supplies READMEs and stars at build time (optional, failure-tolerant).
+- **Packagist** supplies download counters — lifetime, last 30 days, and when it first
+  saw the package — which is all the trend signals need to be computed without the
+  pipeline keeping any history of its own (optional, failure-tolerant).
 - **Mage-OS vendor trust files** — per-vendor JSON files in `service/data/vendors/`,
   edited by pull request — add the trust layer: trusted-vendor badges, partner tiers,
   editorial picks, and warnings that derank or hide problem packages.
-- A transparent, config-tunable **ranking** blends trust, quality, freshness, and
-  popularity into the default ordering, with the per-signal breakdown published in
-  the feed.
+- A transparent, config-tunable **ranking** blends trust, quality, freshness,
+  popularity and momentum — how a module's recent downloads compare with its own
+  lifetime average — into the default ordering, with the per-signal breakdown
+  published in the feed.
 
 ## The admin module
 

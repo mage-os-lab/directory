@@ -1,4 +1,9 @@
-import type { CategoriesFile, PackageMavenSnapshot, SourcePackage } from '../schema/source.js';
+import type {
+  CategoriesFile,
+  PackageMavenSnapshot,
+  PackagistSnapshot,
+  SourcePackage,
+} from '../schema/source.js';
 import type { PackageWarning, VendorFile } from '../schema/vendor-file.js';
 import type {
   Feed,
@@ -10,7 +15,7 @@ import type {
 import type { RankingConfig } from '../schema/ranking-config.js';
 import { SCHEMA_VERSION } from '../schema/common.js';
 import { compareVersions, isNewer, parseVersion } from '../shared/version.js';
-import { buildRankingContext, rankPackage } from './rank.js';
+import { buildRankingContext, packageMomentum, rankPackage } from './rank.js';
 import { isRedundantName } from './packagemaven.js';
 
 /** A vendor's human name; vendors without a trust file are named by their slug. */
@@ -36,6 +41,9 @@ export interface MergeInput {
   github: Map<string, GithubExtras>;
   githubOk: boolean;
   githubFetchedAt: string | null;
+  /** Packagist download stats; entries older than the snapshot were carried forward. */
+  packagist: PackagistSnapshot;
+  packagistOk: boolean;
   now: Date;
 }
 
@@ -129,6 +137,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
   const { snapshot, vendorFiles, categories, rankingConfig, github, now } = input;
 
   const vendorBySlug = new Map(vendorFiles.map((file) => [file.vendor, file]));
+  const downloadsByName = new Map(input.packagist.packages.map((entry) => [entry.name, entry]));
   const snapshotNames = new Set(snapshot.packages.map((p) => p.name));
 
   const danglingTrustEntries: string[] = [];
@@ -150,6 +159,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
       readmeSourceUrl: null,
       stars: null,
     };
+    const downloads = downloadsByName.get(source.name) ?? null;
     const warnings = sortWarnings(trustEntry?.warnings ?? []);
     const deranked = warnings.some((w) => w.severity === 'derank' || w.severity === 'hide');
     const hidden = warnings.some((w) => w.severity === 'hide');
@@ -162,6 +172,15 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
       trustEntry,
       extras,
       releases,
+      downloads:
+        downloads === null
+          ? null
+          : {
+              total: downloads.totalDownloads,
+              monthly: downloads.monthlyDownloads,
+              createdAt: downloads.createdAt,
+            },
+      downloadsStale: downloads !== null && downloads.fetchedAt !== input.packagist.fetchedAt,
       summaryBase: {
         name: source.name,
         vendor: vendorSlug,
@@ -212,6 +231,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
     assembled.map((a) => ({
       installs: a.summaryBase.popularity.installs,
       githubStars: a.summaryBase.popularity.githubStars,
+      downloads: a.downloads,
     })),
     rankingConfig,
     now,
@@ -220,6 +240,14 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
   const packages: PackageSummary[] = assembled
     .map((a) => ({
       ...a.summaryBase,
+      activity:
+        a.downloads === null
+          ? null
+          : {
+              monthlyDownloads: a.downloads.monthly,
+              momentum: roundMomentum(packageMomentum(a.downloads, rankingConfig, rankingContext)),
+              stale: a.downloadsStale,
+            },
       ranking: rankPackage(
         {
           editorialPick: a.summaryBase.trust.editorialPick,
@@ -229,6 +257,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
           latestReleasedAt: a.summaryBase.latestReleasedAt,
           installs: a.summaryBase.popularity.installs,
           githubStars: a.summaryBase.popularity.githubStars,
+          downloads: a.downloads,
           deranked: a.summaryBase.trust.deranked,
           abandoned: a.summaryBase.abandoned,
         },
@@ -280,6 +309,12 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         stale: false,
         fetchedAt: input.githubFetchedAt,
       },
+      {
+        id: 'packagist',
+        ok: input.packagistOk,
+        stale: assembled.some((a) => a.downloadsStale),
+        fetchedAt: input.packagist.packages.length > 0 ? input.packagist.fetchedAt : null,
+      },
     ],
     rankingConfigVersion: rankingConfig.version,
     categories: buildCategoryEntries(packages, categories),
@@ -296,6 +331,11 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
       categories,
     ),
   };
+}
+
+/** Same precision as ranking.components, so the two published numbers agree. */
+function roundMomentum(momentum: number | null): number | null {
+  return momentum === null ? null : Math.round(momentum * 1e6) / 1e6;
 }
 
 function sortWarnings(warnings: PackageWarning[]): PackageWarning[] {

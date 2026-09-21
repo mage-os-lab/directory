@@ -56,6 +56,7 @@ const feed: Feed = {
         hidden: false,
       },
       popularity: { installs: 100, githubStars: 142 },
+      activity: { monthlyDownloads: 340, momentum: 0.62, stale: false },
       ranking: { score: 0.7, components: { qualityTier: 0.8 } },
     },
     {
@@ -87,6 +88,7 @@ const feed: Feed = {
         hidden: false,
       },
       popularity: { installs: 20, githubStars: 0 },
+      activity: null,
       ranking: { score: 0.3, components: { qualityTier: 0.4 } },
     },
     {
@@ -125,6 +127,7 @@ const feed: Feed = {
         hidden: false,
       },
       popularity: { installs: 4, githubStars: null },
+      activity: null,
       ranking: { score: 0.1, components: { qualityTier: 0.1 } },
     },
   ],
