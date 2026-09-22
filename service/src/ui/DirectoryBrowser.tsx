@@ -2,9 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import MiniSearch from 'minisearch';
 import {
   POPULAR_PERCENTILE,
+  TRENDING_MOMENTUM,
+  TRENDING_VOLUME_PERCENTILE,
   installsAtPercentile,
   isHighQuality,
   isPopular,
+  isTrending,
+  monthlyDownloadsAtPercentile,
 } from '../shared/merits.js';
 import { qualityLabel } from '../shared/quality.js';
 import { compareVersions, isNewer } from '../shared/version.js';
@@ -64,7 +68,16 @@ export const RECENT_DAYS = 365;
 // The merit predicates live in src/shared so the prerendered pages agree
 // with the island; re-exported here for the tests and embedders that import
 // them from the UI.
-export { POPULAR_PERCENTILE, installsAtPercentile, isHighQuality, isPopular };
+export {
+  POPULAR_PERCENTILE,
+  TRENDING_MOMENTUM,
+  TRENDING_VOLUME_PERCENTILE,
+  installsAtPercentile,
+  isHighQuality,
+  isPopular,
+  isTrending,
+  monthlyDownloadsAtPercentile,
+};
 
 export function composerCommand(entries: Array<{ name: string; version: string | null }>): string {
   const args = entries.map((e) => (e.version ? `${e.name}:^${e.version}` : e.name));
@@ -107,6 +120,7 @@ const SORTS: Array<{ key: SortKey; label: string }> = [
   { key: 'recommended', label: 'Recommended' },
   { key: 'installs', label: 'Most installed' },
   { key: 'stars', label: 'Most starred' },
+  { key: 'trending', label: 'Trending' },
   { key: 'recency', label: 'Recently released' },
   { key: 'name', label: 'Name A–Z' },
 ];
@@ -206,10 +220,13 @@ export function releasedAgo(iso: string | null, now: number = Date.now()): strin
   return `updated ${years} year${years === 1 ? '' : 's'} ago`;
 }
 
-/** Install counts are scale, not accounting: 9.8k reads faster than 9,847. */
-export function installsLabel(installs: number): string {
-  if (installs < 1000) return String(installs);
-  const thousands = installs / 1000;
+/**
+ * Counts on a card are scale, not accounting: 9.8k reads faster than 9,847.
+ * Shared by installs and stars so the two read as the same kind of number.
+ */
+export function countLabel(count: number): string {
+  if (count < 1000) return String(count);
+  const thousands = count / 1000;
   const rounded = thousands >= 10 ? String(Math.round(thousands)) : thousands.toFixed(1);
   return `${rounded.replace(/\.0$/, '')}k`;
 }
@@ -225,6 +242,14 @@ function compare(a: PackageSummary, b: PackageSummary, sort: SortKey): number {
       return (b.popularity.installs ?? -1) - (a.popularity.installs ?? -1);
     case 'stars':
       return (b.popularity.githubStars ?? -1) - (a.popularity.githubStars ?? -1);
+    case 'trending': {
+      // Momentum first, volume as the tiebreak: of two packages growing
+      // alike, the one more people are downloading leads.
+      const momentum = (b.activity?.momentum ?? -1) - (a.activity?.momentum ?? -1);
+      return momentum !== 0
+        ? momentum
+        : (b.activity?.monthlyDownloads ?? -1) - (a.activity?.monthlyDownloads ?? -1);
+    }
     case 'recency':
       return (b.latestReleasedAt ?? '').localeCompare(a.latestReleasedAt ?? '');
     case 'name':
@@ -284,6 +309,12 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   const latestMagento = useMemo(() => latestMagentoVersion(feed.packages), [feed]);
   const popularFloor = useMemo(
     () => installsAtPercentile(feed.packages, POPULAR_PERCENTILE),
+    [feed],
+  );
+  // Null until enough of the catalog reports downloads — with no floor there
+  // is no honest "trending", so the chip and the badge simply don't appear.
+  const trendingFloor = useMemo(
+    () => monthlyDownloadsAtPercentile(feed.packages, TRENDING_VOLUME_PERCENTILE),
     [feed],
   );
 
@@ -368,7 +399,15 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     chips.push({
       flag: 'popular',
       label: 'Popular',
-      title: `Top 15% of the catalog by installs (${installsLabel(popularFloor)}+)`,
+      title: `Top 15% of the catalog by installs (${countLabel(popularFloor)}+)`,
+    });
+  }
+  if (trendingFloor !== null) {
+    chips.push({
+      flag: 'trending',
+      label: 'Trending',
+      title:
+        'Growing faster than the catalog: recent downloads well above the package’s own average',
     });
   }
   if (installed) {
@@ -392,6 +431,8 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
         return isHighQuality(pkg);
       case 'popular':
         return isPopular(pkg, popularFloor);
+      case 'trending':
+        return isTrending(pkg, trendingFloor);
       case 'installed':
         return installState(pkg) !== 'not-installed';
       case 'update':
@@ -630,7 +671,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   /**
    * The marks a module has earned, for the card's bottom-left corner (the
    * install toggle holds the bottom-right): trusted vendor, editors' pick,
-   * high quality, popular. They are the same four facts
+   * high quality, popular, trending. They are the same facts
    * the "show only" chips ask about, in the same words, so what a chip narrows
    * to is what a card shows. "High quality" stands in for PackageMaven's top
    * two tiers; the tier's own name is a tooltip, because "strict checks pass"
@@ -657,6 +698,14 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     }
     if (isPopular(pkg, popularFloor)) {
       badges.push({ key: 'popular', label: 'Popular', title: 'Top 15% of the catalog by installs' });
+    }
+    if (isTrending(pkg, trendingFloor)) {
+      badges.push({
+        key: 'trending',
+        label: '↗ Trending',
+        title:
+          'Growing faster than the catalog: recent downloads well above the package’s own average',
+      });
     }
     return badges;
   };
@@ -895,7 +944,13 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                 <p class="mosd-card-stats">
                   {pkg.popularity.installs !== null && (
                     <span class="mosd-stat">
-                      <strong>{installsLabel(pkg.popularity.installs)}</strong> installs
+                      <strong>{countLabel(pkg.popularity.installs)}</strong> installs
+                    </span>
+                  )}
+                  {pkg.popularity.githubStars !== null && pkg.popularity.githubStars > 0 && (
+                    <span class="mosd-stat" title="GitHub stars">
+                      <span class="mosd-star" aria-hidden="true">★</span>{' '}
+                      <strong>{countLabel(pkg.popularity.githubStars)}</strong> stars
                     </span>
                   )}
                   {age !== null && <span class="mosd-stat">{age}</span>}

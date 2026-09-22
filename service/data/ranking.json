@@ -1,14 +1,16 @@
 {
   "$schema": "./ranking.schema.json",
-  "version": "2026-07-02.1",
+  "version": "2026-09-20.1",
   "weights": {
-    "editorialPick": 0.2,
+    "editorialPick": 0.15,
     "partnerTier": 0.1,
-    "trustedVendor": 0.1,
-    "qualityTier": 0.25,
-    "freshness": 0.15,
-    "installs": 0.12,
-    "stars": 0.08
+    "trustedVendor": 0.05,
+    "qualityTier": 0.27,
+    "freshness": 0.12,
+    "installs": 0.06,
+    "recentInstalls": 0.13,
+    "momentum": 0.06,
+    "stars": 0.06
   },
   "qualityTierValues": {
     "strict-compliant": 1.0,
@@ -24,6 +26,7 @@
   },
   "freshnessHalfLifeDays": 180,
   "popularityPercentile": 0.95,
+  "momentumCeiling": 4,
   "penalties": {
     "deranked": 0.3,
     "abandoned": 0.1

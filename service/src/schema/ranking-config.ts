@@ -16,6 +16,10 @@ export const rankingConfig = z
       qualityTier: weight,
       freshness: weight,
       installs: weight,
+      /** Trailing-30-day downloads — the adoption a package has *now*. */
+      recentInstalls: weight,
+      /** Recent downloads against the package's own lifetime average. */
+      momentum: weight,
       stars: weight,
     }),
     qualityTierValues: z.record(qualityTier, z.number().min(0).max(1)),
@@ -23,6 +27,12 @@ export const rankingConfig = z
     freshnessHalfLifeDays: z.number().positive(),
     /** Corpus percentile installs/stars are log-normalized against. */
     popularityPercentile: z.number().gt(0).lt(1),
+    /**
+     * Momentum ratio (relative to the corpus median) that scores 1.0; its
+     * reciprocal scores 0 and the median 0.5. 4 means "growing four times
+     * faster than typical" is the ceiling.
+     */
+    momentumCeiling: z.number().gt(1),
     penalties: z.object({
       deranked: z.number().min(0).max(1),
       abandoned: z.number().min(0).max(1),

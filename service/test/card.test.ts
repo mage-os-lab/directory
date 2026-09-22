@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
   POPULAR_PERCENTILE,
+  countLabel,
   installsAtPercentile,
-  installsLabel,
   isHighQuality,
   isPopular,
   isRecent,
+  isTrending,
   isRisky,
   latestMagentoVersion,
   magentoRange,
   releaseLine,
+  monthlyDownloadsAtPercentile,
   releasedAgo,
 } from '../src/ui/DirectoryBrowser.js';
 import type { PackageSummary } from '../src/ui/types.js';
@@ -56,14 +58,20 @@ describe('releasedAgo', () => {
   });
 });
 
-describe('installsLabel', () => {
+describe('countLabel', () => {
   it('shows scale, not accounting', () => {
-    expect(installsLabel(0)).toBe('0');
-    expect(installsLabel(940)).toBe('940');
-    expect(installsLabel(1000)).toBe('1k');
-    expect(installsLabel(8700)).toBe('8.7k');
-    expect(installsLabel(9847)).toBe('9.8k');
-    expect(installsLabel(25_400)).toBe('25k');
+    expect(countLabel(0)).toBe('0');
+    expect(countLabel(940)).toBe('940');
+    expect(countLabel(1000)).toBe('1k');
+    expect(countLabel(8700)).toBe('8.7k');
+    expect(countLabel(9847)).toBe('9.8k');
+    expect(countLabel(25_400)).toBe('25k');
+  });
+
+  it('reads the same for a star count, which is usually the small kind', () => {
+    expect(countLabel(3)).toBe('3');
+    expect(countLabel(142)).toBe('142');
+    expect(countLabel(1480)).toBe('1.5k');
   });
 });
 
@@ -173,5 +181,65 @@ describe('releaseLine', () => {
 
   it('leaves a pre-release alone — only -p<n> is a patch release', () => {
     expect(releaseLine('2.4.9-beta1')).toBe('2.4.9-beta1');
+  });
+});
+
+describe('monthlyDownloadsAtPercentile', () => {
+  const withMonthly = (monthlyDownloads: number | null) =>
+    pkg({
+      activity:
+        monthlyDownloads === null ? null : { monthlyDownloads, momentum: 0.8, stale: false },
+    });
+
+  it('is the nearest-rank percentile of packages Packagist reported on', () => {
+    const packages = [10, 20, 30, 40, 50, 60, null].map(withMonthly);
+    expect(monthlyDownloadsAtPercentile(packages, 0.5)).toBe(30);
+  });
+
+  it('declines to set a floor when too few packages report downloads', () => {
+    expect(monthlyDownloadsAtPercentile([10, 20, 30].map(withMonthly), 0.5)).toBeNull();
+  });
+});
+
+describe('isTrending', () => {
+  const FLOOR = 100;
+  const trust = (over: Partial<PackageSummary['trust']> = {}): PackageSummary['trust'] => ({
+    trustedVendor: false,
+    partnerTier: null,
+    editorialPick: false,
+    warnings: [],
+    deranked: false,
+    hidden: false,
+    ...over,
+  });
+  const trending = (over: Partial<PackageSummary> = {}) =>
+    pkg({
+      abandoned: false,
+      trust: trust(),
+      activity: { monthlyDownloads: 500, momentum: 0.8, stale: false },
+      ...over,
+    });
+
+  it('is true for real growth with real volume behind it', () => {
+    expect(isTrending(trending(), FLOOR)).toBe(true);
+  });
+
+  it('is false without growth, without volume, or without either number', () => {
+    const activity = (monthlyDownloads: number, momentum: number | null) => ({
+      monthlyDownloads,
+      momentum,
+      stale: false,
+    });
+    expect(isTrending(trending({ activity: activity(500, 0.6) }), FLOOR)).toBe(false);
+    expect(isTrending(trending({ activity: activity(50, 0.9) }), FLOOR)).toBe(false);
+    expect(isTrending(trending({ activity: activity(500, null) }), FLOOR)).toBe(false);
+    expect(isTrending(trending({ activity: null }), FLOOR)).toBe(false);
+    expect(isTrending(trending(), null)).toBe(false);
+  });
+
+  it('never badges something the directory is warning readers away from', () => {
+    expect(isTrending(trending({ abandoned: true }), FLOOR)).toBe(false);
+    expect(isTrending(trending({ trust: trust({ deranked: true }) }), FLOOR)).toBe(false);
+    expect(isTrending(trending({ trust: trust({ hidden: true }) }), FLOOR)).toBe(false);
   });
 });

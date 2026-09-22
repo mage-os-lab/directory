@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import {
   loadCategories,
+  loadPackagistSnapshot,
   loadRankingConfig,
   loadSnapshot,
   loadVendorFiles,
@@ -14,7 +15,13 @@ import { mergeToFeed } from './merge.js';
 import { emitArtifacts } from './emit.js';
 import { disabledGithubExtras, fetchGithubExtras } from './github.js';
 import { fetchPackageMavenSnapshot } from './packagemaven.js';
-import { packageMavenSnapshot, type PackageMavenSnapshot } from '../schema/source.js';
+import { fetchPackagistStats } from './packagist.js';
+import {
+  packageMavenSnapshot,
+  packagistSnapshot,
+  type PackageMavenSnapshot,
+  type PackagistSnapshot,
+} from '../schema/source.js';
 
 interface PipelineOptions {
   source: 'fixture' | 'live';
@@ -67,6 +74,25 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
       : disabledGithubExtras();
   warnings.push(...github.warnings);
 
+  // Packagist download stats drive the recent-installs and momentum signals.
+  // A fixture build reads a fixture snapshot; a live build fetches fresh
+  // counters, carrying forward the previously published entry for any
+  // package the paced fetch did not reach.
+  let packagist: PackagistSnapshot;
+  let packagistOk: boolean;
+  if (options.source === 'fixture') {
+    packagist = loadPackagistSnapshot(path.join(dataDir, 'fixtures', 'packagist-stats.json'));
+    packagistOk = true;
+  } else {
+    const live = await fetchLivePackagistStats(
+      snapshot.packages.map((p) => p.name),
+      options.now,
+    );
+    packagist = live.snapshot;
+    packagistOk = live.ok;
+    warnings.push(...live.warnings);
+  }
+
   const { feed, details, danglingTrustEntries, unmappedCategories } = mergeToFeed({
     snapshot,
     snapshotStale,
@@ -76,6 +102,8 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
     github: github.extras,
     githubOk: github.ok,
     githubFetchedAt: github.fetchedAt,
+    packagist,
+    packagistOk,
     now: options.now,
   });
 
@@ -91,7 +119,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
     );
   }
 
-  const result = emitArtifacts(options.outDir, feed, details, snapshot);
+  const result = emitArtifacts(options.outDir, feed, details, snapshot, packagist);
   return {
     feedHash: result.feedHash,
     packageCount: feed.packages.length,
@@ -154,6 +182,41 @@ async function fetchLiveSnapshot(now: Date): Promise<{
     `PM fetch failed (${fetchError}) and PUBLISHED_BASE_URL is not set — nothing to carry ` +
       `forward. First-ever run? Bootstrap with --source fixture.`,
   );
+}
+
+/**
+ * Live Packagist stats, seeded with the previously published snapshot
+ * (PUBLISHED_BASE_URL/api/v1/sources/packagist.json) so a package the paced
+ * fetch misses keeps last run's counters. No published snapshot — a first
+ * run, or the variable unset — just means no carry-forward.
+ */
+async function fetchLivePackagistStats(
+  packages: string[],
+  now: Date,
+): Promise<{ snapshot: PackagistSnapshot; ok: boolean; warnings: string[] }> {
+  const warnings: string[] = [];
+  let previous: PackagistSnapshot | null = null;
+  const publishedBase = process.env.PUBLISHED_BASE_URL;
+  if (publishedBase) {
+    try {
+      previous = await fetchPublishedPackagistSnapshot(publishedBase);
+    } catch (error) {
+      warnings.push(
+        `previous Packagist snapshot unavailable (${(error as Error).message}) — ` +
+          'nothing to carry forward this run',
+      );
+    }
+  }
+  const result = await fetchPackagistStats({ packages, now, previous });
+  return { snapshot: result.snapshot, ok: result.ok, warnings: [...warnings, ...result.warnings] };
+}
+
+export async function fetchPublishedPackagistSnapshot(
+  publishedBase: string,
+): Promise<PackagistSnapshot> {
+  const response = await fetch(new URL('/api/v1/sources/packagist.json', publishedBase));
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return packagistSnapshot.parse(await response.json());
 }
 
 /**

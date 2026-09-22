@@ -61,6 +61,9 @@ const popularFloor = installsAtPercentile(feed.packages, POPULAR_PERCENTILE);
               {pkg.popularity.installs !== null && (
                 <span class="stat">{pkg.popularity.installs.toLocaleString()} installs</span>
               )}
+              {pkg.popularity.githubStars !== null && pkg.popularity.githubStars > 0 && (
+                <span class="stat">★ {pkg.popularity.githubStars.toLocaleString()} stars</span>
+              )}
             </p>
           </li>
         ))}

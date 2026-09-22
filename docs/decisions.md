@@ -299,3 +299,46 @@ ignore it); an admin-notification inbox entry (global, not role-gated, and read 
 shared across users); a per-user dismissal (needs somewhere to keep it, and the ask was a
 setting); showing the panel to anyone who can open the directory page (the ACL for
 viewing the catalogue is deliberately broad, the decision to install is not).
+
+## 15. Trend joins the default ranking, from stateless Packagist counters
+
+**Decision:** the pipeline fetches Packagist's documented per-package stats endpoint
+(lifetime, trailing-30-day and daily downloads plus the date Packagist first saw the
+package) and publishes the result as `api/v1/sources/packagist.json`. Two signals join
+the default score: **recentInstalls** (0.13), the trailing-30-day count log-normalized
+against the corpus like lifetime installs, and **momentum** (0.06), the package's last
+30 days against its own lifetime monthly average, normalized so the corpus median scores
+0.5 and `momentumCeiling` (4) times the median scores 1. Every package carries an
+additive `activity: { monthlyDownloads, momentum, stale } | null` block, and the browse
+UI gains a gated **Trending** chip, badge and sort. Lifetime `installs` drops to 0.06,
+`trustedVendor` to 0.05 and `editorialPick` to 0.15.
+
+**Why:** total ÷ age is a lifetime average, so the stats endpoint alone makes "is this
+growing?" computable with no history store, no database and no scheduled scraping of our
+own — the same stateless-artifact discipline as decision 1. The ratio is taken against
+the corpus median rather than against 1 because the whole ecosystem's download counts
+grow: a ratio near 1.8 is the tide, not a story, and only the deviation from typical is
+signal. recentInstalls takes half of installs' old weight so that a module with real
+adoption *today* can stand beside a veteran whose lifetime total is fifty times larger —
+which is the point of the feature, and is what `rank.test.ts` pins. Momentum itself
+stays small (0.06) because it is the most volatile and most gameable number here: a
+nightly CI job installing a package looks exactly like adoption. The Trending mark is
+gated for the same reason — momentum above 0.75, monthly downloads at or above the
+catalog median, and not abandoned, deranked or hidden — because a directory whose
+premise is trust must not badge something it is simultaneously warning readers away
+from. Trimming trusted vendor and editors' pick keeps the marks from dominating a score
+that now has more to say. Politeness is part of the decision, not an implementation
+detail: 4 requests a second, concurrency 3, a `mailto:` User-Agent, one Retry-After-
+honouring retry, a breaker on the second throttle, request and time budgets, and
+carry-forward of any package the run did not reach from the previously published
+snapshot — which is why the snapshot is an artifact rather than a database.
+
+**Rejected:** the undocumented chart-history endpoint (`stats/all.json`) — a richer
+series, but unpublished, unversioned and a heavier request per package, and building a
+default ranking signal on something Packagist never promised is how a directory breaks
+quietly; a time series persisted by the pipeline (state to store, migrate and trust,
+for a number two published counters already imply); GitHub commit velocity (a better
+maintenance signal than downloads and worth adding later, but it measures the
+maintainer's activity, not the market's, and the GitHub budget is already spent on
+READMEs and stars); keeping trend as a separate "what's rising" view only (a view
+nobody sorts by changes nothing about which modules a reader actually sees first).

@@ -16,6 +16,8 @@ PackageMaven API ────┐
                      ├─→ pipeline (GitHub Actions, daily + on push to service/)
 GitHub API ──────────┤      fetch → merge trust data → rank → validate → emit
                      │
+Packagist stats ─────┤
+                     │
 data/vendors/*.json ─┘
                             │
                             ▼
@@ -120,6 +122,27 @@ retry loop or build failure. READMEs are republished under the package's own
 open-source license with a link back to the source; takedown requests are honored via
 the repo's issue tracker.
 
+### Packagist (download activity, failure-tolerant)
+
+- **Download counters** from Packagist's documented per-package stats endpoint
+  (`/packages/<vendor>/<name>/stats.json`): lifetime total, trailing 30 days, the last
+  day, and the date Packagist first saw the package. Total ÷ age is the package's
+  lifetime monthly average, so "is it growing?" is answerable without the pipeline
+  keeping any history of its own.
+- They feed the `recentInstalls` and `momentum` ranking signals and the published
+  `activity` block (see [Ranking](#ranking)), and nothing else depends on them.
+
+Packagist publishes no numeric rate limit, so the client paces itself to its stated
+terms: 4 request starts a second corpus-wide, concurrency 3, a `mailto:`-bearing
+User-Agent, one Retry-After-honouring retry, and a breaker that stops the whole step on
+a second throttling response or when the run's request or time budget is spent. Nothing
+in it throws. A package the run did not reach keeps the entry from the previously
+published `sources/packagist.json` (dropped once it passes 30 days old), which is why
+the snapshot is an artifact rather than a database; the feed's `packagist` source entry
+reports `stale` whenever any package's counters were carried forward, and each affected
+package's `activity.stale` says which. A package with no counters at all carries
+`activity: null` and simply drops both trend signals from its score.
+
 ### Mage-OS vendor trust files (trust layer)
 
 Human-curated trust data lives in this repository as `data/vendors/<vendor>.json` —
@@ -182,6 +205,7 @@ A TypeScript script under `src/pipeline/`, run by GitHub Actions:
 | `/api/v1/feed.json` | Everything the search/browse UI needs: all packages (slim records), vendors, categories, source status |
 | `/api/v1/packages/<vendor>/<name>.json` | Full detail per package, including sanitized README HTML |
 | `/api/v1/sources/packagemaven.json` | The latest raw normalized PM snapshot — carry-forward source for failed fetches, and an audit trail of what PM provided vs. what we derived |
+| `/api/v1/sources/packagist.json` | The latest Packagist download counters per package — the trend signals' only state, and the carry-forward source for packages a paced run did not reach |
 
 Versioning: the `/api/v1/` path prefix plus a `schemaVersion` field inside each payload.
 A breaking schema change publishes `/api/v2/` alongside v1 for a deprecation window.
@@ -244,6 +268,12 @@ interface PackageSummary {
     installs: number | null;      // PackageMaven install count
     githubStars: number | null;
   };
+  activity: {                     // Packagist download counters; null when Packagist
+    monthlyDownloads: number;     // had nothing for this package and nothing to carry
+    momentum: number | null;      // 0..1 vs the package's own lifetime average, corpus-
+                                  // relative (0.5 = typical); null without a start date
+    stale: boolean;               // true when these counters came from an earlier run
+  } | null;
   ranking: {
     score: number;                // 0..1
     components: Record<string, number>;  // per-signal breakdown, for transparency;
@@ -341,18 +371,22 @@ live in `data/ranking.json` so curators can tune ranking with a one-file PR:
 ```json
 {
   "weights": {
-    "editorialPick": 0.20,
+    "editorialPick": 0.15,
     "partnerTier": 0.10,
-    "trustedVendor": 0.10,
-    "qualityTier": 0.25,
-    "freshness": 0.15,
-    "installs": 0.12,
-    "stars": 0.08
+    "trustedVendor": 0.05,
+    "qualityTier": 0.27,
+    "freshness": 0.12,
+    "installs": 0.06,
+    "recentInstalls": 0.13,
+    "momentum": 0.06,
+    "stars": 0.06
   },
   "qualityTierValues": { "strict-compliant": 1.0, "no-errors": 0.8,
                          "ready-to-install": 0.5, "needs-help": 0.15 },
   "partnerTierValues": { "platinum": 1.0, "gold": 0.8, "silver": 0.6, "bronze": 0.4 },
   "freshnessHalfLifeDays": 180,
+  "popularityPercentile": 0.95,
+  "momentumCeiling": 4,
   "penalties": { "deranked": 0.3, "abandoned": 0.1 }
 }
 ```
@@ -362,6 +396,22 @@ live in `data/ranking.json` so curators can tune ranking with a one-file PR:
   a future-dated release can't exceed 1), installs and stars log-normalized against the
   corpus 95th percentile (so giant vendors don't flatten the scale; a degenerate
   percentile of 0 makes the whole signal unavailable rather than dividing by zero).
+- **`recentInstalls`** is Packagist's trailing-30-day count, log-normalized the same way
+  as lifetime installs. It carries twice installs' weight deliberately: what a module is
+  downloaded *now* says more about whether to install it than what it accumulated over
+  a decade.
+- **`momentum`** is the package's last 30 days against its own lifetime monthly average
+  — `(monthly + k) / (lifetimeAverage + k)`, with `k` the corpus median monthly count so
+  3 → 30 downloads isn't a tenfold story, and age floored at one month so a package
+  Packagist met last week reads as neutral. That raw ratio is then mapped onto 0..1
+  against the *corpus median* ratio: the median scores 0.5, `momentumCeiling` (4) times
+  the median scores 1, its reciprocal 0, log-symmetric in between. The median matters —
+  ecosystem-wide download growth makes ~1.8 the typical ratio, and only the deviation
+  from typical is signal. It keeps a small weight (0.06) because it is volatile and
+  gameable (a nightly CI job installing a package looks exactly like adoption), and it
+  is unavailable — omitted, not zeroed — when Packagist reports no start date. The same
+  0..1 number is published as `activity.momentum`, so the Trending mark and the ranking
+  never disagree.
 - **Missing data is not a zero score.** When a signal's underlying data is unavailable
   (null installs, null stars — e.g. non-GitHub repos — or no release date), that
   component is *omitted* and the remaining weights are renormalized to sum to 1. This
@@ -418,7 +468,8 @@ mountDirectory(el: HTMLElement, options: {
   initialFilters?: {                // seeds the controls; sort and flags are the same
     category?: string; query?: string; sort?: SortKey;
     flags?: FilterFlag[];            // 'trusted' | 'picks' | 'tested' | 'recent' |
-                                     // 'quality' | 'popular' | 'installed' | 'update'
+                                     // 'quality' | 'popular' | 'trending' |
+                                     // 'installed' | 'update'
     quality?: string[];              // tier allowlist; honoured, no control of its own
   };
   baseUrl?: string;                // href prefix for linkMode 'href'; default ""
@@ -499,8 +550,10 @@ time, and the chips on each card are the same control); "show only" chips that e
 answer one shortlisting question and combine with AND — Trusted vendor, Editors' picks,
 Tested with &lt;version&gt;, Recently updated (a release in the last 12 months), High
 quality (PackageMaven's top two tiers), Popular (top 15% of the catalog by installs),
-plus Installed and Update available where the host supplied `installed`; sort
-(recommended by ranking score, installs, stars, recency, name); pages of 24 cards that
+Trending (momentum above the catalog's own growth, with volume behind it, and no
+abandonment or warning against it), plus Installed and Update available where the host
+supplied `installed`; sort (recommended by ranking score, installs, stars, trending,
+recency, name); pages of 24 cards that
 load as the reader nears the end, with "Show more" as the fallback; README on detail
 pages; vendor pages. Quality tier is not a filter of its
 own — "Known issues" is not something anyone narrows *to* — and a card names only the

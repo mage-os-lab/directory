@@ -24,11 +24,13 @@ const FLAGS: ReadonlySet<string> = new Set<FilterFlag>([
   'recent',
   'quality',
   'popular',
+  'trending',
 ]);
 const SORTS: ReadonlySet<string> = new Set<SortKey>([
   'recommended',
   'installs',
   'stars',
+  'trending',
   'recency',
   'name',
 ]);

@@ -92,9 +92,42 @@ export const packageMavenSnapshot = z.object({
 });
 export type PackageMavenSnapshot = z.infer<typeof packageMavenSnapshot>;
 
+/**
+ * One package's download counters as Packagist reports them: lifetime,
+ * trailing 30 days, and the last day, plus when Packagist first saw the
+ * package. Total and createdAt together give the lifetime average, so the
+ * momentum signal (rank.ts) needs no history of our own.
+ */
+export const packagistPackageStats = z.object({
+  name: packageName,
+  totalDownloads: z.number().int().min(0),
+  monthlyDownloads: z.number().int().min(0),
+  dailyDownloads: z.number().int().min(0),
+  /** Packagist's "date" — when it started counting; null if it didn't say. */
+  createdAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  /** When *this entry* was fetched — older than the snapshot when carried forward. */
+  fetchedAt: isoDateTime,
+});
+export type PackagistPackageStats = z.infer<typeof packagistPackageStats>;
+
+/**
+ * The Packagist download-stats snapshot, published as
+ * dist/api/v1/sources/packagist.json. It is the only state the trend signals
+ * have: a run that cannot reach Packagist for a package carries that entry
+ * forward from the previously published snapshot, marked by its older
+ * fetchedAt, instead of keeping a database.
+ */
+export const packagistSnapshot = z.object({
+  schemaVersion: z.literal(1),
+  fetchedAt: isoDateTime,
+  origin: z.enum(['live', 'fixture']),
+  packages: z.array(packagistPackageStats),
+});
+export type PackagistSnapshot = z.infer<typeof packagistSnapshot>;
+
 /** Per-source status block published in the feed. */
 export const sourceStatus = z.object({
-  id: z.enum(['packagemaven', 'github']),
+  id: z.enum(['packagemaven', 'github', 'packagist']),
   ok: z.boolean(),
   /** True when this run reused a previous snapshot because the fetch failed. */
   stale: z.boolean(),

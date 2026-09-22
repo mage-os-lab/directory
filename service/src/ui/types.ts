@@ -7,13 +7,13 @@ import type { Feed, PackageSummary } from '../schema/feed.js';
 
 export type { Feed, PackageSummary };
 
-export type SortKey = 'recommended' | 'installs' | 'stars' | 'recency' | 'name';
+export type SortKey = 'recommended' | 'installs' | 'stars' | 'trending' | 'recency' | 'name';
 
 /**
  * The one-click filters. Each answers a question a reader asks before
  * shortlisting: who stands behind it, does it fit, is anyone maintaining it,
- * is it any good, does anyone use it — plus, where the host knows the shop,
- * do I already run it.
+ * is it any good, does anyone use it, is it catching on — plus, where the
+ * host knows the shop, do I already run it.
  */
 export type FilterFlag =
   | 'trusted'
@@ -22,6 +22,7 @@ export type FilterFlag =
   | 'recent'
   | 'quality'
   | 'popular'
+  | 'trending'
   | 'installed'
   | 'update';
 

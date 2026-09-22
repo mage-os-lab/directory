@@ -220,6 +220,7 @@ const jsonLd = {
   <p class="detail-stats">
     {pkg.popularity.installs !== null && <span>{pkg.popularity.installs.toLocaleString()} installs</span>}
     {pkg.popularity.githubStars !== null && <span>★ {pkg.popularity.githubStars.toLocaleString()} stars</span>}
+    {pkg.activity !== null && <span>{pkg.activity.monthlyDownloads.toLocaleString()} downloads/month</span>}
     {pkg.latestVersion && <span>Latest: v{pkg.latestVersion}</span>}
     {pkg.latestReleasedAt && <span>Released {pkg.latestReleasedAt.slice(0, 10)}</span>}
     {pkg.license && pkg.license.length > 0 && <span>License: {pkg.license.join(', ')}</span>}

@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
-import { categoriesFile, packageMavenSnapshot } from '../schema/source.js';
-import type { CategoriesFile, PackageMavenSnapshot } from '../schema/source.js';
+import { categoriesFile, packageMavenSnapshot, packagistSnapshot } from '../schema/source.js';
+import type { CategoriesFile, PackageMavenSnapshot, PackagistSnapshot } from '../schema/source.js';
 import { rankingConfig, type RankingConfig } from '../schema/ranking-config.js';
 import { validateWarningEvidence, vendorFile, type VendorFile } from '../schema/vendor-file.js';
 
@@ -67,6 +67,11 @@ export function loadSnapshot(filePath: string): PackageMavenSnapshot {
  * example trust data — fake tiers, a fake security warning — from ever
  * reaching a live build.
  */
+/** A Packagist download-stats snapshot (fixture or previously published). */
+export function loadPackagistSnapshot(filePath: string): PackagistSnapshot {
+  return parseWith(packagistSnapshot, filePath);
+}
+
 export function vendorsDirFor(dataDir: string, source: 'live' | 'fixture'): string {
   return source === 'fixture'
     ? path.join(dataDir, 'fixtures', 'vendors')

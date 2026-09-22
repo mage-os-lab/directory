@@ -615,6 +615,16 @@
   font-weight: 600;
 }
 
+/* The star glyph is what makes a star count scannable in a row of muted
+ * text. It stays the text colour rather than a gold badge — stars are
+ * popularity, not an endorsement, and the card's colours are spoken for. A
+ * notch smaller than the digits, because ★ draws larger than a numeral at
+ * the same size. */
+.mosd-star {
+  color: var(--mosd-fg);
+  font-size: 11px;
+}
+
 /* The fit answer, for surfaces with no shop version to compare against. */
 .mosd-card-span {
   border: 1px solid var(--mosd-border);
@@ -674,13 +684,14 @@
   white-space: nowrap;
 }
 
-/* The four earned marks, each in the tone it already has elsewhere: trusted
+/* The earned marks, each in the tone it already has elsewhere: trusted
  * shares the verified green, the pick the accent, high quality its own tint,
- * and popular the plain soft fill — a count, not a verdict. */
+ * and popular and trending the plain soft fill — counts, not verdicts. */
 .mosd-badge-trusted { background: var(--mosd-ok-soft); color: var(--mosd-ok); }
 .mosd-badge-pick { background: var(--mosd-accent-soft); color: var(--mosd-accent); }
 .mosd-badge-high-quality { background: var(--mosd-quality-bg); color: var(--mosd-quality-fg); }
 .mosd-badge-popular { color: var(--mosd-fg); }
+.mosd-badge-trending { color: var(--mosd-fg); }
 
 /* Empty, loading and error states share one quiet, centred voice. */
 

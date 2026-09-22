@@ -10,8 +10,18 @@ export interface RankingInput {
   latestReleasedAt: string | null;
   installs: number | null;
   githubStars: number | null;
+  /** Packagist download counters; null when the package has none this run. */
+  downloads: DownloadCounters | null;
   deranked: boolean;
   abandoned: boolean | null;
+}
+
+/** The slice of a Packagist stats entry the trend signals read. */
+export interface DownloadCounters {
+  total: number;
+  monthly: number;
+  /** YYYY-MM-DD; null means the lifetime average (and so momentum) is unknowable. */
+  createdAt: string | null;
 }
 
 export interface RankingResult {
@@ -39,6 +49,51 @@ function logNormalize(value: number, scale: number): number {
   return clamp01(Math.log1p(value) / Math.log1p(scale));
 }
 
+/** Median of the positive values, or null when there are none. */
+function medianOf(values: Array<number | null>): number | null {
+  return percentileOf(values, 0.5);
+}
+
+const DAYS_PER_MONTH = 365.25 / 12;
+
+/**
+ * How a package's last 30 days compare with its lifetime monthly average:
+ * `(monthly + k) / (lifetimeAverage + k)`, where k (the corpus median monthly
+ * count) keeps 3 → 30 downloads from reading as a tenfold surge. Age is
+ * floored at one month so a package Packagist met last week lands near 1
+ * (neutral) rather than somewhere absurd. Null when the age is unknown.
+ *
+ * This is the raw ratio; rankPackage maps it onto 0..1 relative to the
+ * corpus median, because ecosystem-wide download growth makes ~1.8 the
+ * typical value and only the deviation from typical is signal.
+ */
+export function momentumRatio(
+  downloads: DownloadCounters,
+  now: Date,
+  smoothing: number,
+): number | null {
+  if (downloads.createdAt === null) return null;
+  const created = Date.parse(`${downloads.createdAt}T00:00:00.000Z`);
+  if (Number.isNaN(created)) return null;
+  const ageMonths = Math.max(1, (now.getTime() - created) / 86_400_000 / DAYS_PER_MONTH);
+  const lifetimeAverage = downloads.total / ageMonths;
+  const k = Math.max(0, smoothing);
+  const denominator = lifetimeAverage + k;
+  if (denominator <= 0) return null;
+  return (downloads.monthly + k) / denominator;
+}
+
+/**
+ * Momentum on the 0..1 scale the ranker and the "Trending" mark share: the
+ * corpus median scores 0.5, `ceiling` times the median scores 1, and a
+ * `ceiling`th of the median scores 0 — log-symmetric, so halving and
+ * doubling are the same distance from typical.
+ */
+export function normalizeMomentum(ratio: number, median: number, ceiling: number): number {
+  if (ratio <= 0 || median <= 0) return 0;
+  return clamp01(0.5 + 0.5 * (Math.log(ratio / median) / Math.log(ceiling)));
+}
+
 /** Freshness decays with a half-life; clamped so future dates can't exceed 1. */
 function freshness(latestReleasedAt: string, now: Date, halfLifeDays: number): number {
   const ageDays = (now.getTime() - Date.parse(latestReleasedAt)) / 86_400_000;
@@ -53,13 +108,27 @@ export interface RankingContext {
   now: Date;
   installsScale: number | null;
   starsScale: number | null;
+  /** Monthly downloads at the popularity percentile. */
+  recentInstallsScale: number | null;
+  /** Corpus median monthly downloads — the momentum ratio's smoothing term. */
+  monthlyMedian: number | null;
+  /** Corpus median momentum ratio — what "typical growth" means this run. */
+  momentumMedian: number | null;
 }
 
 export function buildRankingContext(
-  packages: Array<Pick<RankingInput, 'installs' | 'githubStars'>>,
+  packages: Array<Pick<RankingInput, 'installs' | 'githubStars' | 'downloads'>>,
   config: RankingConfig,
   now: Date,
 ): RankingContext {
+  const monthly = packages.map((p) => p.downloads?.monthly ?? null);
+  const monthlyMedian = medianOf(monthly);
+  const ratios =
+    monthlyMedian === null
+      ? []
+      : packages.map((p) =>
+          p.downloads === null ? null : momentumRatio(p.downloads, now, monthlyMedian),
+        );
   return {
     now,
     installsScale: percentileOf(
@@ -70,7 +139,29 @@ export function buildRankingContext(
       packages.map((p) => p.githubStars),
       config.popularityPercentile,
     ),
+    recentInstallsScale: percentileOf(monthly, config.popularityPercentile),
+    monthlyMedian,
+    momentumMedian: medianOf(ratios),
   };
+}
+
+/**
+ * A package's momentum on the shared 0..1 scale, or null when the package
+ * has no counters, no creation date, or the corpus has no usable median.
+ * Published in the feed as `activity.momentum` and used as the momentum
+ * ranking signal, so the "Trending" mark and the ranking agree.
+ */
+export function packageMomentum(
+  downloads: DownloadCounters | null,
+  config: RankingConfig,
+  context: RankingContext,
+): number | null {
+  if (downloads === null || context.monthlyMedian === null || context.momentumMedian === null) {
+    return null;
+  }
+  const ratio = momentumRatio(downloads, context.now, context.monthlyMedian);
+  if (ratio === null) return null;
+  return normalizeMomentum(ratio, context.momentumMedian, config.momentumCeiling);
 }
 
 /**
@@ -88,6 +179,7 @@ export function rankPackage(
   context: RankingContext,
 ): RankingResult {
   const { weights } = config;
+  const momentum = packageMomentum(input.downloads, config, context);
   // Every signal is either [weight, value 0..1] or null (unavailable).
   const signals: Record<string, [number, number] | null> = {
     editorialPick: [weights.editorialPick, input.editorialPick ? 1 : 0],
@@ -111,6 +203,14 @@ export function rankPackage(
       input.installs === null || context.installsScale === null
         ? null
         : [weights.installs, logNormalize(input.installs, context.installsScale)],
+    recentInstalls:
+      input.downloads === null || context.recentInstallsScale === null
+        ? null
+        : [
+            weights.recentInstalls,
+            logNormalize(input.downloads.monthly, context.recentInstallsScale),
+          ],
+    momentum: momentum === null ? null : [weights.momentum, momentum],
     stars:
       input.githubStars === null || context.starsScale === null
         ? null

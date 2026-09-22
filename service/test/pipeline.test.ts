@@ -12,7 +12,8 @@ import {
   loadVendorFiles,
   vendorsDirFor,
 } from '../src/pipeline/load.js';
-import { packageMavenSnapshot } from '../src/schema/source.js';
+import { packageMavenSnapshot, packagistSnapshot } from '../src/schema/source.js';
+import { emptyPackagistSnapshot } from '../src/pipeline/packagist.js';
 import { vendorFile as vendorFileSchema, type VendorFile } from '../src/schema/vendor-file.js';
 
 const rootDir = path.resolve(__dirname, '..');
@@ -134,11 +135,67 @@ describe('pipeline on fixture data', () => {
       if (pkg.popularity.installs === null) {
         expect(pkg.ranking.components).not.toHaveProperty('installs');
       }
-      // GitHub fetch is disabled on fixture builds — stars never contribute.
-      expect(pkg.ranking.components).not.toHaveProperty('stars');
+      // GitHub fetch is disabled on fixture builds, so the stars signal can
+      // only come from PM's own reported count. A known zero still scores
+      // (as zero) — only an unknown count drops the signal and redistributes
+      // its weight.
+      if (pkg.popularity.githubStars === null) {
+        expect(pkg.ranking.components).not.toHaveProperty('stars');
+      } else if (pkg.popularity.githubStars === 0) {
+        expect(pkg.ranking.components['stars']).toBe(0);
+      } else {
+        expect(pkg.ranking.components['stars']).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('publishes Packagist activity, its snapshot, and the trend signals', async () => {
+    await runPipeline({ source: 'fixture', rootDir, outDir, now });
+    const feed = feedSchema.parse(
+      JSON.parse(fs.readFileSync(path.join(outDir, 'api/v1/feed.json'), 'utf8')),
+    );
+
+    // The snapshot is republished so the next live run can carry it forward.
+    const snapshotPath = path.join(outDir, 'api/v1/sources/packagist.json');
+    expect(fs.existsSync(snapshotPath)).toBe(true);
+    const snapshot = packagistSnapshot.parse(JSON.parse(fs.readFileSync(snapshotPath, 'utf8')));
+    expect(snapshot.packages.length).toBeGreaterThan(0);
+
+    // The fixture deliberately carries one entry forward from an earlier run,
+    // so the source block must report the corpus as partly stale.
+    const source = feed.sources.find((s) => s.id === 'packagist')!;
+    expect(source.ok).toBe(true);
+    expect(source.stale).toBe(true);
+    expect(source.fetchedAt).toBe(snapshot.fetchedAt);
+
+    const withActivity = feed.packages.filter((p) => p.activity !== null);
+    expect(withActivity.length).toBe(snapshot.packages.length);
+    for (const pkg of withActivity) {
+      expect(pkg.ranking.components['recentInstalls']).toBeDefined();
+    }
+
+    // Carried-forward counters say so on the package, not just the source.
+    const carried = feed.packages.find((p) => p.name === 'castlegate/module-checkout-suite')!;
+    expect(carried.activity!.stale).toBe(true);
+    expect(feed.packages.filter((p) => p.activity?.stale === true)).toHaveLength(1);
+
+    // No creation date means no lifetime average, so no momentum — but the
+    // recent-downloads signal still counts.
+    const undated = feed.packages.find((p) => p.name === 'castlegate/module-payment-gateway')!;
+    expect(undated.activity!.momentum).toBeNull();
+    expect(undated.ranking.components).not.toHaveProperty('momentum');
+    expect(undated.ranking.components['recentInstalls']).toBeDefined();
+
+    // A package Packagist had nothing for carries no activity block at all.
+    const missing = feed.packages.filter((p) => p.activity === null);
+    expect(missing.length).toBe(feed.packages.length - snapshot.packages.length);
+    for (const pkg of missing) {
+      expect(pkg.ranking.components).not.toHaveProperty('recentInstalls');
+      expect(pkg.ranking.components).not.toHaveProperty('momentum');
     }
   });
 });
+
 
 describe('trust overlay separation', () => {
   const dataDir = path.join(rootDir, 'data');
@@ -209,6 +266,8 @@ describe('display name fallback', () => {
       github: new Map(),
       githubOk: true,
       githubFetchedAt: now.toISOString(),
+      packagist: emptyPackagistSnapshot(now),
+      packagistOk: true,
       now,
     });
   }
@@ -264,6 +323,8 @@ describe('GitHub extras', () => {
       github,
       githubOk: true,
       githubFetchedAt: now.toISOString(),
+      packagist: emptyPackagistSnapshot(now),
+      packagistOk: true,
       now,
     });
   }
