@@ -1,0 +1,16 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "mage2kishan",
+  "vendorName": "Panth Infotech",
+  "url": "https://kishansavaliya.com/",
+  "trustedVendor": false,
+  "partnerTier": null,
+  "packages": {
+    "mage2kishan/module-advanced-seo": {
+      "docsUrl": "https://kishansavaliya.com/magento-2-advanced-seo.html"
+    },
+    "mage2kishan/module-ordered-items": {
+      "docsUrl": "https://kishansavaliya.com/magento-2-ordered-items.html"
+    }
+  }
+}
