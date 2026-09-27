@@ -10,7 +10,6 @@ const visible = feed.packages.filter((p) => !p.trust.hidden);
 const readyCount = visible.filter(
   (p) => p.quality.tier !== null && p.quality.tier !== 'needs-help',
 ).length;
-const needsHelpCount = visible.filter((p) => p.quality.tier === 'needs-help').length;
 const vendorCount = new Set(visible.map((p) => p.vendor)).size;
 ---
 
@@ -28,7 +27,6 @@ const vendorCount = new Set(visible.map((p) => p.vendor)).size;
     <p class="hero-stats">
       <span class="hero-stat"><strong>{visible.length}</strong> modules</span>
       <span class="hero-stat hero-stat-ready"><strong>{readyCount}</strong> ready to install</span>
-      <span class="hero-stat hero-stat-help"><strong>{needsHelpCount}</strong> need help</span>
       <span class="hero-stat"><strong>{vendorCount}</strong> vendors</span>
     </p>
   </section>
