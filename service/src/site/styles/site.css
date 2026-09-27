@@ -275,10 +275,6 @@ html[data-embed] .site-header {
   color: var(--ok);
 }
 
-.hero-stat-help strong {
-  color: var(--warn);
-}
-
 /* Section headings shared across the homepage */
 .section {
   margin-block: 40px;
