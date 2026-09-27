@@ -311,8 +311,9 @@ const jsonLd = {
         {' '}<span class="pm-attribution">(source of the quality data)</span>
       </li>
       {pkg.links.repository && <li><a href={pkg.links.repository} rel="noopener">Repository</a></li>}
-      {pkg.links.issues && <li><a href={pkg.links.issues} rel="noopener">Issues</a></li>}
-      {pkg.links.docs && <li><a href={pkg.links.docs} rel="noopener">Documentation</a></li>}
+      {/* Issues and docs URLs can come from vendor trust files, so they carry no endorsement. */}
+      {pkg.links.issues && <li><a href={pkg.links.issues} rel="noopener nofollow ugc">Issues</a></li>}
+      {pkg.links.docs && <li><a href={pkg.links.docs} rel="noopener nofollow ugc">Documentation</a></li>}
     </ul>
   </div>
 
