@@ -3,7 +3,6 @@
   "vendor": "mage2kishan",
   "vendorName": "Panth Infotech",
   "url": "https://kishansavaliya.com/",
-  "trustedVendor": false,
   "partnerTier": null,
   "packages": {
     "mage2kishan/module-advanced-seo": {
