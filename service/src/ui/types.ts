@@ -11,12 +11,11 @@ export type SortKey = 'recommended' | 'installs' | 'stars' | 'trending' | 'recen
 
 /**
  * The one-click filters. Each answers a question a reader asks before
- * shortlisting: who stands behind it, does it fit, is anyone maintaining it,
+ * shortlisting: do the maintainers recommend it, does it fit, is anyone maintaining it,
  * is it any good, does anyone use it, is it catching on — plus, where the
  * host knows the shop, do I already run it.
  */
 export type FilterFlag =
-  | 'trusted'
   | 'picks'
   | 'tested'
   | 'recent'

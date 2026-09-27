@@ -5,16 +5,26 @@
  * keeps old links alive: it sends the reader to the home page with the
  * category preselected. Static hosting has no server redirect, hence the
  * meta refresh; the canonical link keeps search engines on the target.
+ * The directory's own slugs from before it adopted PackageMaven's taxonomy
+ * redirect to the PM category that replaced them.
  */
 import { loadFeed } from '../../lib/data.js';
 import { withBase } from '../../lib/base.js';
+import { LEGACY_CATEGORY_SLUGS } from '../../../shared/categories.js';
 
 export function getStaticPaths() {
   const feed = loadFeed();
-  return feed.categories.map((category) => ({
-    params: { category: category.slug },
-    props: { category },
-  }));
+  const bySlug = new Map(feed.categories.map((c) => [c.slug, c]));
+  const legacy = Object.entries(LEGACY_CATEGORY_SLUGS)
+    .filter(([old, current]) => !bySlug.has(old) && bySlug.has(current))
+    .map(([old, current]) => ({ params: { category: old }, props: { category: bySlug.get(current)! } }));
+  return [
+    ...feed.categories.map((category) => ({
+      params: { category: category.slug },
+      props: { category },
+    })),
+    ...legacy,
+  ];
 }
 
 const { category } = Astro.props;

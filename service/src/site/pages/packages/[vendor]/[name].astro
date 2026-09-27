@@ -9,6 +9,7 @@ import {
   vendorHref,
   visiblePackages,
 } from '../../../lib/data.js';
+import { withBase } from '../../../lib/base.js';
 import { qualityLabel } from '../../../../shared/quality.js';
 
 export function getStaticPaths() {
@@ -23,6 +24,7 @@ export function getStaticPaths() {
 
 const { vendor, name } = Astro.params;
 const pkg = loadPackageDetail(vendor as string, name as string);
+const categoryNames = new Map(loadFeed().categories.map((c) => [c.slug, c.name]));
 
 
 const installCommand = `composer require ${pkg.name}`;
@@ -73,8 +75,8 @@ const jsonLd = {
       <div class="withdrawn-banner" role="alert">
         <h2>This listing has been withdrawn from search results</h2>
         <p>
-          {pkg.displayName} no longer appears in default directory search results. It remains
-          reachable here for reference only — no automatic delisting means link rot.
+          {pkg.displayName} no longer appears in default directory search results. The page
+          stays reachable here for reference, so existing links keep working.
         </p>
         <ul>
           {pkg.trust.warnings.map((w) => (
@@ -109,7 +111,6 @@ const jsonLd = {
       <span class="badge">PHPStan level {pkg.quality.phpstanLevel}</span>
     )}
     <span class="badge">Build {pkg.quality.buildStatus}</span>
-    {pkg.trust.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
     {pkg.trust.partnerTier && (
       <span class={`badge badge-partner-${pkg.trust.partnerTier}`}>{pkg.trust.partnerTier} partner</span>
     )}
@@ -176,10 +177,29 @@ const jsonLd = {
     )
   }
 
-  <p>
-    <strong>Supported Magento versions:</strong>{' '}
-    {pkg.supportedMagento.length > 0 ? pkg.supportedMagento.join(', ') : 'Not reported'}
-  </p>
+  <dl class="detail-facts">
+    <dt>Supported Magento versions</dt>
+    <dd>{pkg.supportedMagento.length > 0 ? pkg.supportedMagento.join(', ') : 'Not reported'}</dd>
+    <dt>License</dt>
+    <dd>{pkg.license && pkg.license.length > 0 ? pkg.license.join(', ') : 'Not reported'}</dd>
+    {
+      pkg.categories.length > 0 && (
+        <>
+          <dt>Categories</dt>
+          <dd>
+            {pkg.categories.map((slug, i) => (
+              <>
+                {i > 0 && ', '}
+                <a class="category-link" href={withBase(`/?category=${encodeURIComponent(slug)}`)}>
+                  {categoryNames.get(slug) ?? slug}
+                </a>
+              </>
+            ))}
+          </dd>
+        </>
+      )
+    }
+  </dl>
 
   {
     pkg.releases.length > 1 && (
@@ -211,7 +231,7 @@ const jsonLd = {
         </table>
         <p class="release-matrix-note">
           Compatibility is PackageMaven's verified test data. A version absent from a row was
-          not tested against that release — that is not a statement of incompatibility.
+          not tested against that release, which says nothing about compatibility either way.
         </p>
       </details>
     )
@@ -223,7 +243,6 @@ const jsonLd = {
     {pkg.activity !== null && <span>{pkg.activity.monthlyDownloads.toLocaleString()} downloads/month</span>}
     {pkg.latestVersion && <span>Latest: v{pkg.latestVersion}</span>}
     {pkg.latestReleasedAt && <span>Released {pkg.latestReleasedAt.slice(0, 10)}</span>}
-    {pkg.license && pkg.license.length > 0 && <span>License: {pkg.license.join(', ')}</span>}
   </p>
 
   <div class="install-block">
@@ -289,7 +308,7 @@ const jsonLd = {
       <li><a href={pkg.links.packagist} rel="noopener">Packagist</a></li>
       <li>
         <a href={pkg.links.packagemaven} rel="noopener">PackageMaven</a>
-        {' '}<span class="pm-attribution">— quality data by PackageMaven</span>
+        {' '}<span class="pm-attribution">(source of the quality data)</span>
       </li>
       {pkg.links.repository && <li><a href={pkg.links.repository} rel="noopener">Repository</a></li>}
       {pkg.links.issues && <li><a href={pkg.links.issues} rel="noopener">Issues</a></li>}

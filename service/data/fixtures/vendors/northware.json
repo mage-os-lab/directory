@@ -3,7 +3,6 @@
   "vendor": "northware",
   "vendorName": "Northware Commerce",
   "url": "https://northware.example",
-  "trustedVendor": true,
   "partnerTier": "gold",
   "packages": {
     "northware/module-order-export": {

@@ -8,12 +8,10 @@ import path from 'node:path';
 import process from 'node:process';
 import { z } from 'zod';
 import { vendorFile } from '../../schema/vendor-file.js';
-import { categoriesFile } from '../../schema/source.js';
 import { rankingConfig } from '../../schema/ranking-config.js';
 
 const targets: Array<{ file: string; schema: z.ZodType; title: string }> = [
   { file: 'vendor.schema.json', schema: vendorFile, title: 'Mage-OS Directory vendor trust file' },
-  { file: 'categories.schema.json', schema: categoriesFile, title: 'Mage-OS Directory category taxonomy' },
   { file: 'ranking.schema.json', schema: rankingConfig, title: 'Mage-OS Directory ranking config' },
 ];
 

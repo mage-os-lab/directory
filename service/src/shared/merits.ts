@@ -1,12 +1,17 @@
 /**
- * The marks a module can earn — trusted vendor, editors' pick, high quality,
- * popular, trending — as one set of predicates shared by the browse UI (its
- * "show only" chips and the badges in each card's corner) and the
- * prerendered pages, so that what a chip narrows to is what every card
- * shows. Trusted vendor and editors' pick are read straight off the trust
- * overlay; the rest need computing.
+ * The marks a module can earn (editors' pick, high quality, popular,
+ * trending) as one set of predicates shared by the browse UI (its "show
+ * only" chips and the badges on each card) and the prerendered pages, so
+ * that what a chip narrows to is what every card shows. Editors' pick is
+ * read straight off the trust overlay; the rest need computing. A risky
+ * package, abandoned or warned about, shows none of them.
  */
 import type { PackageSummary } from '../schema/feed.js';
+
+/** Warnings and abandonment are the only things on a card allowed to be red. */
+export function isRisky(pkg: PackageSummary): boolean {
+  return pkg.abandoned === true || pkg.trust.warnings.length > 0;
+}
 
 /** "Popular" means installs at or above this percentile of the catalog. */
 export const POPULAR_PERCENTILE = 0.85;

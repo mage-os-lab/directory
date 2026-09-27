@@ -3,7 +3,6 @@
   "vendor": "castlegate",
   "vendorName": "Castlegate Payments",
   "url": "https://castlegate.example",
-  "trustedVendor": false,
   "partnerTier": "silver",
   "packages": {
     "castlegate/module-fraud-shield": {

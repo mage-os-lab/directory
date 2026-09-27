@@ -268,13 +268,7 @@ html[data-embed] .site-header {
   margin: 0 0 14px;
 }
 
-.section-intro {
-  color: var(--fg-muted);
-  margin: -8px 0 16px;
-}
-
-/* Editorial picks / package card grid used on home + category + vendor pages */
-.pick-grid,
+/* Package card grid used on vendor pages */
 .package-grid {
   display: grid;
   gap: 14px;
@@ -347,7 +341,6 @@ html[data-embed] .site-header {
 /* The earned marks on listing cards; "Popular" keeps the plain badge tone. */
 .badge-high-quality { --badge: #1971c2; }
 .badge-pick { --badge: #b34f00; }
-.badge-trusted { --badge: #14735c; }
 .badge-warning { --badge: #c92a2a; }
 .badge-partner-platinum,
 .badge-partner-gold,
@@ -383,6 +376,40 @@ html[data-embed] .site-header {
   flex-wrap: wrap;
   gap: 8px;
   margin: 12px 0;
+}
+
+.detail-facts {
+  display: grid;
+  font-size: 14px;
+  gap: 4px 16px;
+  grid-template-columns: max-content 1fr;
+  margin: 12px 0;
+}
+
+.detail-facts dt {
+  color: var(--fg-muted);
+}
+
+.detail-facts dd {
+  margin: 0;
+}
+
+/* Inside the admin's modal a category link would load the whole directory
+ * into the frame, so there the categories read as plain text. */
+html[data-embed] .detail-facts .category-link {
+  color: inherit;
+  pointer-events: none;
+  text-decoration: none;
+}
+
+@media (max-width: 480px) {
+  .detail-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-facts dd {
+    margin-bottom: 6px;
+  }
 }
 
 .detail-stats {

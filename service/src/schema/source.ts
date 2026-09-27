@@ -14,6 +14,13 @@ import {
  * with its structural source; the PM → snapshot field mapping is documented
  * under "PackageMaven" in docs/architecture.md.
  */
+/** One PackageMaven category, as PM names it. */
+export const sourceCategory = z.object({
+  slug: categorySlug,
+  name: z.string().min(1),
+});
+export type SourceCategory = z.infer<typeof sourceCategory>;
+
 /** One row of PM's per-release test matrix. */
 export const sourceRelease = z.object({
   version: z.string().min(1),
@@ -28,7 +35,7 @@ export const sourcePackage = z.object({
   name: packageName,
   displayName: z.string().min(1),
   description: z.string().default(''),
-  /** PM's raw category label(s), mapped to canonical slugs during merge. */
+  /** PM's category slugs, published as the package's categories. */
   rawCategories: z.array(z.string()).default([]),
   repositoryUrl: z.url().nullable().default(null),
   latestVersion: z.string().nullable().default(null),
@@ -88,6 +95,12 @@ export const packageMavenSnapshot = z.object({
   fetchedAt: isoDateTime,
   /** Where this snapshot came from: live fetch, manual drop, or fixture. */
   origin: z.enum(['live', 'manual', 'fixture']),
+  /**
+   * PM's category taxonomy: each slug the packages use, with PM's own name
+   * for it. Empty in snapshots written before the directory adopted PM's
+   * categories; merge then names a category after its slug.
+   */
+  categories: z.array(sourceCategory).default([]),
   packages: z.array(sourcePackage),
 });
 export type PackageMavenSnapshot = z.infer<typeof packageMavenSnapshot>;
@@ -134,20 +147,3 @@ export const sourceStatus = z.object({
   fetchedAt: isoDateTime.nullable(),
 });
 export type SourceStatus = z.infer<typeof sourceStatus>;
-
-/** Categories taxonomy file (data/categories.json). */
-export const categoriesFile = z.object({
-  $schema: z.string().optional(),
-  categories: z.array(
-    z.object({
-      slug: categorySlug,
-      name: z.string().min(1),
-      description: z.string().optional(),
-      /** PM raw category labels that map onto this canonical category. */
-      packageMavenLabels: z.array(z.string()).default([]),
-    }),
-  ),
-  /** Canonical slug for packages whose PM category maps to nothing. */
-  fallbackCategory: categorySlug,
-});
-export type CategoriesFile = z.infer<typeof categoriesFile>;

@@ -31,8 +31,8 @@ category overrides, editorial picks, and warnings on top of the indexed data.
    [trust policy](docs/trust-policy.md#vendor-identity)): open the PR from an account
    in the org that owns the vendor's repositories, or link a commit/site note that
    references the PR.
-3. `trustedVendor`, `partnerTier`, and `editorialPick` are granted by maintainers, not
-   self-assigned — leave them out or expect the PR review to set them.
+3. `partnerTier` and `editorialPick` are granted by maintainers, not self-assigned —
+   leave them out or expect the PR review to set them.
 4. Run the formatter and validator before pushing:
 
    ```sh
@@ -42,7 +42,8 @@ category overrides, editorial picks, and warnings on top of the indexed data.
 
 CI enforces the schema (`service/data/vendor.schema.json` gives editor autocomplete), the
 canonical format, category references, and that every package you reference exists in
-the current PM snapshot.
+the current PM snapshot. Category overrides use PackageMaven's category slugs
+(`seo-urls`, `checkout-payments`, …) and must name a category in PM's taxonomy.
 
 ## Filing a warning about a package
 

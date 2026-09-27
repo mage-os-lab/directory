@@ -1,11 +1,10 @@
 {
   "$schema": "./ranking.schema.json",
-  "version": "2026-09-20.1",
+  "version": "2026-09-26.1",
   "weights": {
     "editorialPick": 0.15,
     "partnerTier": 0.1,
-    "trustedVendor": 0.05,
-    "qualityTier": 0.27,
+    "qualityTier": 0.32,
     "freshness": 0.12,
     "installs": 0.06,
     "recentInstalls": 0.13,

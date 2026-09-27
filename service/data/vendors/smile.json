@@ -3,7 +3,6 @@
   "vendor": "smile",
   "vendorName": "Smile",
   "url": "https://www.smile.eu/",
-  "trustedVendor": false,
   "partnerTier": null,
   "packages": {
     "smile/elasticsuite": {

@@ -4,9 +4,8 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { runPipeline } from '../src/pipeline/run.js';
 import { feed as feedSchema, packageDetail } from '../src/schema/feed.js';
-import { mapCategories, mergeToFeed, unmappedCategoryLabels } from '../src/pipeline/merge.js';
+import { mergeToFeed } from '../src/pipeline/merge.js';
 import {
-  loadCategories,
   loadRankingConfig,
   loadSnapshot,
   loadVendorFiles,
@@ -27,12 +26,7 @@ describe('pipeline on fixture data', () => {
     const first = await runPipeline({ source: 'fixture', rootDir, outDir, now });
     expect(first.packageCount).toBe(40);
     expect(first.stale).toBe(false);
-    // The fixture deliberately carries one unmapped PM label to exercise the
-    // fallback path — taxonomy drift must surface as a warning, not silence.
-    expect(first.warnings).toEqual([
-      'PM category "Misc Utilities" has no mapping in data/categories.json — its packages ' +
-        'fall back to the "other" category',
-    ]);
+    expect(first.warnings).toEqual([]);
 
     const feedRaw = fs.readFileSync(path.join(outDir, 'api/v1/feed.json'), 'utf8');
     const feed = feedSchema.parse(JSON.parse(feedRaw));
@@ -67,7 +61,6 @@ describe('pipeline on fixture data', () => {
     const pick = byName.get('northware/module-order-export')!;
     expect(pick.displayName).toBe('Order Export Suite');
     expect(pick.trust.editorialPick).toBe(true);
-    expect(pick.trust.trustedVendor).toBe(true);
     expect(pick.trust.partnerTier).toBe('gold');
 
     const deranked = byName.get('northware/module-order-sync')!;
@@ -82,9 +75,31 @@ describe('pipeline on fixture data', () => {
     const sibling = byName.get('northware/module-invoice-pdf')!;
     expect(deranked.ranking.score).toBeLessThan(sibling.ranking.score);
 
-    // Category override wins over PM mapping.
+    // A category override wins over PM's categories.
     const overridden = byName.get('pixelforge/module-catalog-swatches')!;
-    expect(overridden.categories).toEqual(['catalog']);
+    expect(overridden.categories).toEqual(['catalog-management', 'performance-optimization']);
+  });
+
+  it("publishes PackageMaven's categories under PackageMaven's names", async () => {
+    await runPipeline({ source: 'fixture', rootDir, outDir, now });
+    const feed = feedSchema.parse(
+      JSON.parse(fs.readFileSync(path.join(outDir, 'api/v1/feed.json'), 'utf8')),
+    );
+    const byName = new Map(feed.packages.map((p) => [p.name, p]));
+
+    expect(byName.get('ferrousbyte/module-graphql-extensions')!.categories).toEqual([
+      'developer-tools',
+      'integration-third-party',
+    ]);
+    // Miscellaneous is dropped beside a real category, and kept when it is all there is.
+    expect(byName.get('quillstack/module-dashboard-widgets')!.categories).toEqual([
+      'administration-backend',
+    ]);
+    expect(byName.get('wrenfield/module-gift-registry')!.categories).toEqual(['miscellaneous']);
+
+    const categories = new Map(feed.categories.map((c) => [c.slug, c]));
+    expect(categories.get('integration-third-party')!.name).toBe('Integration & Third-Party');
+    expect(categories.get('miscellaneous')!.packageCount).toBe(1);
   });
 
   it('derives per-Magento compatibility from the per-release test matrix', async () => {
@@ -199,7 +214,6 @@ describe('pipeline on fixture data', () => {
 
 describe('trust overlay separation', () => {
   const dataDir = path.join(rootDir, 'data');
-  const categories = loadCategories(dataDir);
 
   it('resolves each universe to its own overlay directory', () => {
     expect(vendorsDirFor(dataDir, 'live')).toBe(path.join(dataDir, 'vendors'));
@@ -207,43 +221,61 @@ describe('trust overlay separation', () => {
   });
 
   it('keeps the invented fixture vendors out of the live overlay', () => {
-    const live = loadVendorFiles(vendorsDirFor(dataDir, 'live'), categories).map((f) => f.vendor);
-    const fixture = loadVendorFiles(vendorsDirFor(dataDir, 'fixture'), categories).map(
-      (f) => f.vendor,
-    );
+    const live = loadVendorFiles(vendorsDirFor(dataDir, 'live')).map((f) => f.vendor);
+    const fixture = loadVendorFiles(vendorsDirFor(dataDir, 'fixture')).map((f) => f.vendor);
     expect(fixture.length).toBeGreaterThan(0);
     expect(live.filter((vendor) => fixture.includes(vendor))).toEqual([]);
   });
 
 });
 
-describe('category mapping', () => {
-  const categories = loadCategories(path.join(rootDir, 'data'));
+describe('categories', () => {
+  const dataDir = path.join(rootDir, 'data');
 
-  it('maps PM labels to canonical slugs case-insensitively', () => {
-    expect(mapCategories(['Payments'], categories)).toEqual(['payments']);
-    expect(mapCategories(['payments', ' SEO '], categories)).toEqual(['payments', 'seo']);
+  function merge(
+    packages: Array<{ name: string; rawCategories: string[] }>,
+    categories: Array<{ slug: string; name: string }>,
+    vendorFiles: VendorFile[] = [],
+  ) {
+    return mergeToFeed({
+      snapshot: packageMavenSnapshot.parse({
+        schemaVersion: 1,
+        fetchedAt: now.toISOString(),
+        origin: 'fixture',
+        categories,
+        packages: packages.map((p) => ({ ...p, displayName: p.name, qualityTier: null })),
+      }),
+      snapshotStale: false,
+      vendorFiles,
+      rankingConfig: loadRankingConfig(dataDir),
+      github: new Map(),
+      githubOk: true,
+      githubFetchedAt: now.toISOString(),
+      packagist: emptyPackagistSnapshot(now),
+      packagistOk: true,
+      now,
+    });
+  }
+
+  it('names a category PM left unnamed after its slug', () => {
+    // A snapshot written before the directory adopted PM's taxonomy has no names.
+    const { feed } = merge([{ name: 'acme/module-a', rawCategories: ['seo-urls'] }], []);
+    expect(feed.categories).toEqual([{ slug: 'seo-urls', name: 'Seo Urls', packageCount: 1 }]);
   });
 
-  it('routes unknown labels and empty lists to the fallback category', () => {
-    expect(mapCategories(['Misc Utilities'], categories)).toEqual(['other']);
-    expect(mapCategories([], categories)).toEqual(['other']);
-  });
-
-  it('reports unmapped labels so PM taxonomy drift surfaces as pipeline warnings', () => {
-    expect(
-      unmappedCategoryLabels(['payments', 'brand-new-pm-category', 'brand-new-pm-category'], categories),
-    ).toEqual(['brand-new-pm-category']);
-    // Every live PM slug (per PM's /categories endpoint) is mapped.
-    const liveSlugs = [
-      'administration-backend', 'developer-tools', 'catalog-management',
-      'performance-optimization', 'seo-urls', 'checkout-payments',
-      'customer-authentication', 'email-communication', 'analytics-tracking',
-      'search', 'content-management', 'images-media', 'integration-third-party',
-      'security-compliance', 'order-shipping', 'tax-pricing',
-      'devops-infrastructure', 'import-export', 'ai-automation', 'miscellaneous',
-    ];
-    expect(unmappedCategoryLabels(liveSlugs, categories)).toEqual([]);
+  it('warns about an override outside PM taxonomy, and still applies it', () => {
+    const acme = vendorFileSchema.parse({
+      vendor: 'acme',
+      vendorName: 'Acme',
+      packages: { 'acme/module-a': { categories: ['made-up'] } },
+    });
+    const { feed, unknownOverrideCategories } = merge(
+      [{ name: 'acme/module-a', rawCategories: ['seo-urls'] }],
+      [{ slug: 'seo-urls', name: 'SEO & URLs' }],
+      [acme],
+    );
+    expect(unknownOverrideCategories).toEqual(['made-up']);
+    expect(feed.packages[0]!.categories).toEqual(['made-up']);
   });
 });
 
@@ -261,7 +293,6 @@ describe('display name fallback', () => {
       }),
       snapshotStale: false,
       vendorFiles,
-      categories: loadCategories(dataDir),
       rankingConfig: loadRankingConfig(dataDir),
       github: new Map(),
       githubOk: true,
@@ -275,7 +306,6 @@ describe('display name fallback', () => {
   const quickpay = vendorFileSchema.parse({
     vendor: 'quickpay',
     vendorName: 'QuickPay',
-    trustedVendor: true,
   });
 
   it('names a package whose PM name is only "Magento2" after its vendor trust file', () => {
@@ -318,7 +348,6 @@ describe('GitHub extras', () => {
       snapshot,
       snapshotStale: false,
       vendorFiles: [],
-      categories: loadCategories(dataDir),
       rankingConfig: loadRankingConfig(dataDir),
       github,
       githubOk: true,

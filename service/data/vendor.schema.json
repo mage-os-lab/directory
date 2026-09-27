@@ -18,10 +18,6 @@
       "type": "string",
       "format": "uri"
     },
-    "trustedVendor": {
-      "default": false,
-      "type": "boolean"
-    },
     "partnerTier": {
       "default": null,
       "anyOf": [

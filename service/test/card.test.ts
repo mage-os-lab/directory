@@ -83,7 +83,6 @@ describe('isRisky', () => {
       isRisky(
         pkg({
           trust: {
-            trustedVendor: false,
             partnerTier: null,
             editorialPick: false,
             warnings: [
@@ -204,7 +203,6 @@ describe('monthlyDownloadsAtPercentile', () => {
 describe('isTrending', () => {
   const FLOOR = 100;
   const trust = (over: Partial<PackageSummary['trust']> = {}): PackageSummary['trust'] => ({
-    trustedVendor: false,
     partnerTier: null,
     editorialPick: false,
     warnings: [],

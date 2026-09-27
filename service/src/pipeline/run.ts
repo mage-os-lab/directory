@@ -4,7 +4,6 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import {
-  loadCategories,
   loadPackagistSnapshot,
   loadRankingConfig,
   loadSnapshot,
@@ -42,9 +41,8 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
   const dataDir = path.join(options.rootDir, 'data');
   const warnings: string[] = [];
 
-  const categories = loadCategories(dataDir);
   const rankingConfig = loadRankingConfig(dataDir);
-  const vendorFiles = loadVendorFiles(vendorsDirFor(dataDir, options.source), categories);
+  const vendorFiles = loadVendorFiles(vendorsDirFor(dataDir, options.source));
 
   let snapshot: PackageMavenSnapshot;
   let snapshotStale = false;
@@ -93,11 +91,10 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
     warnings.push(...live.warnings);
   }
 
-  const { feed, details, danglingTrustEntries, unmappedCategories } = mergeToFeed({
+  const { feed, details, danglingTrustEntries, unknownOverrideCategories } = mergeToFeed({
     snapshot,
     snapshotStale,
     vendorFiles,
-    categories,
     rankingConfig,
     github: github.extras,
     githubOk: github.ok,
@@ -112,10 +109,10 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRun
       `trust entry for "${name}" references a package absent from the PM snapshot — skipped`,
     );
   }
-  for (const label of unmappedCategories) {
+  for (const slug of unknownOverrideCategories) {
     warnings.push(
-      `PM category "${label}" has no mapping in data/categories.json — its packages ` +
-        `fall back to the "${categories.fallbackCategory}" category`,
+      `a trust-file category override names "${slug}", which is not in PackageMaven's ` +
+        `taxonomy; the override still applies`,
     );
   }
 

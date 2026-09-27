@@ -481,6 +481,7 @@
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.3;
+  overflow-wrap: anywhere;
   text-decoration: none;
 }
 
@@ -513,7 +514,7 @@
 }
 
 /* One line for "who is behind this": the vendor, and the partner tier where
- * there is one. The earned marks (trusted, pick) are badges in the foot. */
+ * there is one. The earned marks are badges below the categories. */
 .mosd-card-vendor {
   align-items: center;
   color: var(--mosd-fg-muted);
@@ -571,10 +572,12 @@
 }
 
 /* Category chips on a card are the same filter as the rail above, one click
- * away: pressing one narrows the list to that category. */
+ * away: pressing one narrows the list to that category. The pressed state is
+ * the rail's pressed state, outline included, so a card never shows the
+ * active filter in a colour that could pass for a badge. */
 .mosd-chip {
   background: var(--mosd-bg-soft);
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 999px;
   color: var(--mosd-fg-muted);
   cursor: pointer;
@@ -585,25 +588,40 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.mosd-chip:hover,
-.mosd-chip[aria-pressed='true'] {
-  background: var(--mosd-accent-soft);
-  color: var(--mosd-accent);
+.mosd-chip:hover {
+  border-color: var(--mosd-border);
+  color: var(--mosd-fg);
 }
 
-/* Footer: adoption and freshness, the two numbers read across cards rather
- * than within one. `margin-top: auto` keeps them aligned along a row. */
+.mosd-chip[aria-pressed='true'] {
+  background: var(--mosd-accent-soft);
+  border-color: var(--mosd-accent);
+  color: var(--mosd-accent);
+  font-weight: 600;
+}
+
+/* Footer: adoption and freshness, the numbers read across cards rather than
+ * within one, then the fit and the reader's action. It is the only block
+ * pushed down (`margin-top: auto`), so it ends every card in a row at the
+ * same edge whatever the description, badges or categories above it. */
+.mosd-card-foot {
+  border-top: 1px solid color-mix(in srgb, var(--mosd-border) 60%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 9px;
+}
+
 .mosd-card-stats {
   align-items: baseline;
-  border-top: 1px solid color-mix(in srgb, var(--mosd-border) 60%, transparent);
   color: var(--mosd-fg-muted);
   display: flex;
   flex-wrap: wrap;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   gap: 3px 12px;
-  margin: auto 0 0;
-  padding-top: 9px;
+  margin: 0;
 }
 
 .mosd-stat {
@@ -625,13 +643,12 @@
   font-size: 11px;
 }
 
-/* The fit answer, for surfaces with no shop version to compare against. */
+/* The fit answer, for surfaces with no shop version to compare against: a
+ * plain line of footer text, not another pill among the badges. */
 .mosd-card-span {
-  border: 1px solid var(--mosd-border);
-  border-radius: 999px;
-  margin-left: auto;
-  padding: 2px 8px;
-  white-space: nowrap;
+  color: var(--mosd-fg-muted);
+  font-size: 12px;
+  margin: 0;
 }
 
 /* "Known issues" is the one tier a card still names: it is the only one that
@@ -642,21 +659,15 @@
   font-weight: 600;
 }
 
-/* The card's last row: in the bottom-left corner the marks the module has
- * earned — trusted vendor, editors' pick, high quality, popular — and the
- * reader's action at the bottom-right, where a primary action is expected.
- * Pushed to the bottom so the corners are the same corners on every card in
- * a row, whatever the description's length. The auto margin holds each side
- * to its own edge when the other is absent, and when the row wraps on a
- * narrow card it keeps the button at the right of its own line. */
-.mosd-card-foot {
-  align-items: flex-end;
+/* The footer's last row: the fit on the left and the reader's action at the
+ * bottom-right, where a primary action is expected. The auto margin holds the
+ * button to the right edge when the fit is absent or the row wraps. */
+.mosd-card-foot-row {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 6px 12px;
   justify-content: space-between;
-  margin-top: auto;
-  padding-top: 4px;
 }
 
 .mosd-card-actions {
@@ -667,7 +678,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  justify-content: flex-start;
   margin: 0;
 }
 
@@ -684,10 +694,9 @@
   white-space: nowrap;
 }
 
-/* The earned marks, each in the tone it already has elsewhere: trusted
- * shares the verified green, the pick the accent, high quality its own tint,
- * and popular and trending the plain soft fill — counts, not verdicts. */
-.mosd-badge-trusted { background: var(--mosd-ok-soft); color: var(--mosd-ok); }
+/* The earned marks, each in the tone it already has elsewhere: the pick the
+ * accent, high quality its own tint, and popular and trending the plain soft
+ * fill, since they are counts, not verdicts. */
 .mosd-badge-pick { background: var(--mosd-accent-soft); color: var(--mosd-accent); }
 .mosd-badge-high-quality { background: var(--mosd-quality-bg); color: var(--mosd-quality-fg); }
 .mosd-badge-popular { color: var(--mosd-fg); }

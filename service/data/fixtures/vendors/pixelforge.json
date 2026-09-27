@@ -3,12 +3,12 @@
   "vendor": "pixelforge",
   "vendorName": "Pixelforge",
   "url": "https://pixelforge.example",
-  "trustedVendor": true,
   "partnerTier": null,
   "packages": {
     "pixelforge/module-catalog-swatches": {
       "categories": [
-        "catalog"
+        "catalog-management",
+        "performance-optimization"
       ],
       "editorialPick": true,
       "docsUrl": "https://pixelforge.example/docs/catalog-swatches"

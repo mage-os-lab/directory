@@ -226,6 +226,8 @@ and detail pages carry the single-package form).
 
 ## 13. One list, a few filters that matter, and a page at a time
 
+*The Trusted vendor chip was later removed; see [decision 16](#16-categories-are-packagemavens-and-there-is-no-trusted-vendor-mark).*
+
 **Decision:** browsing by category is a filter on the single directory list, not a
 second listing: the home page's category grid and the prerendered `/categories/<slug>/`
 pages are gone, the old URLs redirect to `/?category=<slug>`, and the island mirrors its
@@ -342,3 +344,35 @@ maintenance signal than downloads and worth adding later, but it measures the
 maintainer's activity, not the market's, and the GitHub budget is already spent on
 READMEs and stars); keeping trend as a separate "what's rising" view only (a view
 nobody sorts by changes nothing about which modules a reader actually sees first).
+
+## 16. Categories are PackageMaven's, and there is no trusted-vendor mark
+
+**Decision:** the directory publishes PackageMaven's categories as they are: PM's slugs,
+and the names PM embeds on every package record (`Checkout & Payments`, `AI &
+Automation`, `Integration & Third-Party`). `data/categories.json` and its label mapping
+are gone. The directory adds one rule, dropping PM's catch-all `miscellaneous` from a
+package that also has a real category, and keeps its former slugs working as aliases,
+so `/categories/seo/` and `?category=seo` land on `seo-urls`. Trust-file category
+overrides use PM slugs and are validated against PM's taxonomy. The `trustedVendor`
+field is removed from vendor files, the feed, the ranking (its 0.05 moves to
+`qualityTier`, now 0.32), the filter chips and the badges. A card that carries a warning
+or an abandonment notice shows no earned marks at all.
+
+**Why:** the mapping was written when PM's labels were free text ("Payments",
+"Payment", "Product"). PM now has stable slugs, so the mapping only made things worse.
+It folded 20 categories into 16, sent `ai-automation` and `miscellaneous` into "Other"
+next to a package's real category (129 of the 160 packages in Other also had one), and
+filed payment gateways under Checkout while "Payments" held only tax modules. The
+directory's own names were not better than PM's, and a second taxonomy is one more thing
+to keep in sync. Trusted vendor was a blanket grant: once given, it vouched for every
+module the vendor ever shipped, including abandoned ones (three cards showed "Trusted
+vendor" beside "Abandoned by its maintainer"), and it was the mark most likely to
+become political. Editors' picks already name specific modules the maintainers
+recommend, which is the claim a reader can use.
+
+**Rejected:** keeping the mapping and fixing the individual rows (it would still drift
+from PM, and still need a PR every time PM adds a category); keeping `trustedVendor` in
+the feed pinned to `false` for older consumers (the embedded UI reads it as a plain
+truthy check, so a missing field already behaves as `false`, and a field that can never
+be true is not worth publishing); showing merit badges on risky cards in a muted style
+(still reads as a recommendation next to a warning).

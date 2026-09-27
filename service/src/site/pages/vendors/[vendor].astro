@@ -6,6 +6,7 @@ import {
   installsAtPercentile,
   isHighQuality,
   isPopular,
+  isRisky,
 } from '../../../shared/merits.js';
 import { qualityLabel } from '../../../shared/quality.js';
 
@@ -30,7 +31,6 @@ const popularFloor = installsAtPercentile(feed.packages, POPULAR_PERCENTILE);
     <h1>{vendor.name}</h1>
     {vendor.url && <p><a href={vendor.url} rel="noopener">{vendor.url}</a></p>}
     <div class="vendor-badges">
-      {vendor.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
       {vendor.partnerTier && (
         <span class={`badge badge-partner-${vendor.partnerTier}`}>{vendor.partnerTier} partner</span>
       )}
@@ -52,12 +52,20 @@ const popularFloor = installsAtPercentile(feed.packages, POPULAR_PERCENTILE);
             </p>
             <p class="description">{pkg.description}</p>
             <p class="meta">
-              {pkg.trust.editorialPick && <span class="badge badge-pick">Editors&rsquo; pick</span>}
-              {isHighQuality(pkg) && <span class="badge badge-high-quality">High quality</span>}
+              {pkg.abandoned === true && <span class="badge badge-abandoned">Abandoned</span>}
+              {pkg.abandoned !== true && isRisky(pkg) && <span class="badge badge-warning">Warning</span>}
+              {!isRisky(pkg) && pkg.trust.editorialPick && (
+                <span class="badge badge-pick">Editors&rsquo; pick</span>
+              )}
+              {!isRisky(pkg) && isHighQuality(pkg) && (
+                <span class="badge badge-high-quality">High quality</span>
+              )}
               {pkg.quality.tier === 'needs-help' && (
                 <span class="badge badge-needs-help">{qualityLabel(pkg.quality.tier)}</span>
               )}
-              {isPopular(pkg, popularFloor) && <span class="badge badge-popular">Popular</span>}
+              {!isRisky(pkg) && isPopular(pkg, popularFloor) && (
+                <span class="badge badge-popular">Popular</span>
+              )}
               {pkg.popularity.installs !== null && (
                 <span class="stat">{pkg.popularity.installs.toLocaleString()} installs</span>
               )}

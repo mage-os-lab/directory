@@ -47,8 +47,7 @@ unauthenticated endpoint). Everything else needs a bearer token issued by the PM
 held as the `PACKAGE_MAVEN_TOKEN` repository secret (`PM_API_URL` overrides the base URL
 for testing). The fetcher (`src/pipeline/packagemaven.ts`) sweeps `GET /packages` at
 `per_page=100` — about 11 requests per run against a limit of 60 requests/minute, with
-`429`/`Retry-After` honoured — plus `GET /categories`, and normalizes the result into the
-internal snapshot shape (`src/schema/source.ts`, `origin: 'live' | 'fixture'`).
+`429`/`Retry-After` honoured — and normalizes the result into the internal snapshot shape (`src/schema/source.ts`, `origin: 'live' | 'fixture'`).
 Only publicly visible packages are returned; hidden packages 404.
 
 Field mapping, PM → snapshot:
@@ -58,7 +57,8 @@ Field mapping, PM → snapshot:
 | `name` | `composer_name` | join key |
 | `displayName` | `name` | nullable; falls back to `composer_name`, then prefix-cleaned (below) |
 | `description`, `repositoryUrl` | `description`, `repository_url` | nullable |
-| `rawCategories` | `categories[].slug` | stable slugs; mapped to canonical slugs via `data/categories.json`, unmapped slugs raise a pipeline warning |
+| `rawCategories` | `categories[].slug` | stable slugs, published as the package's categories (see below) |
+| snapshot `categories` | `categories[].{slug,name}` | PM's taxonomy as the packages carry it: each slug with PM's name for it |
 | `latestVersion`, `latestReleasedAt` | `latest_release.{version,date}` | |
 | `quality.tier` | `quality.{strict_compliant,no_errors,build_works,needs_help}` | tiered flags: first true wins in that order; all false → `null` (not yet tested) |
 | `quality.phpstanLevel` | `test_results.phpstan_level` | `-1..9`; `-1` = fails at level 0; `null` = untested |
@@ -175,9 +175,11 @@ A TypeScript script under `src/pipeline/`, run by GitHub Actions:
      page owns the h1). Live runs only: a fixture build stays hermetic and
      publishes the disabled state.
   4. Merge into canonical package records. Precedence: trust-file overrides → PackageMaven.
-     PM's raw category labels map to canonical slugs via `data/categories.json`
-     (unmapped labels land in the fallback category); a trust-file `categories` override
-     wins outright.
+     Categories are PackageMaven's own slugs and names, with one directory rule on top:
+     PM's catch-all `miscellaneous` is dropped from a package that also has a real
+     category (`src/shared/categories.ts`). A trust-file `categories` override wins
+     outright; one naming a slug outside PM's taxonomy fails `validate:data` in CI and
+     warns in a scheduled run.
   5. Compute the ranking score (see [Ranking](#ranking)).
   6. Validate the assembled output against the schema (the pipeline validates its own
      output before publishing).
@@ -226,7 +228,7 @@ interface Feed {
   sources: SourceStatus[];        // { id, ok, stale, fetchedAt } per source
   rankingConfigVersion: string;
   categories: Category[];         // { slug, name, packageCount }
-  vendors: VendorSummary[];       // { slug, name, trustedVendor, partnerTier, packageCount }
+  vendors: VendorSummary[];       // { slug, name, url, partnerTier, packageCount }
   packages: PackageSummary[];
 }
 
@@ -235,7 +237,7 @@ interface PackageSummary {
   vendor: string;
   displayName: string;            // trust-file override → PM friendly name (prefix-cleaned)
   description: string;
-  categories: string[];           // canonical slugs; trust-file override wins
+  categories: string[];           // PackageMaven category slugs; trust-file override wins
   repositoryUrl: string | null;
   latestVersion: string | null;
   latestReleasedAt: string | null;
@@ -256,7 +258,6 @@ interface PackageSummary {
     stale: boolean;               // mirrors the packagemaven entry in Feed.sources:
   };                              // true when this run reused a carried-forward snapshot
   trust: {
-    trustedVendor: boolean;
     partnerTier: 'platinum' | 'gold' | 'silver' | 'bronze' | null;
     editorialPick: boolean;
     warnings: Array<{ code: string; message: string;
@@ -311,12 +312,11 @@ warning banner — no link rot) but are excluded from the default search results
   "vendor": "acme",
   "vendorName": "Acme Commerce",
   "url": "https://acme.example",
-  "trustedVendor": true,
   "partnerTier": "gold",
   "packages": {
     "acme/module-widget": {
       "displayName": "Acme Widget Manager",
-      "categories": ["catalog"],
+      "categories": ["catalog-management"],
       "editorialPick": true
     },
     "acme/module-legacy": {
@@ -340,15 +340,16 @@ Rules, enforced by schema validation in CI:
   universe; they do not extend it). CI checks this against the latest published PM
   snapshot (`PUBLISHED_BASE_URL`) and *fails the PR*; where no published snapshot is
   reachable yet, package references are reported *unverified* rather than failing —
-  a vendor file carrying only a tier or badge names no packages and validates either way; scheduled pipeline runs only *warn and skip* dangling
+  a vendor file carrying only a tier names no packages and validates either way; scheduled pipeline runs only *warn and skip* dangling
   entries, because PM's index moves between our runs and a scheduled build must not
   hard-fail on external drift.
-- Categories must exist in `data/categories.json`.
+- Category overrides must name a category in PackageMaven's taxonomy, checked against
+  the same snapshot as package references.
 - Warning severity is one of `info` (shown on the card, no ranking effect), `derank`
   (ranking penalty), `hide` (excluded from default results). `derank` and `hide`
   warnings must carry an `evidenceUrl` linking the public evidence.
 
-Who may hold `trustedVendor`/`partnerTier`, the evidence and notification bar for
+Who may hold `partnerTier`, the evidence and notification bar for
 warnings, dispute handling, and the expedited path for malicious packages are governed
 by the [trust policy](trust-policy.md).
 
@@ -358,10 +359,6 @@ failures. `CODEOWNERS` on `/service/data/vendors/` requires maintainer review, w
 how partner-tier changes are guarded. (CODEOWNERS patterns are repo-root anchored, and
 the data lives under `service/` — a root-relative `/data/...` entry silently matches
 nothing and gates no review.)
-
-`partnerTier` and `trustedVendor` are independent fields granted on independent
-criteria: a partnership never confers the trusted badge, and neither field is a
-prerequisite for the other. See the [trust policy](trust-policy.md#trusted-vendor).
 
 ## Ranking
 
@@ -373,8 +370,7 @@ live in `data/ranking.json` so curators can tune ranking with a one-file PR:
   "weights": {
     "editorialPick": 0.15,
     "partnerTier": 0.10,
-    "trustedVendor": 0.05,
-    "qualityTier": 0.27,
+    "qualityTier": 0.32,
     "freshness": 0.12,
     "installs": 0.06,
     "recentInstalls": 0.13,
@@ -436,10 +432,10 @@ experience as a Preact island using MiniSearch for client-side search over the f
 
 | Route | Contents |
 |---|---|
-| `/` | Hero, editorial picks (prerendered), and the browse island — search, category chips, one-click filters, sort, paged results; filter state mirrors into `?q=`, `?category=`, `?only=`, `?sort=` |
-| `/packages/<vendor>/<name>/` | Prerendered detail page: README, badges, stats, supported Magento versions, copyable `composer require`, JSON-LD |
-| `/vendors/<vendor>/` | Vendor trust badges + ranked package list |
-| `/categories/<category>/` | Redirect (meta refresh + canonical) to `/?category=<category>` — browsing by category is a filter on the one list, not a second listing |
+| `/` | Hero and the browse island — search, category chips, one-click filters, sort, paged results; filter state mirrors into `?q=`, `?category=`, `?only=`, `?sort=` |
+| `/packages/<vendor>/<name>/` | Prerendered detail page: README, badges, stats, supported Magento versions, license, categories, copyable `composer require`, JSON-LD |
+| `/vendors/<vendor>/` | Vendor partner badge + ranked package list |
+| `/categories/<category>/` | Redirect (meta refresh + canonical) to `/?category=<category>` — browsing by category is a filter on the one list, not a second listing. The directory's own slugs from before it adopted PM's taxonomy (`seo`, `other`, …) redirect to the PM category that replaced them, and `?category=` follows the same aliases |
 | `/how-to-get-listed/` | Rendered from docs |
 | `/api/v1/**` | The pipeline's static JSON output |
 | `/embed/*` | The embeddable bundle (`directory-ui.iife.js`, `directory-ui.js`, `directory-ui.css`), served CORS-open from the directory's own origin |
@@ -467,7 +463,7 @@ mountDirectory(el: HTMLElement, options: {
   linkMode?: 'href' | 'event';     // default 'href'
   initialFilters?: {                // seeds the controls; sort and flags are the same
     category?: string; query?: string; sort?: SortKey;
-    flags?: FilterFlag[];            // 'trusted' | 'picks' | 'tested' | 'recent' |
+    flags?: FilterFlag[];            // 'picks' | 'tested' | 'recent' |
                                      // 'quality' | 'popular' | 'trending' |
                                      // 'installed' | 'update'
     quality?: string[];              // tier allowlist; honoured, no control of its own
@@ -547,7 +543,7 @@ Contract details the admin module depends on:
 
 **UI features:** text search; category chips (alphabetical, with counts — one at a
 time, and the chips on each card are the same control); "show only" chips that each
-answer one shortlisting question and combine with AND — Trusted vendor, Editors' picks,
+answer one shortlisting question and combine with AND — Editors' picks,
 Tested with &lt;version&gt;, Recently updated (a release in the last 12 months), High
 quality (PackageMaven's top two tiers), Popular (top 15% of the catalog by installs),
 Trending (momentum above the catalog's own growth, with volume behind it, and no
@@ -569,9 +565,12 @@ past — so it answers eight questions and leaves the rest to the detail page: n
 path, one sentence, the marks it has earned, fit, installs, time since the last release,
 and any risk (a trust warning or abandonment, with the maintainer's suggested
 replacement). Host-aware surfaces add a ninth, where the reader stands with it. The earned
-marks — Trusted vendor, Editors' pick, High quality, Popular — sit as badges in the card's
-bottom-left corner, with the install toggle at the bottom-right, and are the same four facts the "show only" chips ask about, in the same
-words, so what a chip narrows to is what a card shows. PHPStan level, SemVer compliance,
+marks — Editors' pick, High quality, Popular, Trending — sit as badges below the
+categories, and are the same facts the "show only" chips ask about, in the same words, so
+what a chip narrows to is what a card shows. A card carrying a risk earns no marks: praise
+beside a red warning reads as a contradiction. The footer (stats, then the fit and the
+install toggle) is the only block pushed to the card's bottom, so every card in a row
+ends at the same edge. PHPStan level, SemVer compliance,
 build status, stars, the release date, the licence and the `composer require` string are
 detail-page facts: each either restates the quality tier, restates a number already on
 the card, or decides nothing at browse time. Where a tier is named, it is in the words a
@@ -618,7 +617,6 @@ service/
   data/                   # everything contributors edit by PR
     vendors/<vendor>.json #   vendor trust files (the trust overlay)
     vendor.schema.json    #   generated from src/schema, committed so editors validate trust files
-    categories.json       #   canonical category taxonomy + PM slug mapping
     ranking.json          #   tunable ranking weights
     fixtures/             #   fixture PM snapshot + its matching trust overlay, for
                           #     dev/preview builds (never loaded by a live run)

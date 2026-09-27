@@ -1,5 +1,4 @@
 import type {
-  CategoriesFile,
   PackageMavenSnapshot,
   PackagistSnapshot,
   SourcePackage,
@@ -14,6 +13,7 @@ import type {
 } from '../schema/feed.js';
 import type { RankingConfig } from '../schema/ranking-config.js';
 import { SCHEMA_VERSION } from '../schema/common.js';
+import { categoryNameFromSlug, packageCategories } from '../shared/categories.js';
 import { compareVersions, isNewer, parseVersion } from '../shared/version.js';
 import { buildRankingContext, packageMomentum, rankPackage } from './rank.js';
 import { isRedundantName } from './packagemaven.js';
@@ -36,7 +36,6 @@ export interface MergeInput {
   /** True when the snapshot was carried forward because the fetch failed. */
   snapshotStale: boolean;
   vendorFiles: VendorFile[];
-  categories: CategoriesFile;
   rankingConfig: RankingConfig;
   github: Map<string, GithubExtras>;
   githubOk: boolean;
@@ -52,42 +51,10 @@ export interface MergeOutput {
   details: PackageDetail[];
   /** Trust entries referencing packages absent from the snapshot (warn + skip). */
   danglingTrustEntries: string[];
-  /** PM category labels with no mapping in data/categories.json (warn; the
-   * affected packages land in the fallback category). PM's taxonomy can move
-   * between our runs — this is how a scheduled build surfaces the drift. */
-  unmappedCategories: string[];
-}
-
-/** Distinct raw PM labels that data/categories.json doesn't map, sorted. */
-export function unmappedCategoryLabels(
-  rawLabels: Iterable<string>,
-  categories: CategoriesFile,
-): string[] {
-  const known = new Set(
-    categories.categories.flatMap((c) => c.packageMavenLabels.map((l) => l.toLowerCase())),
-  );
-  const unmapped = new Set<string>();
-  for (const raw of rawLabels) {
-    const label = raw.trim();
-    if (!known.has(label.toLowerCase())) unmapped.add(label);
-  }
-  return [...unmapped].sort();
-}
-
-/** Map PM's raw category labels to canonical slugs via data/categories.json. */
-export function mapCategories(rawCategories: string[], categories: CategoriesFile): string[] {
-  const byLabel = new Map<string, string>();
-  for (const category of categories.categories) {
-    for (const label of category.packageMavenLabels) {
-      byLabel.set(label.toLowerCase(), category.slug);
-    }
-  }
-  const slugs = new Set<string>();
-  for (const raw of rawCategories) {
-    slugs.add(byLabel.get(raw.trim().toLowerCase()) ?? categories.fallbackCategory);
-  }
-  if (slugs.size === 0) slugs.add(categories.fallbackCategory);
-  return [...slugs].sort();
+  /** Category slugs that trust-file overrides name but PM's taxonomy lacks
+   * (warn; the override still applies). PM's taxonomy can move between our
+   * runs, and this is how a scheduled build surfaces the drift. */
+  unknownOverrideCategories: string[];
 }
 
 /**
@@ -134,7 +101,7 @@ export function buildCompatibility(releases: PackageRelease[]): Record<string, s
 }
 
 export function mergeToFeed(input: MergeInput): MergeOutput {
-  const { snapshot, vendorFiles, categories, rankingConfig, github, now } = input;
+  const { snapshot, vendorFiles, rankingConfig, github, now } = input;
 
   const vendorBySlug = new Map(vendorFiles.map((file) => [file.vendor, file]));
   const downloadsByName = new Map(input.packagist.packages.map((entry) => [entry.name, entry]));
@@ -192,9 +159,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
             ? vendorDisplayName(vendorSlug, vendorFile)
             : source.displayName),
         description: source.description,
-        categories: trustEntry?.categories
-          ? [...trustEntry.categories].sort()
-          : mapCategories(source.rawCategories, categories),
+        categories: packageCategories(trustEntry?.categories ?? source.rawCategories),
         repositoryUrl: source.repositoryUrl,
         latestVersion: source.latestVersion,
         latestReleasedAt: source.latestReleasedAt,
@@ -210,7 +175,6 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
           stale: input.snapshotStale,
         },
         trust: {
-          trustedVendor: vendorFile?.trustedVendor ?? false,
           partnerTier: vendorFile?.partnerTier ?? null,
           editorialPick: trustEntry?.editorialPick ?? false,
           warnings,
@@ -252,7 +216,6 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
         {
           editorialPick: a.summaryBase.trust.editorialPick,
           partnerTier: a.summaryBase.trust.partnerTier,
-          trustedVendor: a.summaryBase.trust.trustedVendor,
           qualityTier: a.summaryBase.quality.tier,
           latestReleasedAt: a.summaryBase.latestReleasedAt,
           installs: a.summaryBase.popularity.installs,
@@ -317,7 +280,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
       },
     ],
     rankingConfigVersion: rankingConfig.version,
-    categories: buildCategoryEntries(packages, categories),
+    categories: buildCategoryEntries(packages, snapshot),
     vendors: buildVendorSummaries(packages, vendorBySlug),
     packages,
   };
@@ -326,10 +289,7 @@ export function mergeToFeed(input: MergeInput): MergeOutput {
     feed,
     details,
     danglingTrustEntries: danglingTrustEntries.sort(),
-    unmappedCategories: unmappedCategoryLabels(
-      snapshot.packages.flatMap((p) => p.rawCategories),
-      categories,
-    ),
+    unknownOverrideCategories: unknownOverrideCategories(vendorFiles, snapshot),
   };
 }
 
@@ -349,14 +309,49 @@ function deriveIssuesUrl(source: SourcePackage): string | null {
   return null;
 }
 
-function buildCategoryEntries(packages: PackageSummary[], categories: CategoriesFile) {
-  return categories.categories
-    .map((category) => ({
-      slug: category.slug,
-      name: category.name,
-      packageCount: packages.filter((p) => p.categories.includes(category.slug)).length,
+/** Every category PM names or a package carries, with PM's name for it. */
+export function knownCategories(snapshot: PackageMavenSnapshot): Map<string, string> {
+  const names = new Map(snapshot.categories.map((c) => [c.slug, c.name]));
+  for (const pkg of snapshot.packages) {
+    for (const slug of pkg.rawCategories) {
+      if (!names.has(slug)) names.set(slug, categoryNameFromSlug(slug));
+    }
+  }
+  return names;
+}
+
+function buildCategoryEntries(packages: PackageSummary[], snapshot: PackageMavenSnapshot) {
+  const names = knownCategories(snapshot);
+  // A trust-file override can name a category no PM package carries yet.
+  for (const pkg of packages) {
+    for (const slug of pkg.categories) {
+      if (!names.has(slug)) names.set(slug, categoryNameFromSlug(slug));
+    }
+  }
+  return [...names.entries()]
+    .map(([slug, name]) => ({
+      slug,
+      name,
+      packageCount: packages.filter((p) => p.categories.includes(slug)).length,
     }))
     .sort((a, b) => a.slug.localeCompare(b.slug, 'en'));
+}
+
+/** Override slugs outside PM's taxonomy, distinct and sorted. */
+function unknownOverrideCategories(
+  vendorFiles: VendorFile[],
+  snapshot: PackageMavenSnapshot,
+): string[] {
+  const known = knownCategories(snapshot);
+  const unknown = new Set<string>();
+  for (const file of vendorFiles) {
+    for (const entry of Object.values(file.packages)) {
+      for (const slug of entry.categories ?? []) {
+        if (!known.has(slug)) unknown.add(slug);
+      }
+    }
+  }
+  return [...unknown].sort();
 }
 
 function buildVendorSummaries(
@@ -372,7 +367,6 @@ function buildVendorSummaries(
       slug,
       name: vendorDisplayName(slug, file),
       url: file?.url ?? null,
-      trustedVendor: file?.trustedVendor ?? false,
       partnerTier: file?.partnerTier ?? null,
       packageCount: packages.filter((p) => p.vendor === slug).length,
     };

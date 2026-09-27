@@ -71,7 +71,7 @@ const dataAsOf = staleNotice(feed);
     {
       dataAsOf && (
         <p class="stale-banner" role="status">
-          Quality data as of {dataAsOf.slice(0, 10)} — the live PackageMaven source was
+          Quality data as of {dataAsOf.slice(0, 10)}. The live PackageMaven source was
           unavailable at the last update.
         </p>
       )
@@ -86,8 +86,8 @@ const dataAsOf = staleNotice(feed);
           Package metadata from <a href="https://packagist.org/" rel="noopener">Packagist</a>.
         </p>
         <p>
-          <a href={withBase('/how-to-get-listed/')}>What do these badges mean?</a> — trusted vendor, partner
-          tier, and editorial pick, explained.
+          <a href={withBase('/how-to-get-listed/')}>What do these badges mean?</a> Partner tiers,
+          editors&rsquo; picks and warnings, explained.
         </p>
         <p class="trademark-disclaimer">
           Magento is a registered trademark of Adobe Inc. Mage-OS is not affiliated with Adobe;
