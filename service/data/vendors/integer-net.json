@@ -3,11 +3,6 @@
   "vendor": "integer-net",
   "vendorName": "integer_net",
   "url": "https://integer-net.com/",
-  "trustedVendor": true,
   "partnerTier": "bronze",
-  "packages": {
-    "integer-net/magento2-sansec-watch": {
-      "editorialPick": true
-    }
-  }
+  "packages": {}
 }

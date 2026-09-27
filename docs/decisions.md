@@ -226,6 +226,8 @@ and detail pages carry the single-package form).
 
 ## 13. One list, a few filters that matter, and a page at a time
 
+*The Trusted vendor chip was later removed; see [decision 16](#16-categories-are-packagemavens-and-there-is-no-trusted-vendor-mark).*
+
 **Decision:** browsing by category is a filter on the single directory list, not a
 second listing: the home page's category grid and the prerendered `/categories/<slug>/`
 pages are gone, the old URLs redirect to `/?category=<slug>`, and the island mirrors its
@@ -342,3 +344,61 @@ maintenance signal than downloads and worth adding later, but it measures the
 maintainer's activity, not the market's, and the GitHub budget is already spent on
 READMEs and stars); keeping trend as a separate "what's rising" view only (a view
 nobody sorts by changes nothing about which modules a reader actually sees first).
+
+## 16. Categories are PackageMaven's, and there is no trusted-vendor mark
+
+**Decision:** the directory publishes PackageMaven's categories as they are: PM's slugs,
+and the names PM embeds on every package record (`Checkout & Payments`, `AI &
+Automation`, `Integration & Third-Party`). `data/categories.json` and its label mapping
+are gone. The directory adds one rule, dropping PM's catch-all `miscellaneous` from a
+package that also has a real category, and keeps its former slugs working as aliases,
+so `/categories/seo/` and `?category=seo` land on `seo-urls`. Trust-file category
+overrides use PM slugs and are validated against PM's taxonomy. The `trustedVendor`
+field is removed from vendor files, the feed, the ranking (its 0.05 moves to
+`qualityTier`, now 0.32), the filter chips and the badges. A card that carries a warning
+or an abandonment notice shows no earned marks at all.
+
+**Why:** the mapping was written when PM's labels were free text ("Payments",
+"Payment", "Product"). PM now has stable slugs, so the mapping only made things worse.
+It folded 20 categories into 16, sent `ai-automation` and `miscellaneous` into "Other"
+next to a package's real category (129 of the 160 packages in Other also had one), and
+filed payment gateways under Checkout while "Payments" held only tax modules. The
+directory's own names were not better than PM's, and a second taxonomy is one more thing
+to keep in sync. Trusted vendor was a blanket grant: once given, it vouched for every
+module the vendor ever shipped, including abandoned ones (three cards showed "Trusted
+vendor" beside "Abandoned by its maintainer"), and it was the mark most likely to
+become political. Editors' picks already name specific modules the maintainers
+recommend, which is the claim a reader can use.
+
+**Rejected:** keeping the mapping and fixing the individual rows (it would still drift
+from PM, and still need a PR every time PM adds a category); keeping `trustedVendor` in
+the feed pinned to `false` for older consumers (the embedded UI reads it as a plain
+truthy check, so a missing field already behaves as `false`, and a field that can never
+be true is not worth publishing); showing merit badges on risky cards in a muted style
+(still reads as a recommendation next to a warning).
+
+## 17. The interface follows M137, Mage-OS's Material 3 design system
+
+**Decision:** the site and the embeddable UI take their palette and component shapes from
+M137, the design system the Mage-OS admin theme is built on, which is Material 3. The
+accent is M137's primary tone 40 (`#005cbb`; tone 80 in dark), everything else is its
+neutral palette, and the type is Inter, self-hosted. Controls are pills: outlined filter
+chips that take a neutral tonal fill when selected (the way M137 marks the active
+navigation item), pill search and select fields, outlined cards that lift one level under
+the pointer, and M137's neutral filled button for the one primary action on a surface.
+Badges are filled rounded rectangles, never pills. The admin's legacy theme keeps
+Magento's orange accent and action through `admin.css`.
+
+**Why:** issue #19 read the old palette as "generic" and the badges as mixed in style.
+The directory is embedded in the M137 admin, so its own design system is the one to
+follow, and it answers most of the questions a bespoke palette left open. Orange appears
+in M137 only as the Mage-OS logo, so using it for links, selection and buttons made the
+directory look like a different product. Chips and badges need to differ in shape, not
+just colour: a pressed category chip and a "High quality" badge were both tonal pills,
+which is the "mixed styles" confusion in the issue.
+
+**Rejected:** Material's 8px filter-chip corner (M137 uses full pills for its controls);
+the accent for filled buttons (M137's primary button is neutral, and the accent is kept
+for selection and links); loading Inter from Google Fonts (a third-party request on every
+page view, when the npm package serves the same file from our origin).
+

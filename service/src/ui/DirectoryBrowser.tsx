@@ -7,6 +7,7 @@ import {
   installsAtPercentile,
   isHighQuality,
   isPopular,
+  isRisky,
   isTrending,
   monthlyDownloadsAtPercentile,
 } from '../shared/merits.js';
@@ -75,6 +76,7 @@ export {
   installsAtPercentile,
   isHighQuality,
   isPopular,
+  isRisky,
   isTrending,
   monthlyDownloadsAtPercentile,
 };
@@ -231,11 +233,6 @@ export function countLabel(count: number): string {
   return `${rounded.replace(/\.0$/, '')}k`;
 }
 
-/** Warnings and abandonment are the only things on a card allowed to be red. */
-export function isRisky(pkg: PackageSummary): boolean {
-  return pkg.abandoned === true || pkg.trust.warnings.length > 0;
-}
-
 function compare(a: PackageSummary, b: PackageSummary, sort: SortKey): number {
   switch (sort) {
     case 'installs':
@@ -375,13 +372,12 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   };
 
   /**
-   * The chips, in the order a reader shortlists: who is behind it, does it
+   * The chips, in the order a reader shortlists: is it recommended, does it
    * fit, is it maintained, is it sound, is it used — then, where the host
    * knows the shop, where I stand with it. Each is a yes/no the card can
    * show, so a chip never hides something the card wouldn't have said.
    */
   const chips: Array<{ flag: FilterFlag; label: string; title: string }> = [
-    { flag: 'trusted', label: 'Trusted vendor', title: 'From a vendor with a sustained track record' },
     { flag: 'picks', label: 'Editors’ picks', title: 'Selected by the Mage-OS maintainers' },
   ];
   if (testedTarget !== null) {
@@ -419,8 +415,6 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
 
   const passesFlag = (pkg: PackageSummary, flag: FilterFlag): boolean => {
     switch (flag) {
-      case 'trusted':
-        return pkg.trust.trustedVendor;
       case 'picks':
         return pkg.trust.editorialPick;
       case 'tested':
@@ -615,7 +609,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     const support = magentoSupport(pkg);
     if (support === null) {
       const span = magentoRange(pkg);
-      return span === null ? null : { tone: 'plain', text: `Magento ${span}` };
+      return span === null ? null : { tone: 'plain', text: `Tested with Magento ${span}` };
     }
     if (support.state === 'tested') {
       return { tone: 'ok', text: `Tested with ${hostLabel}` };
@@ -669,23 +663,18 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
   };
 
   /**
-   * The marks a module has earned, for the card's bottom-left corner (the
-   * install toggle holds the bottom-right): trusted vendor, editors' pick,
-   * high quality, popular, trending. They are the same facts
-   * the "show only" chips ask about, in the same words, so what a chip narrows
-   * to is what a card shows. "High quality" stands in for PackageMaven's top
-   * two tiers; the tier's own name is a tooltip, because "strict checks pass"
-   * describes a codebase to its contributors, not a module to its buyer.
+   * The marks a module has earned: editors' pick, high quality, popular,
+   * trending. They are the same facts the "show only" chips ask about, in the
+   * same words, so what a chip narrows to is what a card shows. "High
+   * quality" stands in for PackageMaven's top two tiers; the tier's own name
+   * is a tooltip, because "strict checks pass" describes a codebase to its
+   * contributors, not a module to its buyer. A card carrying a warning or an
+   * abandonment notice earns none: praise beside a red warning reads as a
+   * contradiction, and the warning is the thing to act on.
    */
   const meritBadges = (pkg: PackageSummary): Array<{ key: string; label: string; title: string }> => {
     const badges: Array<{ key: string; label: string; title: string }> = [];
-    if (pkg.trust.trustedVendor) {
-      badges.push({
-        key: 'trusted',
-        label: '✓ Trusted vendor',
-        title: 'From a vendor with a sustained track record',
-      });
-    }
+    if (isRisky(pkg)) return badges;
     if (pkg.trust.editorialPick) {
       badges.push({ key: 'pick', label: '★ Editors’ pick', title: 'Selected by the Mage-OS maintainers' });
     }
@@ -763,7 +752,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     <div class="mosd-browser" data-mosd-scheme={scheme === 'auto' ? undefined : scheme}>
       {dataAsOf && (
         <p class="mosd-stale-notice" role="status">
-          Quality data as of {dataAsOf.slice(0, 10)} — the live source was unavailable at the
+          Quality data as of {dataAsOf.slice(0, 10)}. The live source was unavailable at the
           last update.
         </p>
       )}
@@ -929,7 +918,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                 </p>
                 {riskLine(pkg)}
                 <div class="mosd-card-categories">
-                  {pkg.categories.slice(0, 2).map((slug) => (
+                  {pkg.categories.map((slug) => (
                     <button
                       key={slug}
                       type="button"
@@ -941,54 +930,54 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                     </button>
                   ))}
                 </div>
-                <p class="mosd-card-stats">
-                  {pkg.popularity.installs !== null && (
-                    <span class="mosd-stat">
-                      <strong>{countLabel(pkg.popularity.installs)}</strong> installs
-                    </span>
-                  )}
-                  {pkg.popularity.githubStars !== null && pkg.popularity.githubStars > 0 && (
-                    <span class="mosd-stat" title="GitHub stars">
-                      <span class="mosd-star" aria-hidden="true">★</span>{' '}
-                      <strong>{countLabel(pkg.popularity.githubStars)}</strong> stars
-                    </span>
-                  )}
-                  {age !== null && <span class="mosd-stat">{age}</span>}
-                  {pkg.quality.tier === 'needs-help' && (
-                    <span class="mosd-stat mosd-stat-issues">{qualityLabel(pkg.quality.tier)}</span>
-                  )}
-                  {!leads && fit !== null && (
-                    <span class="mosd-card-span">{fit.text}</span>
-                  )}
-                </p>
-                {(markable(pkg) || merits.length > 0) && (
-                  <div class="mosd-card-foot">
-                    {merits.length > 0 && (
-                      <p class="mosd-card-badges">
-                        {merits.map((badge) => (
-                          <span key={badge.key} class={`mosd-badge mosd-badge-${badge.key}`} title={badge.title}>
-                            {badge.label}
-                          </span>
-                        ))}
-                      </p>
-                    )}
-                    {markable(pkg) && (
-                      <p class="mosd-card-actions">
-                        <button
-                          type="button"
-                          class={`mosd-mark${marked.has(pkg.name) ? ' mosd-marked' : ''}`}
-                          onClick={() => toggleMark(pkg)}
-                        >
-                          {marked.has(pkg.name)
-                            ? '✓ On install list'
-                            : installState(pkg) === 'update'
-                              ? '+ Mark for update'
-                              : '+ Mark for install'}
-                        </button>
-                      </p>
-                    )}
-                  </div>
+                {merits.length > 0 && (
+                  <p class="mosd-card-badges">
+                    {merits.map((badge) => (
+                      <span key={badge.key} class={`mosd-badge mosd-badge-${badge.key}`} title={badge.title}>
+                        {badge.label}
+                      </span>
+                    ))}
+                  </p>
                 )}
+                <div class="mosd-card-foot">
+                  <p class="mosd-card-stats">
+                    {pkg.popularity.installs !== null && (
+                      <span class="mosd-stat">
+                        <strong>{countLabel(pkg.popularity.installs)}</strong> installs
+                      </span>
+                    )}
+                    {pkg.popularity.githubStars !== null && pkg.popularity.githubStars > 0 && (
+                      <span class="mosd-stat" title="GitHub stars">
+                        <span class="mosd-star" aria-hidden="true">★</span>{' '}
+                        <strong>{countLabel(pkg.popularity.githubStars)}</strong> stars
+                      </span>
+                    )}
+                    {age !== null && <span class="mosd-stat">{age}</span>}
+                    {pkg.quality.tier === 'needs-help' && (
+                      <span class="mosd-stat mosd-stat-issues">{qualityLabel(pkg.quality.tier)}</span>
+                    )}
+                  </p>
+                  {((!leads && fit !== null) || markable(pkg)) && (
+                    <div class="mosd-card-foot-row">
+                      {!leads && fit !== null && <p class="mosd-card-span">{fit.text}</p>}
+                      {markable(pkg) && (
+                        <p class="mosd-card-actions">
+                          <button
+                            type="button"
+                            class={`mosd-mark${marked.has(pkg.name) ? ' mosd-marked' : ''}`}
+                            onClick={() => toggleMark(pkg)}
+                          >
+                            {marked.has(pkg.name)
+                              ? '✓ On install list'
+                              : installState(pkg) === 'update'
+                                ? '+ Mark for update'
+                                : '+ Mark for install'}
+                          </button>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </li>
           );

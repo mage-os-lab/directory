@@ -32,7 +32,6 @@ export const packageQuality = z.object({
 });
 
 export const packageTrust = z.object({
-  trustedVendor: z.boolean(),
   partnerTier: partnerTier.nullable(),
   editorialPick: z.boolean(),
   warnings: z.array(packageWarning),
@@ -82,7 +81,7 @@ export const packageSummary = z.object({
   vendor: vendorSlug,
   displayName: z.string(),
   description: z.string(),
-  /** Canonical category slugs; trust-file override wins over PM mapping. */
+  /** PackageMaven category slugs; a trust-file override wins. */
   categories: z.array(categorySlug),
   repositoryUrl: z.url().nullable(),
   latestVersion: z.string().nullable(),
@@ -118,7 +117,6 @@ export const vendorSummary = z.object({
   slug: vendorSlug,
   name: z.string(),
   url: z.url().nullable(),
-  trustedVendor: z.boolean(),
   partnerTier: partnerTier.nullable(),
   packageCount: z.number().int().min(0),
 });

@@ -2,7 +2,7 @@
 
 This document governs the trust overlay described in
 [architecture.md](architecture.md#vendor-trust-files): who can claim a vendor namespace,
-what it takes to earn a Trusted Vendor badge or a partner tier, how editorial picks stay
+what it takes to earn a partner tier, how editorial picks stay
 independent of partnership, how warnings get filed and disputed, and how to report a
 malicious package. It applies to every `data/vendors/<vendor>.json` file and every PR
 that touches one.
@@ -19,30 +19,8 @@ that touches one.
   it. A reviewing maintainer checks this before merge — it is not automated.
 - Vendors publishing under multiple Packagist namespaces (e.g. `acme` and
   `acme-labs`) get one file per namespace. Shared identity is established once (the
-  namespaces point at the same org/site), but `trustedVendor`, `partnerTier`, and
-  warnings are granted per namespace, not inherited across them.
-
-## Trusted vendor
-
-The `trustedVendor` badge signals a sustained track record, not a one-time check.
-Eligibility:
-
-- At least one package maintained (releases and issue responses) for 12+ months.
-- No open `derank` or `hide` severity warning against any of the vendor's packages.
-- Demonstrated responsiveness: issues on the vendor's repos get triaged, not ignored,
-  within a reasonable window.
-- Identity verified per [Vendor identity](#vendor-identity) above.
-
-A partner tier confers no part of this. `partnerTier` and `trustedVendor` are separate
-grants against separate criteria: a partner earns the trusted badge on exactly the
-record above, like any other vendor, and a vendor with no partnership earns it on the
-same terms. They are stored as independent fields and land in separate PRs — a tier
-change never carries a badge with it.
-
-Granted or revoked only by a maintainer PR review (CODEOWNERS-guarded, same as every
-`data/vendors/**` change). Revocation for cause — e.g. an unresolved `hide` warning, or a
-pattern of unresponsiveness — must state the reason in the PR description, not just flip
-the field silently; the PR itself is the audit trail.
+  namespaces point at the same org/site), but `partnerTier` and warnings are granted
+  per namespace, not inherited across them.
 
 ## Partner tiers
 

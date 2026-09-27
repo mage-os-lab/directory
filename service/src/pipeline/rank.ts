@@ -4,7 +4,6 @@ import type { RankingConfig } from '../schema/ranking-config.js';
 export interface RankingInput {
   editorialPick: boolean;
   partnerTier: keyof RankingConfig['partnerTierValues'] | null;
-  trustedVendor: boolean;
   /** Null = PM hasn't tested the package; the quality signal is omitted. */
   qualityTier: keyof RankingConfig['qualityTierValues'] | null;
   latestReleasedAt: string | null;
@@ -187,7 +186,6 @@ export function rankPackage(
       weights.partnerTier,
       input.partnerTier === null ? 0 : (config.partnerTierValues[input.partnerTier] ?? 0),
     ],
-    trustedVendor: [weights.trustedVendor, input.trustedVendor ? 1 : 0],
     qualityTier:
       input.qualityTier === null
         ? null

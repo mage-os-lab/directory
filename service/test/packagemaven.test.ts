@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  categoriesFromPackages,
   cleanDisplayName,
   fetchPackageMavenSnapshot,
   isRedundantName,
@@ -29,7 +30,10 @@ function apiPackage(overrides: Partial<PmApiPackage> = {}): PmApiPackage {
       phpstan_level: 6,
     },
     semver: { status: 'compliant', compliance_percent: 100 },
-    categories: [{ slug: 'developer-tools' }, { slug: 'admin-tools' }],
+    categories: [
+      { slug: 'developer-tools', name: 'Developer Tools' },
+      { slug: 'administration-backend', name: 'Administration & Backend' },
+    ],
     links: { web: 'https://package-maven.com/acme/module-widget' },
     ...overrides,
   };
@@ -145,6 +149,22 @@ describe('cleanDisplayName', () => {
     expect(cleanDisplayName('for Magento 2')).toBe('for Magento 2');
     expect(cleanDisplayName('  Magento2 for Magento 2  ')).toBe('Magento2 for Magento 2');
   });
+
+  it('turns a Vendor_Module code into words, without the vendor', () => {
+    expect(cleanDisplayName('CustomGento_RemoveProductComparison')).toBe(
+      'Remove Product Comparison',
+    );
+    expect(cleanDisplayName('AvS_ScopeHint')).toBe('Scope Hint');
+    expect(cleanDisplayName('Acme_SEOToolkit')).toBe('SEO Toolkit');
+    expect(cleanDisplayName('Yireo_GoogleTagManager2')).toBe('Google Tag Manager 2');
+  });
+
+  it('leaves a name that is only partly a module code alone', () => {
+    expect(cleanDisplayName('Acme_Widget Pro')).toBe('Acme_Widget Pro');
+    expect(cleanDisplayName('Acme_Widget_Pro')).toBe('Acme_Widget_Pro');
+    // Module codes are PascalCase on both sides; a snake_case name is just a name.
+    expect(cleanDisplayName('snake_case')).toBe('snake_case');
+  });
 });
 
 describe('isRedundantName', () => {
@@ -178,7 +198,7 @@ describe('normalizePmApiPackage', () => {
     expect(source).toMatchObject({
       name: 'acme/module-widget',
       displayName: 'Acme Widget Manager',
-      rawCategories: ['developer-tools', 'admin-tools'],
+      rawCategories: ['developer-tools', 'administration-backend'],
       latestVersion: '2.3.1',
       latestReleasedAt: '2026-05-14T09:30:00.000Z',
       supportedMagento: ['2.4.9'],
@@ -334,6 +354,24 @@ describe('normalizePmApiPackage', () => {
   });
 });
 
+describe('categoriesFromPackages', () => {
+  it("collects PM's name for every slug the packages carry, sorted by slug", () => {
+    expect(
+      categoriesFromPackages([
+        apiPackage(),
+        apiPackage({ categories: [{ slug: 'ai-automation', name: 'AI & Automation' }] }),
+        // A record without names, or a broken one, adds nothing and breaks nothing.
+        apiPackage({ categories: [{ slug: 'search' }] }),
+        { broken: true },
+      ]),
+    ).toEqual([
+      { slug: 'administration-backend', name: 'Administration & Backend' },
+      { slug: 'ai-automation', name: 'AI & Automation' },
+      { slug: 'developer-tools', name: 'Developer Tools' },
+    ]);
+  });
+});
+
 describe('fetchPackageMavenSnapshot', () => {
   const page = (packages: unknown[], currentPage: number, lastPage: number, total: number) =>
     new Response(
@@ -373,6 +411,10 @@ describe('fetchPackageMavenSnapshot', () => {
     expect(result.skipped).toEqual(['(unparseable record)']);
     expect(result.snapshot.origin).toBe('live');
     expect(result.snapshot.fetchedAt).toBe('2026-07-10T00:00:00.000Z');
+    expect(result.snapshot.categories.map((c) => c.name)).toEqual([
+      'Administration & Backend',
+      'Developer Tools',
+    ]);
     expect(() => packageMavenSnapshot.parse(result.snapshot)).not.toThrow();
   });
 

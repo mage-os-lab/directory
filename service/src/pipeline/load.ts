@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
-import { categoriesFile, packageMavenSnapshot, packagistSnapshot } from '../schema/source.js';
-import type { CategoriesFile, PackageMavenSnapshot, PackagistSnapshot } from '../schema/source.js';
+import { packageMavenSnapshot, packagistSnapshot } from '../schema/source.js';
+import type { PackageMavenSnapshot, PackagistSnapshot } from '../schema/source.js';
 import { rankingConfig, type RankingConfig } from '../schema/ranking-config.js';
 import { validateWarningEvidence, vendorFile, type VendorFile } from '../schema/vendor-file.js';
 
@@ -38,19 +38,6 @@ function parseWith<T>(schema: z.ZodType<T>, filePath: string): T {
   return result.data;
 }
 
-export function loadCategories(dataDir: string): CategoriesFile {
-  const file = path.join(dataDir, 'categories.json');
-  const parsed = parseWith(categoriesFile, file);
-  const slugs = new Set(parsed.categories.map((c) => c.slug));
-  if (slugs.size !== parsed.categories.length) {
-    throw new DataError(file, 'duplicate category slugs');
-  }
-  if (!slugs.has(parsed.fallbackCategory)) {
-    throw new DataError(file, `fallbackCategory "${parsed.fallbackCategory}" is not a category`);
-  }
-  return parsed;
-}
-
 export function loadRankingConfig(dataDir: string): RankingConfig {
   return parseWith(rankingConfig, path.join(dataDir, 'ranking.json'));
 }
@@ -81,13 +68,14 @@ export function vendorsDirFor(dataDir: string, source: 'live' | 'fixture'): stri
 /**
  * Load and validate every <vendorsDir>/*.json trust file. Malformed files
  * throw (our own data — CI on the PR should have caught it); cross-file
- * checks (filename = vendor, key prefixes, category refs, warning evidence)
- * are enforced here because the schema alone can't see filenames.
+ * checks (filename = vendor, key prefixes, warning evidence) are enforced
+ * here because the schema alone can't see filenames. Category overrides are
+ * checked against PM's taxonomy, which lives in the snapshot: by
+ * validate-data in CI, and as a warning by each pipeline run.
  */
-export function loadVendorFiles(vendorsDir: string, categories: CategoriesFile): VendorFile[] {
+export function loadVendorFiles(vendorsDir: string): VendorFile[] {
   if (!fs.existsSync(vendorsDir)) return [];
 
-  const slugs = new Set(categories.categories.map((c) => c.slug));
   const files = fs
     .readdirSync(vendorsDir)
     .filter((name) => name.endsWith('.json'))
@@ -103,14 +91,6 @@ export function loadVendorFiles(vendorsDir: string, categories: CategoriesFile):
     for (const [packageName, entry] of Object.entries(parsed.packages)) {
       if (!packageName.startsWith(`${parsed.vendor}/`)) {
         throw new DataError(filePath, `package "${packageName}" must start with "${parsed.vendor}/"`);
-      }
-      for (const category of entry.categories ?? []) {
-        if (!slugs.has(category)) {
-          throw new DataError(
-            filePath,
-            `package "${packageName}" references unknown category "${category}"`,
-          );
-        }
       }
     }
     const evidenceProblems = validateWarningEvidence(parsed);

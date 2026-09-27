@@ -15,7 +15,6 @@ const VENDOR_KEY_ORDER = [
   'vendor',
   'vendorName',
   'url',
-  'trustedVendor',
   'partnerTier',
   'packages',
 ] as const;

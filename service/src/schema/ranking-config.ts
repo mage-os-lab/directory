@@ -12,7 +12,6 @@ export const rankingConfig = z
     weights: z.object({
       editorialPick: weight,
       partnerTier: weight,
-      trustedVendor: weight,
       qualityTier: weight,
       freshness: weight,
       installs: weight,

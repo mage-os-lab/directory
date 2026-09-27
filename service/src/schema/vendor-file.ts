@@ -48,7 +48,6 @@ export const vendorFile = z
     vendor: vendorSlug,
     vendorName: z.string().min(1),
     url: z.url().optional(),
-    trustedVendor: z.boolean().default(false),
     partnerTier: partnerTier.nullable().default(null),
     packages: z.record(packageName, packageTrustEntry).default({}),
   })

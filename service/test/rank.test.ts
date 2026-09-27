@@ -16,8 +16,7 @@ const config: RankingConfig = rankingConfig.parse({
   weights: {
     editorialPick: 0.2,
     partnerTier: 0.1,
-    trustedVendor: 0.1,
-    qualityTier: 0.2,
+    qualityTier: 0.3,
     freshness: 0.15,
     installs: 0.06,
     recentInstalls: 0.07,
@@ -42,7 +41,6 @@ const now = new Date('2026-07-01T00:00:00.000Z');
 const base: RankingInput = {
   editorialPick: false,
   partnerTier: null,
-  trustedVendor: false,
   qualityTier: 'no-errors',
   latestReleasedAt: '2026-06-01T00:00:00.000Z',
   installs: 1000,
@@ -103,7 +101,6 @@ describe('rankPackage', () => {
       'qualityTier',
       'recentInstalls',
       'stars',
-      'trustedVendor',
     ]);
   });
 
@@ -112,7 +109,6 @@ describe('rankPackage', () => {
       {
         editorialPick: true,
         partnerTier: 'platinum',
-        trustedVendor: true,
         qualityTier: 'strict-compliant',
         latestReleasedAt: now.toISOString(),
         installs: 1_000_000,
@@ -303,7 +299,6 @@ describe('the point of the trend signals, under the shipped config', () => {
   const contender = (downloads: DownloadCounters, installs: number): RankingInput => ({
     editorialPick: false,
     partnerTier: null,
-    trustedVendor: false,
     qualityTier: 'no-errors',
     latestReleasedAt: '2026-06-01T00:00:00.000Z',
     installs,

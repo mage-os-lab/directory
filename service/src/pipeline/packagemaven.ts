@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { sourcePackage, type PackageMavenSnapshot, type SourcePackage } from '../schema/source.js';
+import {
+  sourcePackage,
+  type PackageMavenSnapshot,
+  type SourceCategory,
+  type SourcePackage,
+} from '../schema/source.js';
 import type { QualityTier } from '../schema/common.js';
 import { normalizeVersion } from '../shared/version.js';
 
@@ -58,7 +63,7 @@ export const pmApiPackage = z.object({
     status: z.enum(['pending', 'compliant', 'violations', 'unknown']),
     compliance_percent: z.number().int().min(0).max(100).nullable(),
   }),
-  categories: z.array(z.object({ slug: z.string() })),
+  categories: z.array(z.object({ slug: z.string(), name: z.string().optional() })),
   links: z.object({ web: z.string() }),
 });
 export type PmApiPackage = z.infer<typeof pmApiPackage>;
@@ -154,8 +159,27 @@ function stripRedundancy(trimmed: string): string {
   return REDUNDANT_NAME_ONLY.test(cleaned) ? '' : cleaned;
 }
 
+/**
+ * A Magento module code standing in for a name, such as
+ * "CustomGento_RemoveProductComparison": the vendor prefix repeats the
+ * package path shown under the title, and the run-together words are too
+ * long to wrap on a card. Only a name that is exactly Vendor_Module, both
+ * parts PascalCase, qualifies.
+ */
+const MODULE_CODE_NAME = /^[A-Z][A-Za-z0-9]*_([A-Z][A-Za-z0-9]*)$/;
+
+/** "CustomGento_RemoveProductComparison" → "Remove Product Comparison". */
+export function humanizeModuleCode(name: string): string {
+  const match = MODULE_CODE_NAME.exec(name);
+  if (match === null) return name;
+  return match[1]!
+    .replace(/([a-z])([A-Z0-9])/g, '$1 $2')
+    .replace(/([0-9])([A-Za-z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2');
+}
+
 export function cleanDisplayName(name: string): string {
-  const trimmed = name.trim();
+  const trimmed = humanizeModuleCode(name.trim());
   return stripRedundancy(trimmed) || trimmed;
 }
 
@@ -211,7 +235,7 @@ export function normalizePmApiPackage(raw: unknown): SourcePackage | null {
     name: pkg.composer_name.toLowerCase(),
     displayName: cleanDisplayName(pkg.name ?? '') || pkg.composer_name,
     description: pkg.description ?? '',
-    rawCategories: pkg.categories.map((c) => c.slug),
+    rawCategories: pkg.categories.map((c) => c.slug.trim().toLowerCase()),
     repositoryUrl: validUrl(pkg.repository_url),
     latestVersion,
     latestReleasedAt,
@@ -238,6 +262,30 @@ export function normalizePmApiPackage(raw: unknown): SourcePackage | null {
 
   const validated = sourcePackage.safeParse(candidate);
   return validated.success ? validated.data : null;
+}
+
+/**
+ * PM's taxonomy as the packages carry it: every category slug any package
+ * uses, with the name PM gives it (the first non-empty name seen wins),
+ * sorted by slug. PM embeds each category's name on every package, so the
+ * sweep that fetches the packages already has the whole taxonomy.
+ */
+export function categoriesFromPackages(raws: unknown[]): SourceCategory[] {
+  const names = new Map<string, string>();
+  for (const raw of raws) {
+    const parsed = pmApiPackage.shape.categories.safeParse(
+      (raw as { categories?: unknown } | null)?.categories,
+    );
+    if (!parsed.success) continue;
+    for (const category of parsed.data) {
+      const slug = category.slug.trim().toLowerCase();
+      const name = category.name?.trim();
+      if (slug !== '' && name && !names.has(slug)) names.set(slug, name);
+    }
+  }
+  return [...names.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, 'en'))
+    .map(([slug, name]) => ({ slug, name }));
 }
 
 export interface PmFetchResult {
@@ -294,6 +342,7 @@ export async function fetchPackageMavenSnapshot(options: PmFetchOptions): Promis
   const sleep = options.sleep ?? defaultSleep;
 
   const packages: SourcePackage[] = [];
+  const raws: unknown[] = [];
   const skipped: string[] = [];
   const seen = new Set<string>();
 
@@ -311,6 +360,7 @@ export async function fetchPackageMavenSnapshot(options: PmFetchOptions): Promis
     lastPage = parsed.data.meta.last_page;
 
     for (const raw of parsed.data.data) {
+      raws.push(raw);
       const normalized = normalizePmApiPackage(raw);
       if (normalized === null) {
         const name = (raw as { composer_name?: unknown })?.composer_name;
@@ -330,6 +380,7 @@ export async function fetchPackageMavenSnapshot(options: PmFetchOptions): Promis
       schemaVersion: 1,
       fetchedAt: options.now.toISOString(),
       origin: 'live',
+      categories: categoriesFromPackages(raws),
       packages,
     },
     skipped,

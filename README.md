@@ -65,8 +65,8 @@ trust overlay (by PR) ─┘                                     └─→ Magen
   saw the package — which is all the trend signals need to be computed without the
   pipeline keeping any history of its own (optional, failure-tolerant).
 - **Mage-OS vendor trust files** — per-vendor JSON files in `service/data/vendors/`,
-  edited by pull request — add the trust layer: trusted-vendor badges, partner tiers,
-  editorial picks, and warnings that derank or hide problem packages.
+  edited by pull request — add the trust layer: partner tiers, editorial picks, and
+  warnings that derank or hide problem packages.
 - A transparent, config-tunable **ranking** blends trust, quality, freshness,
   popularity and momentum — how a module's recent downloads compare with its own
   lifetime average — into the default ordering, with the per-signal breakdown
@@ -76,8 +76,8 @@ trust overlay (by PR) ─┘                                     └─→ Magen
 
 The module renders the same browse/search UI inside the Magento admin
 (**System → Extensions → Extension Directory**) — one list with search, category chips,
-one-click filters (trusted vendor, editors' picks, tested with your version, recently
-updated, high quality, popular) and a page of cards at a time — enriched with what only
+one-click filters (editors' picks, tested with your version, recently updated, high
+quality, popular, trending) and a page of cards at a time — enriched with what only
 the shop knows:
 its installed modules (read from `composer.lock` — never by shelling out) and its
 Magento version, which drive installed/update badges and version pinning against

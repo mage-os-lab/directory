@@ -20,6 +20,7 @@
 .mageos-extension-directory {
     --mosd-theme-accent: #eb5202;
     --mosd-theme-accent-soft: #fdf0e8;
+    --mosd-theme-action: #eb5202;
     --mosd-theme-fg: #303030;
     --mosd-theme-fg-muted: #666666;
     --mosd-theme-surface: #ffffff;
@@ -31,13 +32,23 @@
     min-height: 240px;
 }
 
-/* M137 admin theme: HCT neutral palette, rounded corners. */
+/*
+ * M137 admin theme: the design system's own Material 3 palettes, which are also the
+ * bundle's defaults, so this block only undoes the legacy values above: primary tone 40
+ * as the accent, the neutral filled action (legacy's is orange), the neutral tones, and
+ * M137's rounded corners.
+ */
 .m137-admin-theme .mageos-extension-directory {
+    --mosd-theme-accent: #005cbb;
+    --mosd-theme-accent-soft: #ecf0ff;
+    --mosd-theme-accent-container: #d6e1ff;
+    --mosd-theme-on-accent-container: #001b3f;
+    --mosd-theme-action: #1b1b1b;
     --mosd-theme-fg: #1b1b1b;
     --mosd-theme-fg-muted: #5e5e5e;
     --mosd-theme-bg-soft: #f1f1f1;
     --mosd-theme-border: #e2e2e2;
-    --mosd-theme-radius: 8px;
+    --mosd-theme-radius: 12px;
 }
 
 .mageos-extension-directory-intro {
@@ -68,4 +79,9 @@
     background: #eb5202;
     border-color: #eb5202;
     color: #fff;
+}
+
+.m137-admin-theme .mageos-extension-directory-modal .mageos-extension-directory-mark.mageos-extension-directory-marked {
+    background: #005cbb;
+    border-color: #005cbb;
 }

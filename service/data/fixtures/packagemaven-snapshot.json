@@ -2,13 +2,63 @@
   "schemaVersion": 1,
   "fetchedAt": "2026-07-01T06:00:00.000Z",
   "origin": "fixture",
+  "categories": [
+    {
+      "slug": "administration-backend",
+      "name": "Administration & Backend"
+    },
+    {
+      "slug": "analytics-tracking",
+      "name": "Analytics & Tracking"
+    },
+    {
+      "slug": "catalog-management",
+      "name": "Catalog Management"
+    },
+    {
+      "slug": "checkout-payments",
+      "name": "Checkout & Payments"
+    },
+    {
+      "slug": "customer-authentication",
+      "name": "Customer & Authentication"
+    },
+    {
+      "slug": "developer-tools",
+      "name": "Developer Tools"
+    },
+    {
+      "slug": "email-communication",
+      "name": "Email & Communication"
+    },
+    {
+      "slug": "integration-third-party",
+      "name": "Integration & Third-Party"
+    },
+    {
+      "slug": "miscellaneous",
+      "name": "Miscellaneous"
+    },
+    {
+      "slug": "order-shipping",
+      "name": "Order & Shipping"
+    },
+    {
+      "slug": "performance-optimization",
+      "name": "Performance & Optimization"
+    },
+    {
+      "slug": "seo-urls",
+      "name": "SEO & URLs"
+    }
+  ],
   "packages": [
     {
       "name": "brightloom/module-email-marketing",
       "displayName": "Email Marketing Automation",
       "description": "Triggers abandoned-cart and post-purchase email sequences through a connected ESP.",
       "rawCategories": [
-        "Marketing"
+        "email-communication"
       ],
       "repositoryUrl": "https://github.com/brightloom/module-email-marketing",
       "latestVersion": "1.5.0",
@@ -33,7 +83,7 @@
       "displayName": "SEO Toolkit",
       "description": "Bulk-edits meta titles and descriptions, generates XML sitemaps, and audits broken canonical tags.",
       "rawCategories": [
-        "SEO"
+        "seo-urls"
       ],
       "repositoryUrl": "https://github.com/brightloom/module-seo-toolkit",
       "latestVersion": "3.2.1",
@@ -63,8 +113,8 @@
       "displayName": "Social Share Buttons",
       "description": "Adds configurable social sharing and follow buttons to product and CMS pages.",
       "rawCategories": [
-        "Marketing",
-        "SEO"
+        "email-communication",
+        "seo-urls"
       ],
       "repositoryUrl": "https://gitlab.com/brightloom/module-social-share",
       "latestVersion": "2.2.2",
@@ -93,7 +143,7 @@
       "displayName": "Checkout Suite",
       "description": "Replaces the default checkout with a single-page flow featuring address autocomplete and saved payment methods.",
       "rawCategories": [
-        "Checkout"
+        "checkout-payments"
       ],
       "repositoryUrl": "https://github.com/castlegate/module-checkout-suite",
       "latestVersion": "3.0.4",
@@ -121,8 +171,8 @@
       "displayName": "Fraud Shield",
       "description": "Scores incoming orders against configurable risk rules and flags suspicious transactions for manual review.",
       "rawCategories": [
-        "Payments",
-        "Admin Tools"
+        "checkout-payments",
+        "administration-backend"
       ],
       "repositoryUrl": "https://github.com/castlegate/module-fraud-shield",
       "latestVersion": "1.6.2",
@@ -147,8 +197,7 @@
       "displayName": "Installments Plan Manager",
       "description": "Offers configurable installment payment plans at checkout with automatic scheduled billing.",
       "rawCategories": [
-        "Payments",
-        "Checkout"
+        "checkout-payments"
       ],
       "repositoryUrl": null,
       "latestVersion": null,
@@ -169,7 +218,7 @@
       "displayName": "Payment Gateway Bridge",
       "description": "Connects checkout to a hosted payment gateway with tokenized cards and 3-D Secure support.",
       "rawCategories": [
-        "Payments"
+        "checkout-payments"
       ],
       "repositoryUrl": "https://github.com/castlegate/module-payment-gateway",
       "latestVersion": "5.1.0",
@@ -223,8 +272,8 @@
       "displayName": "Customer Segments",
       "description": "Builds dynamic customer segments from purchase history for targeted pricing and promotions.",
       "rawCategories": [
-        "Customer",
-        "Marketing"
+        "customer-authentication",
+        "email-communication"
       ],
       "repositoryUrl": "https://github.com/driftwood/module-customer-segments",
       "latestVersion": "1.4.4",
@@ -248,8 +297,8 @@
       "displayName": "Loyalty Points Program",
       "description": "Rewards purchases, reviews, and referrals with redeemable points shown in the customer account.",
       "rawCategories": [
-        "Customer",
-        "Marketing"
+        "customer-authentication",
+        "email-communication"
       ],
       "repositoryUrl": "https://github.com/driftwood/module-loyalty-points",
       "latestVersion": "2.5.3",
@@ -278,7 +327,7 @@
       "displayName": "Wishlist Plus",
       "description": "Adds multiple named wishlists, sharing links, and back-in-stock alerts.",
       "rawCategories": [
-        "Customer"
+        "customer-authentication"
       ],
       "repositoryUrl": "https://github.com/driftwood/module-wishlist-plus",
       "latestVersion": "1.8.0",
@@ -303,7 +352,7 @@
       "displayName": "API Request Logger",
       "description": "Logs and lets admins replay inbound REST and GraphQL requests for debugging integrations.",
       "rawCategories": [
-        "Developer Tools"
+        "developer-tools"
       ],
       "repositoryUrl": "https://gitlab.com/ferrousbyte/module-api-logger",
       "latestVersion": "2.6.1",
@@ -327,7 +376,7 @@
       "displayName": "ERP Connector",
       "description": "Synchronizes products, prices, and stock levels bidirectionally with a back-office ERP system.",
       "rawCategories": [
-        "Integration"
+        "integration-third-party"
       ],
       "repositoryUrl": "https://github.com/ferrousbyte/module-erp-connector",
       "latestVersion": "4.3.0",
@@ -353,8 +402,8 @@
       "displayName": "GraphQL Extensions",
       "description": "Exposes additional order, wishlist, and CMS block fields on the Magento GraphQL schema.",
       "rawCategories": [
-        "Developer Tools",
-        "Integration"
+        "developer-tools",
+        "integration-third-party"
       ],
       "repositoryUrl": "https://github.com/ferrousbyte/module-graphql-extensions",
       "latestVersion": "1.0.9",
@@ -382,8 +431,8 @@
       "displayName": "Webhook Dispatcher",
       "description": "Fires configurable outbound webhooks on order, customer, and catalog events with retry and signing.",
       "rawCategories": [
-        "Integration",
-        "Developer Tools"
+        "integration-third-party",
+        "developer-tools"
       ],
       "repositoryUrl": "https://github.com/ferrousbyte/module-webhook-dispatcher",
       "latestVersion": "1.3.4",
@@ -408,8 +457,8 @@
       "displayName": "Address Validation",
       "description": "Validates and normalizes shipping addresses at checkout against a third-party address API.",
       "rawCategories": [
-        "Shipping",
-        "Checkout"
+        "order-shipping",
+        "checkout-payments"
       ],
       "repositoryUrl": "https://github.com/ironclasp/module-address-validation",
       "latestVersion": "2.0.2",
@@ -434,7 +483,7 @@
       "displayName": "Freightline Carrier Integration",
       "description": "Adds live rates, label printing, and tracking for the Freightline LTL carrier network.",
       "rawCategories": [
-        "Shipping"
+        "order-shipping"
       ],
       "repositoryUrl": "https://github.com/ironclasp/module-carrier-freightline",
       "latestVersion": "3.6.0",
@@ -464,7 +513,7 @@
       "displayName": "Checkout Custom Fields",
       "description": "Adds configurable custom fields to shipping, billing, and payment steps of checkout.",
       "rawCategories": [
-        "Checkout"
+        "checkout-payments"
       ],
       "repositoryUrl": "https://github.com/ironclasp/module-checkout-fields",
       "latestVersion": "1.3.0",
@@ -489,7 +538,7 @@
       "displayName": "Multi-Carrier Shipping",
       "description": "Aggregates live rates from several regional carriers into a single checkout shipping method list.",
       "rawCategories": [
-        "Shipping"
+        "order-shipping"
       ],
       "repositoryUrl": "https://github.com/ironclasp/module-multi-carrier",
       "latestVersion": "1.1.7",
@@ -512,8 +561,8 @@
       "displayName": "Debug Bar",
       "description": "Overlays query counts, cache hits, and observer timings on storefront pages in developer mode.",
       "rawCategories": [
-        "Developer Tools",
-        "Performance"
+        "developer-tools",
+        "performance-optimization"
       ],
       "repositoryUrl": null,
       "latestVersion": null,
@@ -538,7 +587,7 @@
       "displayName": "Cache Warmer",
       "description": "Crawls and pre-warms the full-page cache for catalog and CMS URLs after deploys and reindexes.",
       "rawCategories": [
-        "Performance"
+        "performance-optimization"
       ],
       "repositoryUrl": "https://github.com/lumenpath/module-cache-warmer",
       "latestVersion": "4.1.2",
@@ -564,7 +613,7 @@
       "displayName": "CLI Toolkit",
       "description": "Bundles bin/magento commands for bulk data fixes, config diffing, and environment snapshots.",
       "rawCategories": [
-        "Developer Tools"
+        "developer-tools"
       ],
       "repositoryUrl": "https://github.com/lumenpath/module-cli-toolkit",
       "latestVersion": "1.0.3",
@@ -586,7 +635,7 @@
       "displayName": "Invoice PDF Generator",
       "description": "Generates branded PDF invoices with configurable templates and automatic email attachment.",
       "rawCategories": [
-        "Admin Tools"
+        "administration-backend"
       ],
       "repositoryUrl": "https://github.com/northware/module-invoice-pdf",
       "latestVersion": "1.2.3",
@@ -615,8 +664,8 @@
       "displayName": "Order Export Suite",
       "description": "Exports orders, invoices, and shipments to CSV, XML, or a configurable REST endpoint on a schedule.",
       "rawCategories": [
-        "Reporting",
-        "Integration"
+        "analytics-tracking",
+        "integration-third-party"
       ],
       "repositoryUrl": "https://github.com/northware/module-order-export",
       "latestVersion": "3.4.2",
@@ -646,7 +695,7 @@
       "displayName": "Order Sync Connector",
       "description": "Keeps order status in sync between Magento and an external fulfillment system via a lightweight queue.",
       "rawCategories": [
-        "Integration"
+        "integration-third-party"
       ],
       "repositoryUrl": "https://github.com/northware/module-order-sync",
       "latestVersion": "2.1.0",
@@ -671,8 +720,8 @@
       "displayName": "Returns Manager",
       "description": "Lets customers request RMAs from their account and gives support staff a queue to approve and track returns.",
       "rawCategories": [
-        "Customer",
-        "Shipping"
+        "customer-authentication",
+        "order-shipping"
       ],
       "repositoryUrl": "https://github.com/northware/module-returns-manager",
       "latestVersion": "2.3.1",
@@ -696,7 +745,7 @@
       "displayName": "Shipping Rules Engine",
       "description": "Adds conditional shipping method visibility rules based on cart weight, destination, and customer group.",
       "rawCategories": [
-        "Shipping"
+        "order-shipping"
       ],
       "repositoryUrl": "https://github.com/northware/module-shipping-rules",
       "latestVersion": "4.0.1",
@@ -722,8 +771,8 @@
       "displayName": "Image Optimizer",
       "description": "Automatically compresses and converts product images to WebP on upload without visible quality loss.",
       "rawCategories": [
-        "Performance",
-        "Catalog"
+        "performance-optimization",
+        "catalog-management"
       ],
       "repositoryUrl": "https://github.com/pixelforge/magento2-image-optimizer",
       "latestVersion": "2.8.0",
@@ -753,7 +802,7 @@
       "displayName": "Lazy Load for Images",
       "description": "Defers offscreen image loading to improve Largest Contentful Paint scores on catalog and CMS pages.",
       "rawCategories": [
-        "Performance"
+        "performance-optimization"
       ],
       "repositoryUrl": "https://github.com/pixelforge/magento2-lazy-load",
       "latestVersion": "1.4.1",
@@ -778,7 +827,7 @@
       "displayName": "Video Gallery",
       "description": "Embeds a product video gallery alongside the standard image gallery with lazy-loaded thumbnails.",
       "rawCategories": [
-        "Catalog"
+        "catalog-management"
       ],
       "repositoryUrl": "https://github.com/pixelforge/magento2-video-gallery",
       "latestVersion": "1.1.0",
@@ -802,7 +851,7 @@
       "displayName": "Catalog Swatches Pro",
       "description": "Adds image and texture swatches to layered navigation and product listing pages.",
       "rawCategories": [
-        "Catalog"
+        "catalog-management"
       ],
       "repositoryUrl": "https://github.com/pixelforge/module-catalog-swatches",
       "latestVersion": "2.0.6",
@@ -845,8 +894,8 @@
       "displayName": "Category Banners",
       "description": "Lets merchandisers schedule rotating promotional banners per category from the admin grid.",
       "rawCategories": [
-        "Marketing",
-        "Catalog"
+        "email-communication",
+        "catalog-management"
       ],
       "repositoryUrl": "https://github.com/pixelforge/module-category-banners",
       "latestVersion": "1.0.5",
@@ -866,8 +915,8 @@
       "displayName": "Product Badges",
       "description": "Overlays configurable sale, new-arrival, and custom badges on product images sitewide.",
       "rawCategories": [
-        "Catalog",
-        "Marketing"
+        "catalog-management",
+        "email-communication"
       ],
       "repositoryUrl": "https://github.com/pixelforge/module-product-badges",
       "latestVersion": "1.9.3",
@@ -891,7 +940,7 @@
       "displayName": "Admin Notes",
       "description": "Adds an internal notes panel with @mentions to order, customer, and product admin pages.",
       "rawCategories": [
-        "Admin Tools"
+        "administration-backend"
       ],
       "repositoryUrl": "https://github.com/quillstack/module-admin-notes",
       "latestVersion": "2.4.0",
@@ -916,8 +965,8 @@
       "displayName": "Audit Log",
       "description": "Records every admin user action with before/after diffs and a searchable audit trail.",
       "rawCategories": [
-        "Admin Tools",
-        "Reporting"
+        "administration-backend",
+        "analytics-tracking"
       ],
       "repositoryUrl": "https://gitlab.com/quillstack/module-audit-log",
       "latestVersion": "3.1.5",
@@ -947,8 +996,8 @@
       "displayName": "Dashboard Widgets",
       "description": "Adds drag-and-drop KPI widgets, including custom SQL-backed tiles, to the admin dashboard.",
       "rawCategories": [
-        "Admin Tools",
-        "Misc Utilities"
+        "administration-backend",
+        "miscellaneous"
       ],
       "repositoryUrl": "https://github.com/quillstack/module-dashboard-widgets",
       "latestVersion": "1.0.1",
@@ -968,7 +1017,7 @@
       "displayName": "Permission Manager",
       "description": "Extends Magento ACL with per-attribute and per-website admin permission scoping.",
       "rawCategories": [
-        "Admin Tools"
+        "administration-backend"
       ],
       "repositoryUrl": "https://github.com/quillstack/module-permission-manager",
       "latestVersion": "1.2.0",
@@ -992,7 +1041,7 @@
       "displayName": "Sales Reports Plus",
       "description": "Adds cohort, RFM, and product-affinity reports beyond Magento core reporting.",
       "rawCategories": [
-        "Reporting"
+        "analytics-tracking"
       ],
       "repositoryUrl": "https://github.com/quillstack/module-sales-reports",
       "latestVersion": "1.7.2",
@@ -1017,7 +1066,7 @@
       "displayName": "Gift Registry",
       "description": "Adds a modern gift and wedding registry experience with shared links and purchase tracking.",
       "rawCategories": [
-        "Misc Utilities"
+        "miscellaneous"
       ],
       "repositoryUrl": null,
       "latestVersion": "1.0.0",
@@ -1037,8 +1086,8 @@
       "displayName": "Inventory Forecast",
       "description": "Projects stockout dates and suggests reorder quantities from historical sales velocity.",
       "rawCategories": [
-        "Reporting",
-        "Catalog"
+        "analytics-tracking",
+        "catalog-management"
       ],
       "repositoryUrl": "https://github.com/wrenfield/module-inventory-forecast",
       "latestVersion": "1.6.0",
@@ -1061,7 +1110,7 @@
       "displayName": "Marketplace Sync",
       "description": "Publishes catalog listings and syncs order status with major third-party online marketplaces.",
       "rawCategories": [
-        "Integration"
+        "integration-third-party"
       ],
       "repositoryUrl": "https://github.com/wrenfield/module-marketplace-sync",
       "latestVersion": "2.1.8",

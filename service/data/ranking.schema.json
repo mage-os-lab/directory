@@ -23,11 +23,6 @@
           "minimum": 0,
           "maximum": 1
         },
-        "trustedVendor": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
         "qualityTier": {
           "type": "number",
           "minimum": 0,
@@ -62,7 +57,6 @@
       "required": [
         "editorialPick",
         "partnerTier",
-        "trustedVendor",
         "qualityTier",
         "freshness",
         "installs",

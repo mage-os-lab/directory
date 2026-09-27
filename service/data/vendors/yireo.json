@@ -3,7 +3,6 @@
   "vendor": "yireo",
   "vendorName": "Yireo",
   "url": "https://www.yireo.com/",
-  "trustedVendor": true,
   "partnerTier": null,
   "packages": {
     "yireo/magento2-googletagmanager2": {

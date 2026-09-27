@@ -21,7 +21,6 @@ const feed: Feed = {
       slug: 'acme',
       name: 'Acme',
       url: null,
-      trustedVendor: true,
       partnerTier: null,
       packageCount: 1,
     },
@@ -48,7 +47,6 @@ const feed: Feed = {
         stale: false,
       },
       trust: {
-        trustedVendor: true,
         partnerTier: null,
         editorialPick: false,
         warnings: [],
@@ -80,7 +78,6 @@ const feed: Feed = {
         stale: false,
       },
       trust: {
-        trustedVendor: true,
         partnerTier: null,
         editorialPick: false,
         warnings: [],
@@ -112,7 +109,6 @@ const feed: Feed = {
         stale: false,
       },
       trust: {
-        trustedVendor: false,
         partnerTier: null,
         editorialPick: false,
         warnings: [
@@ -385,8 +381,8 @@ describe('mountDirectory', () => {
     // tested range sits in the footer instead.
     expect(el.querySelector('.mosd-card-fit')).toBeNull();
     expect([...el.querySelectorAll('.mosd-card-span')].map((s) => s.textContent)).toEqual([
-      'Magento 2.4.7',
-      'Magento 2.4.7',
+      'Tested with Magento 2.4.7',
+      'Tested with Magento 2.4.7',
     ]);
     // The abandoned package has no tested Magento versions at all, so it
     // gets no range rather than an empty or invented one.
@@ -408,9 +404,9 @@ describe('mountDirectory', () => {
     const badgesOf = (name: string) =>
       [...cardOf(name).querySelectorAll('.mosd-card-badges .mosd-badge')].map((b) => b.textContent);
 
-    // Trusted vendor and High quality read exactly as the chips of the same
-    // name; too few packages report installs here for anything to be Popular.
-    expect(badgesOf('acme/module-pay')).toEqual(['✓ Trusted vendor', 'High quality']);
+    // High quality reads exactly as the chip of the same name; too few
+    // packages report installs here for anything to be Popular.
+    expect(badgesOf('acme/module-pay')).toEqual(['High quality']);
     // Nothing earned, nothing shown — not an empty row.
     expect(cardOf('module-legacy').querySelector('.mosd-card-badges')).toBeNull();
     // PackageMaven's tier names describe code to its contributors, not a
@@ -480,7 +476,25 @@ describe('mountDirectory', () => {
     ]);
   });
 
-  it('puts the earned badges before the install toggle in the card footer', async () => {
+  it('gives an abandoned or warned-about card no merit badges', async () => {
+    // Even an editors' pick loses its badge once the card carries a warning.
+    const picked = structuredClone(feed);
+    picked.packages[2]!.trust.editorialPick = true;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(picked), { status: 200 })),
+    );
+    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false });
+    await flush();
+
+    const legacy = [...el.querySelectorAll('.mosd-card')].find((c) =>
+      c.querySelector('.mosd-card-name')!.textContent!.includes('module-legacy'),
+    )!;
+    expect(legacy.querySelector('.mosd-card-risk')).not.toBeNull();
+    expect(legacy.querySelector('.mosd-card-badges')).toBeNull();
+  });
+
+  it('ends every card with the stats footer, badges above it', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
@@ -492,11 +506,20 @@ describe('mountDirectory', () => {
       [...el.querySelectorAll('.mosd-card')].find((c) =>
         c.querySelector('.mosd-card-name')!.textContent!.includes(name),
       )!;
-    // Acme Pay earns at least one badge and is markable, so its footer holds both.
-    const foot = cardOf('acme/module-pay').querySelector('.mosd-card-foot')!;
-    const badges = foot.querySelector('.mosd-card-badges')!;
-    const actions = foot.querySelector('.mosd-card-actions')!;
-    expect([...foot.children]).toEqual([badges, actions]);
+    // The footer is the body's last block on every card, so a row of cards
+    // shares one bottom edge whether or not a card earned any badges.
+    for (const card of el.querySelectorAll('.mosd-card')) {
+      expect(card.querySelector('.mosd-card-body')!.lastElementChild!.className).toBe(
+        'mosd-card-foot',
+      );
+    }
+    // Acme Pay earns a badge and is markable: the badge sits above the
+    // footer, the install toggle inside it.
+    const body = cardOf('acme/module-pay').querySelector('.mosd-card-body')!;
+    const badges = body.querySelector('.mosd-card-badges')!;
+    const foot = body.querySelector('.mosd-card-foot')!;
+    expect(badges.nextElementSibling).toBe(foot);
+    expect(foot.querySelector('.mosd-card-actions')).not.toBeNull();
   });
 
   it('builds the composer command and dispatches mosd:selection when marking', async () => {

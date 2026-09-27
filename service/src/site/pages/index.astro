@@ -1,20 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import SearchIsland from '../components/SearchIsland.js';
-import { withBase } from '../lib/base.js';
-import {
-  POPULAR_PERCENTILE,
-  installsAtPercentile,
-  isHighQuality,
-  isPopular,
-} from '../../shared/merits.js';
-import { qualityLabel } from '../../shared/quality.js';
-import { editorialPicks, loadFeed, packageHref } from '../lib/data.js';
+import { loadFeed } from '../lib/data.js';
 
 const feed = loadFeed();
-const picks = editorialPicks(feed, 6);
-// The same floor the browse island uses, so "Popular" means one thing on the page.
-const popularFloor = installsAtPercentile(feed.packages, POPULAR_PERCENTILE);
 
 // Hero counters (PM-style): visible modules by readiness.
 const visible = feed.packages.filter((p) => !p.trust.hidden);
@@ -27,15 +16,14 @@ const vendorCount = new Set(visible.map((p) => p.vendor)).size;
 
 <Base
   title="Home"
-  description="A trustworthy, quality-tested catalog of open-source Magento and Mage-OS modules, powered by PackageMaven data."
+  description="Magento and Mage-OS modules, tested against real Magento releases by PackageMaven."
 >
   <section class="hero">
-    <h1>Find Magento &amp; Mage-OS modules you can trust</h1>
+    <h1>Find Magento &amp; Mage-OS modules</h1>
     <p>
-      The Mage-OS Extension Directory is a quality-tested catalog of open-source Magento 2 and
-      Mage-OS modules. Every listing is backed by <a href="https://package-maven.com/" rel="noopener">PackageMaven</a>'s
-      real compatibility testing against actual Magento versions — not just parsed Composer
-      constraints — plus a human-curated trust layer for vendor track record and editorial picks.
+      Modules for Magento 2 and Mage-OS, each installed and compiled against real Magento
+      releases by <a href="https://package-maven.com/" rel="noopener">PackageMaven</a>.
+      Editors&rsquo; picks and warnings come from the Mage-OS maintainers.
     </p>
     <p class="hero-stats">
       <span class="hero-stat"><strong>{visible.length}</strong> modules</span>
@@ -45,47 +33,8 @@ const vendorCount = new Set(visible.map((p) => p.vendor)).size;
     </p>
   </section>
 
-  {
-    picks.length > 0 && (
-      <section class="section" id="editorial-picks">
-        <h2>Editors&rsquo; picks</h2>
-        <p class="section-intro">
-          Maintainer-selected modules, independent of any partner relationship — see{' '}
-          <a href={withBase('/how-to-get-listed/')}>how badges work</a>.
-        </p>
-        <ul class="pick-grid">
-          {picks.map((pkg) => (
-            <li class="package-card">
-              <h3>
-                <a href={packageHref(pkg)}>{pkg.displayName}</a>
-              </h3>
-              <p class="package-name">
-                <code>{pkg.name}</code>
-              </p>
-              <p class="description">{pkg.description}</p>
-              <p class="meta">
-                <span class="badge badge-pick">Editors&rsquo; pick</span>
-                {pkg.trust.trustedVendor && <span class="badge badge-trusted">Trusted vendor</span>}
-                {isHighQuality(pkg) && <span class="badge badge-high-quality">High quality</span>}
-                {pkg.quality.tier === 'needs-help' && (
-                  <span class="badge badge-needs-help">{qualityLabel(pkg.quality.tier)}</span>
-                )}
-                {isPopular(pkg, popularFloor) && <span class="badge badge-popular">Popular</span>}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )
-  }
-
   <section class="section" id="browse">
     <h2>Browse all modules</h2>
-    <p class="section-intro">
-      Search, pick a category, or narrow to what matters — trusted vendors, tested with the
-      latest Magento, recently updated. Filters stay in the address bar, so a narrowed view is
-      a link you can share.
-    </p>
     <SearchIsland client:load />
   </section>
 </Base>

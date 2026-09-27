@@ -15,10 +15,10 @@ import { useEffect, useState } from 'preact/hooks';
 import { DirectoryBrowser } from '../../ui/DirectoryBrowser.js';
 import type { DirectoryFilters, Feed, FilterFlag, SortKey } from '../../ui/types.js';
 import { withBase } from '../lib/base.js';
+import { resolveCategorySlug } from '../../shared/categories.js';
 import '../../ui/directory.css';
 
 const FLAGS: ReadonlySet<string> = new Set<FilterFlag>([
-  'trusted',
   'picks',
   'tested',
   'recent',
@@ -46,7 +46,9 @@ export function filtersFromSearch(search: string): DirectoryFilters | undefined 
     .split(',')
     .map((f) => f.trim())
     .filter((f): f is FilterFlag => FLAGS.has(f));
-  if (category) filters.category = category;
+  // Links shared before the directory adopted PackageMaven's categories
+  // carry the old slugs; they land on the category that replaced them.
+  if (category) filters.category = resolveCategorySlug(category);
   if (query) filters.query = query;
   if (sort && SORTS.has(sort)) filters.sort = sort as SortKey;
   if (only.length > 0) filters.flags = only;

@@ -42,14 +42,6 @@ export function byScoreDesc(a: PackageSummary, b: PackageSummary): number {
   return b.ranking.score - a.ranking.score;
 }
 
-/** Top editorial picks by ranking score, hidden packages excluded. */
-export function editorialPicks(feed: Feed, limit = 6): PackageSummary[] {
-  return visiblePackages(feed)
-    .filter((p) => p.trust.editorialPick)
-    .sort(byScoreDesc)
-    .slice(0, limit);
-}
-
 export function packagesForCategory(feed: Feed, slug: string): PackageSummary[] {
   return visiblePackages(feed)
     .filter((p) => p.categories.includes(slug))

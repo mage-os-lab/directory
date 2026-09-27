@@ -3,7 +3,13 @@
   "vendor": "customgento",
   "vendorName": "CustomGento",
   "url": "https://github.com/customgento",
-  "trustedVendor": true,
   "partnerTier": null,
-  "packages": {}
+  "packages": {
+    "customgento/module-koality-m2": {
+      "displayName": "Koality"
+    },
+    "customgento/module-youtube-no-cookie-m2": {
+      "displayName": "YouTube No Cookie"
+    }
+  }
 }

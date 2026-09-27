@@ -24,13 +24,12 @@ import Base from '../layouts/Base.astro';
         <strong>Submit to PackageMaven.</strong> Use the "Submit a Module" form on{' '}
         <a href="https://package-maven.com/" rel="noopener">package-maven.com</a>. PackageMaven
         tests each module against real Magento versions and produces the quality tier, PHPStan
-        level, and build status shown on every listing here — that's what makes compatibility
-        data trustworthy instead of guessed from version constraints.
+        level, and build status shown on every listing here.
       </li>
       <li>
-        <strong>Optional: request a vendor trust file.</strong> Trusted-vendor badges, partner
-        tiers, and editorial picks come from a human-curated overlay maintained in this
-        repository, not from PackageMaven. Open a pull request against{' '}
+        <strong>Optional: request a vendor trust file.</strong> Partner tiers, editorial picks
+        and warnings come from a curated overlay maintained in this repository. Open a pull
+        request against{' '}
         <a href="https://github.com/mage-os-lab/directory" rel="noopener">the GitHub repository</a>{' '}
         adding or editing <code>data/vendors/&lt;vendor&gt;.json</code>. Read the{' '}
         <a
@@ -39,36 +38,29 @@ import Base from '../layouts/Base.astro';
         >
           trust policy
         </a>{' '}
-        first — it covers vendor identity verification, trusted-vendor eligibility, and how
-        editorial picks are kept independent of partnership.
+        first. It covers vendor identity verification and how editorial picks are kept
+        independent of partnership.
       </li>
     </ol>
 
     <h2>What the badges mean</h2>
     <ul>
       <li>
-        <strong>Trusted vendor</strong> — a sustained track record (12+ months of maintenance, no
-        open serious warnings, responsive to issues), granted or revoked only by maintainer PR
-        review.
-      </li>
-      <li>
         <strong>Partner tier</strong> (platinum / gold / silver / bronze) reflects a relationship
-        with the Mage-OS organization, which <strong>may be commercial</strong>. It contributes a
-        small, fixed, published weight to the ranking score — there is no pay-to-rank beyond that
-        bounded weight; a commercial partnership buys a badge and a bounded ranking bump, never
-        arbitrary placement.
+        with the Mage-OS organization, which <strong>may be commercial</strong>. It adds a small,
+        fixed, published weight to the ranking score, and has no other effect on placement.
       </li>
       <li>
         <strong>Editors&rsquo; pick</strong> is a maintainer judgment about quality or usefulness,
         independent of partner status. Being a partner does not make a package more likely to be
-        picked, and picks happen for non-partner vendors routinely.
+        picked.
       </li>
     </ul>
 
     <h2>Warnings and disputes</h2>
     <p>
       Curators can attach warnings to a listing (info, derank, or hide severity) when there's a
-      documented problem — for example an unmaintained package or a security advisory. Any
+      documented problem, such as an unmaintained package or a security advisory. Any
       <code>derank</code> or <code>hide</code> warning must link public evidence, and (outside a
       security emergency) the vendor is notified with a response window before it merges. If you
       believe a warning on your package is wrong or resolved, open an issue or a counter-PR with
