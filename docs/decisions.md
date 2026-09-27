@@ -376,3 +376,29 @@ the feed pinned to `false` for older consumers (the embedded UI reads it as a pl
 truthy check, so a missing field already behaves as `false`, and a field that can never
 be true is not worth publishing); showing merit badges on risky cards in a muted style
 (still reads as a recommendation next to a warning).
+
+## 17. The interface follows M137, Mage-OS's Material 3 design system
+
+**Decision:** the site and the embeddable UI take their palette and component shapes from
+M137, the design system the Mage-OS admin theme is built on, which is Material 3. The
+accent is M137's primary tone 40 (`#005cbb`; tone 80 in dark), everything else is its
+neutral palette, and the type is Inter, self-hosted. Controls are pills: outlined filter
+chips that take a neutral tonal fill when selected (the way M137 marks the active
+navigation item), pill search and select fields, outlined cards that lift one level under
+the pointer, and M137's neutral filled button for the one primary action on a surface.
+Badges are filled rounded rectangles, never pills. The admin's legacy theme keeps
+Magento's orange accent and action through `admin.css`.
+
+**Why:** issue #19 read the old palette as "generic" and the badges as mixed in style.
+The directory is embedded in the M137 admin, so its own design system is the one to
+follow, and it answers most of the questions a bespoke palette left open. Orange appears
+in M137 only as the Mage-OS logo, so using it for links, selection and buttons made the
+directory look like a different product. Chips and badges need to differ in shape, not
+just colour: a pressed category chip and a "High quality" badge were both tonal pills,
+which is the "mixed styles" confusion in the issue.
+
+**Rejected:** Material's 8px filter-chip corner (M137 uses full pills for its controls);
+the accent for filled buttons (M137's primary button is neutral, and the accent is kept
+for selection and links); loading Inter from Google Fonts (a third-party request on every
+page view, when the npm package serves the same file from our origin).
+

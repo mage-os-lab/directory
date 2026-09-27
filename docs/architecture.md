@@ -534,7 +534,13 @@ Contract details the admin module depends on:
   themes differ in both). Cards, the filter panel and the floating install tray are the
   opaque surfaces. Two palettes ship in the stylesheet — light by default, dark when the
   OS asks and `colorScheme` is `'auto'`, or when it is pinned `'dark'` — and the host's
-  `--mosd-theme-*` custom properties override either.
+  `--mosd-theme-*` custom properties override either. Both palettes are the M137 design
+  system's (Material 3): its primary tonal palette for the accent (tone 40 light, 80
+  dark) and its neutral palette for everything else. Hosts can set `accent`,
+  `accent-soft`, `accent-container`, `on-accent`, `on-accent-container`, `fg`,
+  `fg-muted`, `surface`, `bg-soft`, `tonal`, `border`, `outline`, `action`,
+  `on-action`, `radius`, `font` and the `ok`/`warn`/`risk` state colours. The admin
+  module maps them to whichever admin theme is active (`src/view/adminhtml/web/css/admin.css`).
 - Class prefixes (`.mosd-*`) keep our styles from leaking out, but only Shadow DOM
   keeps host-page styles (like the Magento admin's global element resets) from leaking
   *in* — hence `shadow: true` by default for embeds. Theming still works because CSS

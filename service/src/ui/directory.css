@@ -7,21 +7,38 @@
  * invalid at computed-value time and falls back to `unset`, which for
  * font-family means inherit.
  *
+ * The defaults are the M137 design system's, which is Material 3: its primary
+ * (blue) and neutral tonal palettes, a neutral filled action, tonal selected
+ * states, outlined controls and pill shapes. Light uses tones 40 (accent), 90
+ * (containers) and 10 (text); dark uses 80, 30 and 90. Orange is the Mage-OS
+ * brand mark, not an interface colour, so nothing here uses it.
+ *
  * Two palettes. The light one is the default; the dark one applies when the
  * reader's OS asks for it and the host has not pinned a scheme, or when the
  * host pins data-mosd-scheme="dark". Host --mosd-theme-* overrides win over
  * both, so a host that sets them owns the answer for both schemes. */
 .mosd-browser {
-  --mosd-accent: var(--mosd-theme-accent, #e8590c);
-  --mosd-accent-soft: var(--mosd-theme-accent-soft, #fdeee4);
-  --mosd-fg: var(--mosd-theme-fg, #1c1b1f);
-  --mosd-fg-muted: var(--mosd-theme-fg-muted, #5f5b66);
+  --mosd-accent: var(--mosd-theme-accent, #005cbb);
+  --mosd-accent-soft: var(--mosd-theme-accent-soft, #ecf0ff);
+  --mosd-on-accent: var(--mosd-theme-on-accent, #ffffff);
+  --mosd-accent-container: var(--mosd-theme-accent-container, var(--mosd-theme-accent-soft, #d6e1ff));
+  --mosd-on-accent-container: var(--mosd-theme-on-accent-container, var(--mosd-theme-accent, #001b3f));
+  --mosd-fg: var(--mosd-theme-fg, #1b1b1b);
+  --mosd-fg-muted: var(--mosd-theme-fg-muted, #5e5e5e);
   /* Surfaces: cards, the filter panel, inputs and the tray sit on --mosd-surface;
-   * --mosd-bg-soft is the muted fill for chips and code. The ground itself is
-   * transparent. */
+   * --mosd-bg-soft is the muted fill for inputs, badges and code, and
+   * --mosd-tonal the stronger one a selected chip or a tonal button takes.
+   * The ground itself is transparent. */
   --mosd-surface: var(--mosd-theme-surface, var(--mosd-theme-bg, #ffffff));
-  --mosd-bg-soft: var(--mosd-theme-bg-soft, #f3f2f7);
-  --mosd-border: var(--mosd-theme-border, #dcd9e0);
+  --mosd-bg-soft: var(--mosd-theme-bg-soft, #f1f1f1);
+  --mosd-tonal: var(--mosd-theme-tonal, #e2e2e2);
+  /* Lines: --mosd-border divides and outlines surfaces (cards, the panel);
+   * --mosd-outline draws controls (chips, the mark toggle). */
+  --mosd-border: var(--mosd-theme-border, #e2e2e2);
+  --mosd-outline: var(--mosd-theme-outline, #c6c6c6);
+  /* The filled action: the kit's primary button is neutral, not the accent. */
+  --mosd-action: var(--mosd-theme-action, #1b1b1b);
+  --mosd-on-action: var(--mosd-theme-on-action, #ffffff);
   --mosd-radius: var(--mosd-theme-radius, 12px);
   /* Semantic state colours, separate from the accent: verified/installed,
    * needs-attention/update, and risk. Themable for hosts whose admin palette
@@ -32,9 +49,6 @@
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #fdf5e7);
   --mosd-risk: var(--mosd-theme-risk, #a52626);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #fdeeee);
-  /* The High quality badge: PackageMaven's top two tiers, one tint. */
-  --mosd-quality-bg: #d7e9fb;
-  --mosd-quality-fg: #135ba1;
   --mosd-shadow-color: 0 0 0;
   --mosd-elevation-1: 0 1px 2px rgb(var(--mosd-shadow-color) / 0.1),
     0 1px 3px 1px rgb(var(--mosd-shadow-color) / 0.06);
@@ -55,42 +69,52 @@
  * light) and once for a host that pins dark. Keep the two blocks identical. */
 @media (prefers-color-scheme: dark) {
   .mosd-browser:not([data-mosd-scheme='light']) {
-    --mosd-accent: var(--mosd-theme-accent, #ff8a4c);
-    --mosd-accent-soft: var(--mosd-theme-accent-soft, #3d2416);
-    --mosd-fg: var(--mosd-theme-fg, #e8e6ec);
-    --mosd-fg-muted: var(--mosd-theme-fg-muted, #a9a5b2);
-    --mosd-surface: var(--mosd-theme-surface, var(--mosd-theme-bg, #1f1e24));
-    --mosd-bg-soft: var(--mosd-theme-bg-soft, #2b2a31);
-    --mosd-border: var(--mosd-theme-border, #3b3944);
+    --mosd-accent: var(--mosd-theme-accent, #abc7ff);
+    --mosd-accent-soft: var(--mosd-theme-accent-soft, #1c2433);
+    --mosd-on-accent: var(--mosd-theme-on-accent, #002f66);
+    --mosd-accent-container: var(--mosd-theme-accent-container, var(--mosd-theme-accent-soft, #00458f));
+    --mosd-on-accent-container: var(--mosd-theme-on-accent-container, var(--mosd-theme-accent, #d6e1ff));
+    --mosd-fg: var(--mosd-theme-fg, #e2e2e2);
+    --mosd-fg-muted: var(--mosd-theme-fg-muted, #c6c6c6);
+    --mosd-surface: var(--mosd-theme-surface, var(--mosd-theme-bg, #1f1f1f));
+    --mosd-bg-soft: var(--mosd-theme-bg-soft, #2a2a2a);
+    --mosd-tonal: var(--mosd-theme-tonal, #474747);
+    --mosd-border: var(--mosd-theme-border, #3a3a3a);
+    --mosd-outline: var(--mosd-theme-outline, #5e5e5e);
+    --mosd-action: var(--mosd-theme-action, #e2e2e2);
+    --mosd-on-action: var(--mosd-theme-on-action, #1b1b1b);
     --mosd-ok: var(--mosd-theme-ok, #6fd39a);
     --mosd-ok-soft: var(--mosd-theme-ok-soft, #182b21);
     --mosd-warn: var(--mosd-theme-warn, #f2be62);
     --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
     --mosd-risk: var(--mosd-theme-risk, #ff8585);
     --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
-    --mosd-quality-bg: #1a2f47;
-    --mosd-quality-fg: #8fc4f5;
     --mosd-shadow-color: 0 0 0;
     color-scheme: dark;
   }
 }
 
 .mosd-browser[data-mosd-scheme='dark'] {
-  --mosd-accent: var(--mosd-theme-accent, #ff8a4c);
-  --mosd-accent-soft: var(--mosd-theme-accent-soft, #3d2416);
-  --mosd-fg: var(--mosd-theme-fg, #e8e6ec);
-  --mosd-fg-muted: var(--mosd-theme-fg-muted, #a9a5b2);
-  --mosd-surface: var(--mosd-theme-surface, var(--mosd-theme-bg, #1f1e24));
-  --mosd-bg-soft: var(--mosd-theme-bg-soft, #2b2a31);
-  --mosd-border: var(--mosd-theme-border, #3b3944);
+  --mosd-accent: var(--mosd-theme-accent, #abc7ff);
+  --mosd-accent-soft: var(--mosd-theme-accent-soft, #1c2433);
+  --mosd-on-accent: var(--mosd-theme-on-accent, #002f66);
+  --mosd-accent-container: var(--mosd-theme-accent-container, var(--mosd-theme-accent-soft, #00458f));
+  --mosd-on-accent-container: var(--mosd-theme-on-accent-container, var(--mosd-theme-accent, #d6e1ff));
+  --mosd-fg: var(--mosd-theme-fg, #e2e2e2);
+  --mosd-fg-muted: var(--mosd-theme-fg-muted, #c6c6c6);
+  --mosd-surface: var(--mosd-theme-surface, var(--mosd-theme-bg, #1f1f1f));
+  --mosd-bg-soft: var(--mosd-theme-bg-soft, #2a2a2a);
+  --mosd-tonal: var(--mosd-theme-tonal, #474747);
+  --mosd-border: var(--mosd-theme-border, #3a3a3a);
+  --mosd-outline: var(--mosd-theme-outline, #5e5e5e);
+  --mosd-action: var(--mosd-theme-action, #e2e2e2);
+  --mosd-on-action: var(--mosd-theme-on-action, #1b1b1b);
   --mosd-ok: var(--mosd-theme-ok, #6fd39a);
   --mosd-ok-soft: var(--mosd-theme-ok-soft, #182b21);
   --mosd-warn: var(--mosd-theme-warn, #f2be62);
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
   --mosd-risk: var(--mosd-theme-risk, #ff8585);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
-  --mosd-quality-bg: #1a2f47;
-  --mosd-quality-fg: #8fc4f5;
   --mosd-shadow-color: 0 0 0;
   color-scheme: dark;
 }
@@ -117,7 +141,6 @@
   background: var(--mosd-surface);
   border: 1px solid var(--mosd-border);
   border-radius: calc(var(--mosd-radius) + 4px);
-  box-shadow: var(--mosd-elevation-1);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -145,13 +168,15 @@
   position: absolute;
 }
 
+/* Inputs are M3 search-bar pills: a filled field that takes a hairline on
+ * hover and the accent when it has focus. */
 .mosd-search {
-  background: var(--mosd-surface);
-  border: 1px solid var(--mosd-border);
-  border-radius: 10px;
+  background: var(--mosd-bg-soft);
+  border: 1px solid transparent;
+  border-radius: 999px;
   color: var(--mosd-fg);
   font: inherit;
-  padding: 9px 14px 9px 38px;
+  padding: 9px 16px 9px 40px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   width: 100%;
 }
@@ -162,12 +187,12 @@
 }
 
 .mosd-search:hover {
-  border-color: color-mix(in srgb, var(--mosd-border), var(--mosd-fg) 20%);
+  border-color: var(--mosd-outline);
 }
 
 .mosd-search:focus {
   border-color: var(--mosd-accent);
-  box-shadow: 0 0 0 3px var(--mosd-accent-soft);
+  box-shadow: 0 0 0 1px var(--mosd-accent);
   outline: none;
 }
 
@@ -201,24 +226,30 @@
 
 .mosd-category,
 .mosd-sort {
-  background: var(--mosd-surface);
-  border: 1px solid var(--mosd-border);
-  border-radius: 10px;
+  background: var(--mosd-bg-soft);
+  border: 1px solid transparent;
+  border-radius: 999px;
   color: var(--mosd-fg);
   font: inherit;
-  padding: 8px 12px;
+  padding: 8px 14px;
+}
+
+.mosd-category:hover,
+.mosd-sort:hover {
+  border-color: var(--mosd-outline);
 }
 
 .mosd-category:focus,
 .mosd-sort:focus {
   border-color: var(--mosd-accent);
-  box-shadow: 0 0 0 3px var(--mosd-accent-soft);
+  box-shadow: 0 0 0 1px var(--mosd-accent);
   outline: none;
 }
 
 /* Chip rows: categories (one at a time) and "show only" flags (any number).
- * A chip is pressed or not — aria-pressed carries the state, the tonal fill
- * only repeats it. */
+ * M3 filter chips: outlined at rest, and a neutral tonal fill once selected,
+ * the way M137 marks its active navigation item. aria-pressed carries the
+ * state; the fill only repeats it. */
 
 .mosd-chip-row {
   align-items: center;
@@ -241,7 +272,7 @@
 .mosd-filter-chip {
   align-items: center;
   background: transparent;
-  border: 1px solid var(--mosd-border);
+  border: 1px solid var(--mosd-outline);
   border-radius: 999px;
   color: var(--mosd-fg-muted);
   cursor: pointer;
@@ -257,19 +288,19 @@
 }
 
 .mosd-filter-chip:hover {
-  background: var(--mosd-bg-soft);
+  background: color-mix(in srgb, var(--mosd-fg) 8%, transparent);
   color: var(--mosd-fg);
 }
 
 .mosd-filter-chip:focus-visible {
-  box-shadow: 0 0 0 3px var(--mosd-accent-soft);
-  outline: none;
+  outline: 2px solid var(--mosd-accent);
+  outline-offset: 2px;
 }
 
 .mosd-filter-chip[aria-pressed='true'] {
-  background: var(--mosd-accent-soft);
-  border-color: var(--mosd-accent);
-  color: var(--mosd-accent);
+  background: var(--mosd-tonal);
+  border-color: var(--mosd-tonal);
+  color: var(--mosd-fg);
   font-weight: 600;
 }
 
@@ -349,6 +380,7 @@
   padding: 0;
 }
 
+/* M3 outlined cards: flat at rest, raised one level under the pointer. */
 .mosd-card {
   --mosd-rail: transparent;
   --mosd-rail-edge: var(--mosd-border);
@@ -357,7 +389,6 @@
   border: 1px solid var(--mosd-border);
   border-left-color: var(--mosd-rail-edge);
   border-radius: var(--mosd-radius);
-  box-shadow: var(--mosd-elevation-1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -368,8 +399,8 @@
 
 .mosd-card:hover,
 .mosd-card:focus-within {
-  border-color: color-mix(in srgb, var(--mosd-accent) 55%, var(--mosd-border));
-  box-shadow: var(--mosd-elevation-2);
+  border-color: var(--mosd-outline);
+  box-shadow: var(--mosd-elevation-1);
 }
 
 /* The rail is a 3px bar flush with the card's left edge: the border pixel on
@@ -572,12 +603,12 @@
 }
 
 /* Category chips on a card are the same filter as the rail above, one click
- * away: pressing one narrows the list to that category. The pressed state is
- * the rail's pressed state, outline included, so a card never shows the
- * active filter in a colour that could pass for a badge. */
+ * away: pressing one narrows the list to that category. They are outlined,
+ * like the rail's chips, and the badges below them are filled, so a control
+ * and a status never look alike; pressed, they take the rail's tonal fill. */
 .mosd-chip {
-  background: var(--mosd-bg-soft);
-  border: 1px solid transparent;
+  background: transparent;
+  border: 1px solid var(--mosd-outline);
   border-radius: 999px;
   color: var(--mosd-fg-muted);
   cursor: pointer;
@@ -589,14 +620,19 @@
 }
 
 .mosd-chip:hover {
-  border-color: var(--mosd-border);
+  background: color-mix(in srgb, var(--mosd-fg) 8%, transparent);
   color: var(--mosd-fg);
 }
 
+.mosd-chip:focus-visible {
+  outline: 2px solid var(--mosd-accent);
+  outline-offset: 2px;
+}
+
 .mosd-chip[aria-pressed='true'] {
-  background: var(--mosd-accent-soft);
-  border-color: var(--mosd-accent);
-  color: var(--mosd-accent);
+  background: var(--mosd-tonal);
+  border-color: var(--mosd-tonal);
+  color: var(--mosd-fg);
   font-weight: 600;
 }
 
@@ -681,12 +717,14 @@
   margin: 0;
 }
 
-/* Badges: MD assist-chip sized, tonal */
+/* Badges are status labels, not controls: filled, and a rounded rectangle
+ * rather than a pill, so a pressed category chip (tonal pill) never reads as
+ * an earned mark. Shape carries the difference, not colour alone. */
 
 .mosd-badge {
   background: var(--mosd-bg-soft);
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -694,11 +732,12 @@
   white-space: nowrap;
 }
 
-/* The earned marks, each in the tone it already has elsewhere: the pick the
- * accent, high quality its own tint, and popular and trending the plain soft
- * fill, since they are counts, not verdicts. */
-.mosd-badge-pick { background: var(--mosd-accent-soft); color: var(--mosd-accent); }
-.mosd-badge-high-quality { background: var(--mosd-quality-bg); color: var(--mosd-quality-fg); }
+/* The earned marks: the pick in the accent's container, the only mark that is
+ * a recommendation; high quality with a check; popular and trending in the
+ * same soft fill, since they are counts, not verdicts. */
+.mosd-badge-pick { background: var(--mosd-accent-container); color: var(--mosd-on-accent-container); }
+.mosd-badge-high-quality { color: var(--mosd-fg); }
+.mosd-badge-high-quality::before { content: '✓ '; }
 .mosd-badge-popular { color: var(--mosd-fg); }
 .mosd-badge-trending { color: var(--mosd-fg); }
 
@@ -733,10 +772,10 @@
 }
 
 .mosd-error button {
-  background: var(--mosd-accent);
+  background: var(--mosd-action);
   border: 0;
-  border-radius: 20px;
-  color: #fff;
+  border-radius: 999px;
+  color: var(--mosd-on-action);
   cursor: pointer;
   font: inherit;
   font-weight: 500;
@@ -771,12 +810,13 @@
   font-size: 13px;
 }
 
-/* Install-list marking (selectable mounts): MD tonal buttons */
+/* Install-list marking (selectable mounts): an M3 outlined button that turns
+ * into a filled accent one when on, like the kit's toggle. */
 
 .mosd-mark {
-  background: var(--mosd-bg-soft);
-  border: 0;
-  border-radius: 18px;
+  background: transparent;
+  border: 1px solid var(--mosd-outline);
+  border-radius: 999px;
   color: var(--mosd-fg);
   cursor: pointer;
   font: inherit;
@@ -787,14 +827,18 @@
 }
 
 .mosd-mark:hover {
-  background: var(--mosd-accent-soft);
-  box-shadow: var(--mosd-elevation-1);
-  color: var(--mosd-accent);
+  background: color-mix(in srgb, var(--mosd-fg) 8%, transparent);
+}
+
+.mosd-mark:focus-visible {
+  outline: 2px solid var(--mosd-accent);
+  outline-offset: 2px;
 }
 
 .mosd-mark.mosd-marked {
   background: var(--mosd-accent);
-  color: #fff;
+  border-color: var(--mosd-accent);
+  color: var(--mosd-on-accent);
 }
 
 /* Tray: the one surface that must stay opaque, because it floats over the
@@ -842,10 +886,12 @@
   margin: 0;
 }
 
+/* Buttons: M3 tonal by default, and the kit's neutral filled button for the
+ * one primary action on a surface. */
 .mosd-btn {
-  background: var(--mosd-bg-soft);
+  background: var(--mosd-tonal);
   border: 1px solid transparent;
-  border-radius: 20px;
+  border-radius: 999px;
   color: var(--mosd-fg);
   cursor: pointer;
   font: inherit;
@@ -856,11 +902,15 @@
 }
 
 .mosd-btn:hover {
-  border-color: var(--mosd-border);
   box-shadow: var(--mosd-elevation-1);
 }
 
+.mosd-btn:focus-visible {
+  outline: 2px solid var(--mosd-accent);
+  outline-offset: 2px;
+}
+
 .mosd-btn-primary {
-  background: var(--mosd-accent);
-  color: #fff;
+  background: var(--mosd-action);
+  color: var(--mosd-on-action);
 }

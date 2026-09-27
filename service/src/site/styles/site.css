@@ -1,18 +1,27 @@
 /* Mage-OS Extension Directory — site chrome styles. Plain CSS, no framework.
  * Palette matches src/ui/directory.css so the embedded island doesn't feel
- * like a foreign object dropped on the page.
+ * like a foreign object dropped on the page: both follow the M137 design
+ * system, which is Material 3 (its blue primary and neutral tonal palettes,
+ * a neutral filled action, pill shapes, Inter). Orange is the Mage-OS brand
+ * mark, not an interface colour.
  *
  * Two palettes: light is the default; dark follows the reader's OS unless
  * the document pins one with data-theme (Base.astro sets it from ?scheme=,
  * which the Magento admin passes when it frames a detail page). */
 :root {
-  --accent: #e8590c;
-  --accent-dark: #b34f00;
-  --fg: #1f2430;
-  --fg-muted: #5c6470;
+  --accent: #005cbb;
+  --accent-soft: #ecf0ff;
+  --accent-container: #d6e1ff;
+  --on-accent-container: #001b3f;
+  --action: #1b1b1b;
+  --on-action: #ffffff;
+  --fg: #1b1b1b;
+  --fg-muted: #5e5e5e;
   --bg: #ffffff;
-  --bg-soft: #f4f5f7;
-  --border: #d9dde3;
+  --bg-soft: #f1f1f1;
+  --tonal: #e2e2e2;
+  --border: #e2e2e2;
+  --outline: #c6c6c6;
   --ok: #1e6b34;
   --warn: #8a5300;
   --warn-bg: #fff3cd;
@@ -22,20 +31,26 @@
   --danger-border: #ffa8a8;
   /* Badge text is the badge colour itself in light; dark lifts it toward white. */
   --badge-text-mix: 100%;
-  --radius: 6px;
+  --radius: 12px;
   --max-width: 1040px;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --accent: #ff8a4c;
-    --accent-dark: #ffa06f;
-    --fg: #e8e6ec;
-    --fg-muted: #a9a5b2;
-    --bg: #141317;
-    --bg-soft: #1f1e24;
-    --border: #35333d;
+    --accent: #abc7ff;
+    --accent-soft: #1c2433;
+    --accent-container: #00458f;
+    --on-accent-container: #d6e1ff;
+    --action: #e2e2e2;
+    --on-action: #1b1b1b;
+    --fg: #e2e2e2;
+    --fg-muted: #c6c6c6;
+    --bg: #131313;
+    --bg-soft: #1f1f1f;
+    --tonal: #474747;
+    --border: #3a3a3a;
+    --outline: #5e5e5e;
     --ok: #6fd39a;
     --warn: #f2be62;
     --warn-bg: #302614;
@@ -49,13 +64,19 @@
 }
 
 :root[data-theme='dark'] {
-  --accent: #ff8a4c;
-  --accent-dark: #ffa06f;
-  --fg: #e8e6ec;
-  --fg-muted: #a9a5b2;
-  --bg: #141317;
-  --bg-soft: #1f1e24;
-  --border: #35333d;
+  --accent: #abc7ff;
+  --accent-soft: #1c2433;
+  --accent-container: #00458f;
+  --on-accent-container: #d6e1ff;
+  --action: #e2e2e2;
+  --on-action: #1b1b1b;
+  --fg: #e2e2e2;
+  --fg-muted: #c6c6c6;
+  --bg: #131313;
+  --bg-soft: #1f1f1f;
+  --tonal: #474747;
+  --border: #3a3a3a;
+  --outline: #5e5e5e;
   --ok: #6fd39a;
   --warn: #f2be62;
   --warn-bg: #302614;
@@ -78,17 +99,17 @@ html {
 body {
   background: var(--bg);
   color: var(--fg);
-  font: 16px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font: 16px/1.55 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   margin: 0;
 }
 
 a {
-  color: var(--accent-dark);
+  color: var(--accent);
 }
 
 a:hover,
 a:focus {
-  color: var(--accent);
+  color: var(--on-accent-container);
 }
 
 code,
@@ -290,12 +311,13 @@ html[data-embed] .site-header {
 }
 
 .package-card h3 a {
-  color: var(--accent-dark);
+  color: var(--fg);
   text-decoration: none;
 }
 
 .package-card h3 a:hover,
 .package-card h3 a:focus {
+  color: var(--accent);
   text-decoration: underline;
 }
 
@@ -316,20 +338,18 @@ html[data-embed] .site-header {
   gap: 6px;
 }
 
-/* Badges — shared visual language with the island's .mosd-badge-* set.
- * Each badge names one colour; fill and border are mixed from it so the
- * same rule reads in both palettes. */
+/* Badges — shared visual language with the island's .mosd-badge-* set:
+ * filled status labels in sentence case, rounded rectangles where controls
+ * are pills. Each badge names one colour and the fill is mixed from it, so
+ * the same rule reads in both palettes. */
 .badge {
   --badge: var(--fg-muted);
   background: color-mix(in srgb, var(--badge) 14%, var(--bg));
-  border: 1px solid color-mix(in srgb, var(--badge) 40%, transparent);
-  border-radius: 999px;
+  border-radius: 6px;
   color: color-mix(in srgb, var(--badge) var(--badge-text-mix), #fff);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 1px 8px;
-  text-transform: uppercase;
+  padding: 3px 10px;
   white-space: nowrap;
 }
 
@@ -338,9 +358,12 @@ html[data-embed] .site-header {
 .badge-ready-to-install { --badge: #997404; }
 .badge-needs-help { --badge: #c92a2a; }
 .badge-untested { --badge: #495057; }
-/* The earned marks on listing cards; "Popular" keeps the plain badge tone. */
-.badge-high-quality { --badge: #1971c2; }
-.badge-pick { --badge: #b34f00; }
+/* The earned marks on listing cards, as the island draws them: the pick in
+ * the accent's container, high quality with a check, "Popular" in the plain
+ * badge tone. */
+.badge-high-quality { background: var(--bg-soft); color: var(--fg); }
+.badge-high-quality::before { content: '✓ '; }
+.badge-pick { background: var(--accent-container); color: var(--on-accent-container); }
 .badge-warning { --badge: #c92a2a; }
 .badge-partner-platinum,
 .badge-partner-gold,
@@ -348,7 +371,7 @@ html[data-embed] .site-header {
 .badge-partner-bronze { --badge: #997404; }
 .badge-semver-ok { --badge: #087f5b; }
 .badge-semver-violations { --badge: #a61e4d; }
-.badge-abandoned { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.badge-abandoned { background: var(--fg); color: var(--bg); }
 
 .stat {
   color: var(--fg-muted);
@@ -509,19 +532,27 @@ html[data-embed] .detail-facts .category-link {
   font-size: 14px;
 }
 
+/* The page's one primary action: the kit's neutral filled pill. */
 .install-block button {
-  background: var(--accent);
+  background: var(--action);
   border: 0;
-  border-radius: var(--radius);
-  color: var(--bg);
+  border-radius: 999px;
+  color: var(--on-action);
   cursor: pointer;
   flex-shrink: 0;
   font: inherit;
-  padding: 6px 14px;
+  font-weight: 500;
+  padding: 7px 18px;
+  transition: box-shadow 0.15s ease;
 }
 
 .install-block button:hover {
-  background: var(--accent-dark);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2), 0 1px 3px 1px rgb(0 0 0 / 0.1);
+}
+
+.install-block button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .readme {
