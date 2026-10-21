@@ -14,9 +14,11 @@
  *    via CSS custom properties.
  *  - installed (composer name → version, read from the host's composer.lock)
  *    adds Installed/update badges and an installed-state filter; selectable
- *    adds mark-for-install toggles and a copyable composer-require tray, with
- *    every change dispatched as CustomEvent('mosd:selection',
- *    {detail: {packages, command}}). The list is kept in sessionStorage per
+ *    adds shortlist toggles and a tray that hands the list on as copyable or
+ *    emailable text (installCommands: true swaps that for a copyable
+ *    composer-require command), with every change dispatched as
+ *    CustomEvent('mosd:selection', {detail: {packages, command}}). The list
+ *    is kept in sessionStorage per
  *    tab, so a reload restores it (and dispatches it once on mount). The host
  *    can change the list itself by dispatching CustomEvent('mosd:mark',
  *    {detail: {name, marked?}}) on the mount element — toggle, or set — under
@@ -59,6 +61,7 @@ interface RootProps {
       | 'initialFilters'
       | 'installed'
       | 'selectable'
+      | 'installCommands'
       | 'magentoVersion'
       | 'distribution'
       | 'colorScheme'
@@ -132,6 +135,7 @@ function Root({ options, host }: RootProps) {
       initialFilters={options.initialFilters}
       installed={options.installed}
       selectable={options.selectable}
+      installCommands={options.installCommands}
       magentoVersion={options.magentoVersion}
       distribution={options.distribution}
       colorScheme={options.colorScheme}
@@ -159,6 +163,7 @@ export function mountDirectory(el: HTMLElement, options: MountOptions = {}): () 
     initialFilters: options.initialFilters,
     installed: options.installed,
     selectable: options.selectable ?? false,
+    installCommands: options.installCommands ?? false,
     magentoVersion: options.magentoVersion,
     distribution: options.distribution,
     colorScheme: options.colorScheme,

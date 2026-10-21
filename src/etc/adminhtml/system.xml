@@ -2,9 +2,9 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <!--
-        Two fields and no section of their own: they join the core Advanced > Admin section and
+        Three fields and no section of their own: they join the core Advanced > Admin section and
         inherit its permission (Magento_Config::config_admin). The tip sits with the other
-        dashboard setting; the mode gets a small group beside it.
+        dashboard setting; the mode and the install commands get a small group beside it.
     -->
     <system>
         <section id="admin">
@@ -21,6 +21,11 @@
                     <label>Mode</label>
                     <source_model>MageOS\ExtensionDirectory\Model\Config\Source\Mode</source_model>
                     <comment>Direct: admin browsers load the UI bundle and the catalog feed straight from the directory host, which needs the CSP whitelist shipped with this module and CORS on that host. Proxy: this store's server fetches and caches the feed and serves the copy of the UI bundle that ships with this module, so the page is fully same-origin — for restricted networks or privacy-sensitive admins.</comment>
+                </field>
+                <field id="install_commands" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+                    <label>Show Install Commands</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>For development copies of the store. No (default): the directory's shortlist is a list of modules with links, to copy or email. Yes: it builds a composer require command instead, and module detail pages show theirs. Nothing is ever installed from the admin either way.</comment>
                 </field>
             </group>
         </section>

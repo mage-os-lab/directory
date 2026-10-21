@@ -48,7 +48,7 @@ export interface SelectDetail {
   vendor: string;
   packageUrl: string;
   /**
-   * The install-list state of the selected package, so a host that shows the
+   * The shortlist state of the selected package, so a host that shows the
    * package elsewhere (a detail modal, say) can offer the same mark toggle
    * there. `markable` is false on a mount that cannot select and for a
    * package the shop already has at its target version.
@@ -60,7 +60,7 @@ export interface SelectDetail {
 
 /**
  * Detail of the mosd:mark event a host dispatches *on* the mount element to
- * change the install list from outside the bundle: toggle when `marked` is
+ * change the shortlist from outside the bundle: toggle when `marked` is
  * omitted, else set. Ignored unless the mount is selectable and the package
  * is in the catalog and not already installed; every change it does make is
  * announced through mosd:selection like any other.
@@ -70,10 +70,13 @@ export interface MarkDetail {
   marked?: boolean;
 }
 
-/** Detail of the mosd:selection event: the current install list. */
+/** Detail of the mosd:selection event: the current shortlist. */
 export interface SelectionDetail {
   packages: Array<{ name: string; version: string | null }>;
-  /** `composer require vendor/a:^1.2 vendor/b` — empty string when nothing is marked. */
+  /**
+   * `composer require vendor/a:^1.2 vendor/b` — empty string when nothing is
+   * marked. Sent whether or not the tray shows it (installCommands).
+   */
   command: string;
 }
 
@@ -90,18 +93,28 @@ export interface MountOptions {
    */
   installed?: Record<string, string>;
   /**
-   * Enable the install list: cards get a "mark for install/update" toggle and
-   * a tray shows the composer require command (copyable); every change
-   * dispatches mosd:selection on the mount element. The list is kept in
-   * sessionStorage, so it survives a reload of the tab and ends with the tab;
-   * a mount that restores a non-empty list dispatches mosd:selection once.
+   * Enable the shortlist: cards get a "Shortlist" toggle and a tray hands the
+   * list on — copyable text, or a mailto link, naming each module, the
+   * release that fits the shop, how it was tested and a link to its page.
+   * Every change dispatches mosd:selection on the mount element. The list is
+   * kept in sessionStorage, so it survives a reload of the tab and ends with
+   * the tab; a mount that restores a non-empty list dispatches mosd:selection
+   * once.
    */
   selectable?: boolean;
+  /**
+   * Show the copyable composer require command in the tray instead of the
+   * handoff list. Off by default: a command in a production admin reads as
+   * "run this here", and installing a module is development work. A host
+   * turns it on for the people who do that work (the admin module behind a
+   * setting). Ignored unless selectable.
+   */
+  installCommands?: boolean;
   /**
    * The host shop's Magento/Mage-OS version (e.g. "2.4.6"), as known to the
    * admin module. When provided, cards get tested-with badges (from PM's
    * empirical test matrix — "not tested" never means "incompatible"), the
-   * tested-with filter targets this version, and the install list pins the
+   * tested-with filter targets this version, and the shortlist pins the
    * newest release verified against it instead of the latest. Matched by
    * release line, so "2.4.9-p1" counts as a match for "2.4.9".
    */

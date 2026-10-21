@@ -12,6 +12,7 @@ declare(strict_types=1);
 $viewModel = $block->getData('view_model');
 
 $dataAsOf = $viewModel->getDataAsOf();
+$installCommandsShown = $viewModel->areInstallCommandsShown();
 $packageMavenUrl = 'https://package-maven.com/';
 $packagistUrl = 'https://packagist.org/';
 
@@ -20,9 +21,8 @@ $loadFailureMessage = $escaper->escapeJs(
     (string)__('The directory UI failed to load. Check that this browser can reach the script, then reload the page.')
 );
 $detailFrameTitle = $escaper->escapeJs((string)__('Module details'));
-$markInstallLabel = $escaper->escapeJs((string)__('Mark for install'));
-$markUpdateLabel = $escaper->escapeJs((string)__('Mark for update'));
-$markedLabel = $escaper->escapeJs((string)__('On install list'));
+$markLabel = $escaper->escapeJs((string)__('Shortlist'));
+$markedLabel = $escaper->escapeJs((string)__('Shortlisted'));
 
 $initJs = <<<JS
 (function () {
@@ -67,7 +67,7 @@ $initJs = <<<JS
     /**
      * The modal's top-right button is the card's mark toggle, for the package on show. It is
      * hidden for a package that cannot be marked (already installed at its target version, or
-     * a mount without an install list), and its label follows the list.
+     * a mount without a shortlist), and its label follows the list.
      */
     function renderMarkButton() {
         var button = detailModal && detailModal.markButton;
@@ -87,9 +87,7 @@ $initJs = <<<JS
         button.setAttribute('aria-pressed', current.marked ? 'true' : 'false');
         button.firstElementChild.textContent = current.marked
             ? '\u2713 {$markedLabel}'
-            : current.installState === 'update'
-                ? '+ {$markUpdateLabel}'
-                : '+ {$markInstallLabel}';
+            : '+ {$markLabel}';
     }
 
     /**
@@ -117,7 +115,7 @@ $initJs = <<<JS
                     modalClass: 'mageos-extension-directory-modal',
                     title: '',
                     // The slide modal renders its buttons in the header's top-right corner.
-                    // The bundle owns the install list, so the click is handed to it as
+                    // The bundle owns the shortlist, so the click is handed to it as
                     // mosd:mark and the label waits for the mosd:selection that answers.
                     buttons: [{
                         text: '',
@@ -148,14 +146,19 @@ $initJs = <<<JS
     /**
      * The framed detail page is told it is framed: it drops its own site header, since the
      * modal already names the page and the site's navigation makes no sense inside it, and it
-     * keeps the admin's one palette rather than following the reader's OS setting. A page
-     * opened in its own tab (no RequireJS) is asked for neither.
+     * keeps the admin's one palette rather than following the reader's OS setting. Unless
+     * install commands are turned on, it also leaves out its copyable composer require, as the
+     * shortlist tray does. A page opened in its own tab (no RequireJS) is asked for none of it.
      */
     function framedDetailPageUrl(packageUrl) {
         var params = 'embed=1';
 
         if (config.colorScheme === 'light' || config.colorScheme === 'dark') {
             params += '&scheme=' + config.colorScheme;
+        }
+
+        if (!config.installCommands) {
+            params += '&install=0';
         }
 
         return packageUrl + (packageUrl.indexOf('?') === -1 ? '?' : '&') + params;
@@ -202,9 +205,15 @@ JS;
 ?>
 <div class="mageos-extension-directory-page">
     <p class="mageos-extension-directory-intro">
-        <?= $escaper->escapeHtml(
-            __('Browse the catalog and mark the modules you want. Nothing is installed from here: marking modules builds a composer require command for you to copy and run on the server, where Composer resolves the dependencies.')
-        ) ?>
+        <?php if ($installCommandsShown): ?>
+            <?= $escaper->escapeHtml(
+                __('Browse the catalog and shortlist modules. Nothing is installed from here: the shortlist builds a composer require command to run on a development copy of the store, where Composer resolves the dependencies and the modules are tested before they reach production.')
+            ) ?>
+        <?php else: ?>
+            <?= $escaper->escapeHtml(
+                __('Browse the catalog and shortlist modules worth a closer look. Nothing is installed from here: copy or email the shortlist to whoever maintains the store, who adds and tests modules on a development copy before they reach production.')
+            ) ?>
+        <?php endif; ?>
     </p>
 
     <?php if ($dataAsOf !== null): ?>

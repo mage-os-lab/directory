@@ -433,7 +433,7 @@ experience as a Preact island using MiniSearch for client-side search over the f
 | Route | Contents |
 |---|---|
 | `/` | Hero and the browse island — search, category chips, one-click filters, sort, paged results; filter state mirrors into `?q=`, `?category=`, `?only=`, `?sort=` |
-| `/packages/<vendor>/<name>/` | Prerendered detail page: README, badges, stats, supported Magento versions, license, categories, copyable `composer require`, JSON-LD |
+| `/packages/<vendor>/<name>/` | Prerendered detail page: README, badges, stats, supported Magento versions, license, categories, copyable `composer require` (left out under `?install=0`), JSON-LD |
 | `/vendors/<vendor>/` | Vendor partner badge + ranked package list |
 | `/categories/<category>/` | Redirect (meta refresh + canonical) to `/?category=<category>` — browsing by category is a filter on the one list, not a second listing. The directory's own slugs from before it adopted PM's taxonomy (`seo`, `other`, …) redirect to the PM category that replaced them, and `?category=` follows the same aliases |
 | `/how-to-get-listed/` | Rendered from docs |
@@ -473,13 +473,15 @@ mountDirectory(el: HTMLElement, options: {
   installed?: Record<string, string>; // composer name → installed version, read by the
                                    // host from composer.lock; adds Installed /
                                    // "update available" badges + an installed-state filter
-  selectable?: boolean;            // default false: mark-for-install toggles + a tray
-                                   // with the copyable composer require command; the
+  selectable?: boolean;            // default false: shortlist toggles + a tray that hands
+                                   // the list on as copyable text or a mailto link; the
                                    // list lives in sessionStorage, so it survives a
                                    // reload of the tab and ends with the tab
+  installCommands?: boolean;       // default false: the tray shows the copyable composer
+                                   // require command instead of the handoff list
   magentoVersion?: string;         // the host shop's Magento/Mage-OS version; adds
                                    // tested-with badges, points the "tested with" chip
-                                   // at it, and the install list pins the newest release
+                                   // at it, and the shortlist pins the newest release
                                    // verified against it (via PackageSummary.compatibility)
   distribution?: { name: string; version: string }; // the host's own distribution when it
                                    // isn't Magento (e.g. Mage-OS 3.5.0); relabels every
@@ -497,15 +499,22 @@ Contract details the admin module depends on:
   `CustomEvent('mosd:select', { detail: { name, vendor, packageUrl, installState,
   markable, marked } })` on the mount element instead of navigating; `packageUrl` is
   the canonical detail-page URL, and the last three describe the package's place on
-  the install list so the host can offer the same mark toggle wherever it shows the
+  the shortlist so the host can offer the same mark toggle wherever it shows the
   package (the admin's detail modal puts one in its header).
 - Feed fetch failure renders a retryable error state inside the component and
   dispatches `CustomEvent('mosd:error', { detail: { message } })`; it never throws out
   of `mountDirectory`.
-- With `selectable: true`, every change to the install list dispatches a bubbling,
+- With `selectable: true`, cards get a "Shortlist" toggle and a tray that hands the
+  list on: "Copy list" and "Email list" (a `mailto:` link) give the same plain text —
+  each module's name, the release the list pins, how it fits the shop's version, any
+  abandonment or warning, and its detail-page URL. The text names versions, never a
+  command. With `installCommands: true` the tray shows the copyable `composer require`
+  instead; that is the developer's view, and the admin module puts it behind a setting.
+  Every change to the shortlist dispatches a bubbling,
   composed `CustomEvent('mosd:selection', { detail: { packages: [{ name, version }],
   command } })` — `command` is the ready-to-paste
-  `composer require vendor/a:^1.2 vendor/b` string (empty when the list is empty). The
+  `composer require vendor/a:^1.2 vendor/b` string (empty when the list is empty), sent
+  whether or not the tray shows it. The
   list is kept in `sessionStorage` (key `mosd:install-list`, package names only) so a
   reload, or a detour through a detail page, does not lose it; a mount that restores a
   non-empty list dispatches `mosd:selection` once on mount, since the host never saw
@@ -516,12 +525,11 @@ Contract details the admin module depends on:
   otherwise — under the same rules as the card's toggle (selectable mount, package in
   the catalog, not already installed); the result is announced as `mosd:selection`. The
   directory never installs anything itself: version detection stays client-side
-  (`installed` comes from the host reading composer.lock) and the output is a command
-  the merchant runs manually — consistent with the copy-the-command model on detail
-  pages.
+  (`installed` comes from the host reading composer.lock) and the output is a list for
+  someone to act on, or a command a developer runs on a development copy.
 - With `magentoVersion`, compatibility is a lookup, never a solver: the fit line at the
   top of each card reads "tested with X" (latest release verified), "vN tested with X"
-  (only an older release verified — the install list pins `^N`), or "not tested with X".
+  (only an older release verified — the shortlist pins `^N`), or "not tested with X".
   Because this is PM's *empirical* test matrix, absence of a test result is never
   presented as incompatibility, and full conflict resolution is deliberately left to
   `composer require --dry-run` on the merchant's machine. Matching is by release line:
@@ -531,7 +539,7 @@ Contract details the admin module depends on:
   recognises — and the Magento release behind it appears only in the chip's tooltip.
 - The component's ground is transparent and its typography inherits from the host, so
   it sits on whichever page background and font the host has (the two Magento admin
-  themes differ in both). Cards, the filter panel and the floating install tray are the
+  themes differ in both). Cards, the filter panel and the floating shortlist tray are the
   opaque surfaces. Two palettes ship in the stylesheet — light by default, dark when the
   OS asks and `colorScheme` is `'auto'`, or when it is pinned `'dark'` — and the host's
   `--mosd-theme-*` custom properties override either. Both palettes are the M137 design
@@ -590,7 +598,7 @@ tooltip.
 three ways at once — a 3px rail on the card's left edge, a tint on the card surface, and
 the state in words — so nothing depends on colour alone. Risk outranks install state: an
 abandoned module the shop already runs shows the risk rail and still names the installed
-version. Marking a module for the install list is the reader's own choice rather than a
+version. Shortlisting a module is the reader's own choice rather than a
 fact about the package, so it draws an accent ring around the whole card instead of a
 fourth rail, and composes with whatever rail is already there.
 

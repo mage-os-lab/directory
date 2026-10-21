@@ -63,6 +63,7 @@ class DirectoryConfig implements ArgumentInterface
             'baseUrl' => $this->config->getBaseUrl(),
             'linkMode' => 'event',
             'selectable' => true,
+            'installCommands' => $this->config->isInstallCommandsEnabled(),
             // Both admin themes are light-only; the bundle must not follow the OS into dark.
             'colorScheme' => 'light',
         ];
@@ -87,6 +88,14 @@ class DirectoryConfig implements ArgumentInterface
         // The template embeds this in a <script type="application/json"> block; encoding "<"
         // as \u003C keeps any value from ever closing that block, and it is still plain JSON.
         return str_replace('<', '\\u003C', $this->json->serialize($mountConfig));
+    }
+
+    /**
+     * Whether the page offers composer require commands, or only the shortlist to hand on.
+     */
+    public function areInstallCommandsShown(): bool
+    {
+        return $this->config->isInstallCommandsEnabled();
     }
 
     public function getDirectoryBaseUrl(): string

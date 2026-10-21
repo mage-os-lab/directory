@@ -8,6 +8,7 @@
             </dashboard>
             <mageos_extension_directory>
                 <mode>direct</mode>
+                <install_commands>0</install_commands>
             </mageos_extension_directory>
         </admin>
     </default>

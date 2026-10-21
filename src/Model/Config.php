@@ -8,9 +8,10 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 /**
  * Typed accessors for the module's settings.
  *
- * Two things are stored in configuration, both in the core Advanced > Admin section rather than
- * a section of their own: the direct/proxy mode, and whether the dashboard carries the panel
- * that points administrators at the directory. The base URL is a constant on purpose: the
+ * Three things are stored in configuration, all in the core Advanced > Admin section rather than
+ * a section of their own: the direct/proxy mode, whether the directory page shows composer
+ * install commands, and whether the dashboard carries the panel that points administrators at
+ * the directory. The base URL is a constant on purpose: the
  * module ships from the same repository as the directory service, so moving the host is a
  * one-commit change here rather than a value every merchant has to correct.
  *
@@ -22,6 +23,7 @@ class Config
     public const MODE_PROXY = 'proxy';
 
     public const XML_PATH_MODE = 'admin/mageos_extension_directory/mode';
+    public const XML_PATH_INSTALL_COMMANDS = 'admin/mageos_extension_directory/install_commands';
     public const XML_PATH_DASHBOARD_CTA = 'admin/dashboard/mageos_extension_directory_tip';
 
     /**
@@ -58,6 +60,16 @@ class Config
     public function isProxy(): bool
     {
         return $this->getMode() === self::MODE_PROXY;
+    }
+
+    /**
+     * Whether the directory page shows composer require commands, in its shortlist tray and on
+     * the detail pages it frames. Shipped off (config.xml): a command in a production admin reads
+     * as "run this here", so it is for the developers who turn it on, on their own copies.
+     */
+    public function isInstallCommandsEnabled(): bool
+    {
+        return $this->scopeConfig->isSetFlag(self::XML_PATH_INSTALL_COMMANDS);
     }
 
     /**

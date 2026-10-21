@@ -34,10 +34,12 @@ export interface DirectoryBrowserProps {
   onSelect?: (detail: SelectDetail) => void;
   /** Composer package name → installed version (from the host's composer.lock). */
   installed?: Record<string, string>;
-  /** Enable marking packages for install and the composer-command tray. */
+  /** Enable the shortlist: a mark toggle on each card and a tray that hands the list on. */
   selectable?: boolean;
+  /** Show the composer require command in the shortlist tray instead of the handoff list. */
+  installCommands?: boolean;
   onSelectionChange?: (detail: SelectionDetail) => void;
-  /** Where a host dispatches mosd:mark to change the install list from outside (the mount element). */
+  /** Where a host dispatches mosd:mark to change the shortlist from outside (the mount element). */
   markSource?: EventTarget;
   /** The host shop's Magento release, or its Mage-OS equivalent (e.g. "2.4.6"). */
   magentoVersion?: string;
@@ -87,12 +89,13 @@ export function composerCommand(entries: Array<{ name: string; version: string |
 }
 
 /**
- * Where a selectable mount keeps the install list between page loads. Session
+ * Where a selectable mount keeps the shortlist between page loads. Session
  * storage is per tab and gone when the tab closes: a reload, a filter change
  * that the host turns into navigation, or a trip into a module's detail page
  * and back should not cost the reader the list they were building, but a
  * fresh tab should start clean. Only package names are kept — versions are
- * pinned again against the feed that is current when the list is read.
+ * pinned again against the feed that is current when the list is read. The
+ * key predates the shortlist's name and keeps it, so no open tab loses a list.
  */
 export const SELECTION_STORAGE_KEY = 'mosd:install-list';
 
@@ -329,7 +332,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     return { state: 'untested' };
   };
 
-  /** What the install list pins: the newest release verified against the
+  /** What the shortlist pins: the newest release verified against the
    * host's Magento when that isn't the latest, else the latest. */
   const targetVersion = (pkg: PackageSummary): string | null => {
     const support = magentoSupport(pkg);
@@ -535,9 +538,8 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     }
   };
 
-  const markedEntries = feed.packages
-    .filter((p) => marked.has(p.name))
-    .map((p) => ({ name: p.name, version: targetVersion(p) }));
+  const markedPackages = feed.packages.filter((p) => marked.has(p.name));
+  const markedEntries = markedPackages.map((p) => ({ name: p.name, version: targetVersion(p) }));
   const command = markedEntries.length > 0 ? composerCommand(markedEntries) : '';
 
   // Emit selection changes from an effect (not the click handler) so rapid
@@ -591,19 +593,74 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     setCopied(false);
   };
 
-  const copyCommand = () => {
-    navigator.clipboard?.writeText(command).then(
+  const copyText = (text: string) => {
+    navigator.clipboard?.writeText(text).then(
       () => setCopied(true),
       () => {},
     );
   };
+
+  /** The shop as its admin knows it: "Mage-OS 3.5.0", "Magento 2.4.7". */
+  const shopLabel = distribution
+    ? hostLabel
+    : props.magentoVersion
+      ? `Magento ${props.magentoVersion}`
+      : undefined;
+
+  /** How the release the list pins fits this shop, in a few words. */
+  const fitNote = (pkg: PackageSummary): string | null => {
+    const support = magentoSupport(pkg);
+    if (support === null) {
+      const span = magentoRange(pkg);
+      return span === null ? null : `tested with Magento ${span}`;
+    }
+    // An 'older' result is the release the list pins, so it is tested too.
+    return support.state === 'untested'
+      ? `not tested with ${shopLabel}`
+      : `tested with ${shopLabel}`;
+  };
+
+  /**
+   * The shortlist as plain text, for whoever takes it from here: each module,
+   * the release that fits this shop and how well, any warning, and a link to
+   * its page. It names versions, never a command — trying a module out is
+   * development work, done on a development copy rather than from this list.
+   */
+  const shortlistText = (): string => {
+    const header = shopLabel
+      ? `Module shortlist for ${shopLabel}, from the Mage-OS Extension Directory:`
+      : 'Module shortlist from the Mage-OS Extension Directory:';
+    const items = markedPackages.map((pkg) => {
+      const facts: string[] = [];
+      const target = targetVersion(pkg);
+      if (installState(pkg) === 'update') {
+        facts.push(`update from v${installed![pkg.name]} to v${target}`);
+      } else if (target !== null) {
+        facts.push(`v${target}`);
+      }
+      const fit = fitNote(pkg);
+      if (fit !== null) facts.push(fit);
+      const warning = pkg.trust.warnings[0];
+      if (pkg.abandoned === true) facts.push('abandoned by its maintainer');
+      else if (warning !== undefined) facts.push(`warning: ${warning.message}`);
+      const summary = facts.length > 0 ? `: ${facts.join(', ')}` : '';
+      return `- ${pkg.displayName} (${pkg.name})${summary}\n  ${packageUrl(baseUrl, pkg)}`;
+    });
+    return [header, '', ...items].join('\n');
+  };
+
+  /** RFC 6068 wants CRLF line breaks in a mailto body. */
+  const shortlistMailto = (text: string): string =>
+    `mailto:?subject=${encodeURIComponent('Module shortlist')}&body=${encodeURIComponent(
+      text.replace(/\n/g, '\r\n'),
+    )}`;
 
   /**
    * The card's fit answer. With a host Magento version it leads the card in
    * a coloured strip; without one it is a neutral range in the footer. The
    * wording stays PackageMaven's: a missing test result is "not tested",
    * never "incompatible", and an older verified release is named so the
-   * reader can see what the install list would pin.
+   * reader can see what the shortlist would pin.
    */
   const fitLine = (pkg: PackageSummary): { tone: string; text: string } | null => {
     const support = magentoSupport(pkg);
@@ -967,11 +1024,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                             class={`mosd-mark${marked.has(pkg.name) ? ' mosd-marked' : ''}`}
                             onClick={() => toggleMark(pkg)}
                           >
-                            {marked.has(pkg.name)
-                              ? '✓ On install list'
-                              : installState(pkg) === 'update'
-                                ? '+ Mark for update'
-                                : '+ Mark for install'}
+                            {marked.has(pkg.name) ? '✓ Shortlisted' : '+ Shortlist'}
                           </button>
                         </p>
                       )}
@@ -1008,22 +1061,54 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
         </div>
       )}
       {props.selectable && marked.size > 0 && (
-        <div class="mosd-tray" role="region" aria-label="Install list">
+        <div class="mosd-tray" role="region" aria-label="Shortlist">
           <span class="mosd-tray-count">
-            {marked.size} module{marked.size === 1 ? '' : 's'} marked
+            {marked.size} module{marked.size === 1 ? '' : 's'} shortlisted
           </span>
-          <code class="mosd-tray-command">{command}</code>
-          <button type="button" class="mosd-btn mosd-btn-primary" onClick={copyCommand}>
-            {copied ? 'Copied ✓' : 'Copy command'}
-          </button>
-          <button type="button" class="mosd-btn" onClick={clearMarks}>
+          {props.installCommands ? (
+            <>
+              <code class="mosd-tray-command">{command}</code>
+              <button
+                type="button"
+                class="mosd-btn mosd-btn-primary"
+                onClick={() => copyText(command)}
+              >
+                {copied ? 'Copied ✓' : 'Copy command'}
+              </button>
+            </>
+          ) : (
+            <>
+              <span class="mosd-tray-list">
+                {markedPackages.map((p) => p.displayName).join(', ')}
+              </span>
+              <button
+                type="button"
+                class="mosd-btn mosd-btn-primary"
+                onClick={() => copyText(shortlistText())}
+              >
+                {copied ? 'Copied ✓' : 'Copy list'}
+              </button>
+              <a class="mosd-btn mosd-tray-email" href={shortlistMailto(shortlistText())}>
+                Email list
+              </a>
+            </>
+          )}
+          <button type="button" class="mosd-btn mosd-tray-clear" onClick={clearMarks}>
             Clear
           </button>
-          <p class="mosd-tray-help">
-            Copy the command and run it in a terminal on a development copy of the store: Composer
-            installs the modules there and confirms they work together before anything reaches
-            production.
-          </p>
+          {props.installCommands ? (
+            <p class="mosd-tray-help">
+              Copy the command and run it in a terminal on a development copy of the store:
+              Composer installs the modules there and confirms they work together before anything
+              reaches production.
+            </p>
+          ) : (
+            <p class="mosd-tray-help">
+              The list names each module, the release that fits this store and a link to its
+              page. Nothing is installed from here: a module is added and tested on a development
+              copy of the store before it reaches production.
+            </p>
+          )}
         </div>
       )}
     </div>

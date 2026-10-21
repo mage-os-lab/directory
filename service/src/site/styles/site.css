@@ -129,6 +129,11 @@ html[data-embed] .site-header {
   display: none;
 }
 
+/* A host that keeps install commands from its readers (?install=0). */
+html[data-no-install] .install-block {
+  display: none;
+}
+
 .site-header {
   border-bottom: 1px solid var(--border);
 }

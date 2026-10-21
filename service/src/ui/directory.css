@@ -876,6 +876,21 @@
   white-space: nowrap;
 }
 
+/* The shortlist by name; the full detail goes into the copied or emailed text. */
+.mosd-tray-list {
+  flex: 1 1 260px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* An <a> in button clothing: mailto has to be a link. */
+a.mosd-btn {
+  display: inline-block;
+  text-decoration: none;
+}
+
 /* What "Copy" is for: a full-width line under the command, so the tray says
  * where the command goes next and nobody takes it for an install button. */
 .mosd-tray-help {

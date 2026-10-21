@@ -111,9 +111,26 @@ final class DirectoryConfigTest extends TestCase
         self::assertSame(self::BASE_URL, $mount['baseUrl']);
         self::assertSame('event', $mount['linkMode']);
         self::assertTrue($mount['selectable']);
+        self::assertFalse($mount['installCommands'], 'Install commands are off unless turned on.');
         self::assertSame('light', $mount['colorScheme'], 'The admin chrome is light-only.');
         self::assertSame('2.4.7-p3', $mount['magentoVersion']);
         self::assertArrayNotHasKey('distribution', $mount, 'Plain Magento is not a distribution.');
+    }
+
+    public function testInstallCommandsAreShippedOff(): void
+    {
+        $viewModel = $this->viewModel([]);
+
+        self::assertFalse($viewModel->areInstallCommandsShown());
+        self::assertFalse($this->decode($viewModel->getMountConfigJson())['installCommands']);
+    }
+
+    public function testTurningInstallCommandsOnReachesBothThePageAndTheBundle(): void
+    {
+        $viewModel = $this->viewModel([Config::XML_PATH_INSTALL_COMMANDS => '1']);
+
+        self::assertTrue($viewModel->areInstallCommandsShown());
+        self::assertTrue($this->decode($viewModel->getMountConfigJson())['installCommands']);
     }
 
     public function testAMageOsHostSendsBothTheMagentoEquivalentVersionAndItsOwnName(): void

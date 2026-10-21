@@ -221,7 +221,7 @@ comparing many results, but wrong for the public site's discovery grid, and a se
 layout to maintain); tile and editorial-row variants (too little and too much room
 respectively); status by badge alone (an install state ranked level with "Editors' pick"
 is the problem being fixed, and colour-only encoding fails for the same reason);
-per-card composer commands (the admin's tray already builds one from the install list,
+per-card composer commands (the admin's tray already builds one from the shortlist,
 and detail pages carry the single-package form).
 
 ## 13. One list, a few filters that matter, and a page at a time
@@ -263,7 +263,7 @@ second URL contract); infinite scroll (loses the footer and the sense of how far
 list goes); keeping prerendered category landing pages for SEO (the detail pages carry
 the search value; a category page whose list differs from the home page's is the
 confusion being removed); favourites in localStorage as on the Lab page (the admin's
-install list already plays that role, and on the public site a shareable filtered URL
+shortlist already plays that role, and on the public site a shareable filtered URL
 is the more useful bookmark); a fixed install threshold for "Popular" (brittle as the
 corpus shifts — a percentile is self-adjusting); auto-dark in the admin (the admin chrome
 does not follow the OS, so the panel must not either).
@@ -402,3 +402,32 @@ the accent for filled buttons (M137's primary button is neutral, and the accent 
 for selection and links); loading Inter from Google Fonts (a third-party request on every
 page view, when the npm package serves the same file from our origin).
 
+## 18. The admin hands on a shortlist; install commands are a developer setting
+
+**Decision:** the admin's install list becomes a shortlist. Cards and the detail modal
+say "Shortlist" / "Shortlisted" instead of "Mark for install", and the tray's output is
+plain text to copy or email (a `mailto:` link): each module's name, the release that
+fits the shop, how it was tested against the shop's version, any abandonment or warning,
+and a link to its detail page. The `composer require` command moves behind **Show Install
+Commands** (Advanced → Admin → Extension Directory, default no). Turned on, the tray
+builds the command as before; turned off, the admin frames detail pages with
+`?install=0`, which hides their copyable command too. The bundle gains an
+`installCommands` mount option (default false) for this; `mosd:selection` still carries
+`command` either way. The dashboard tip stops promising "the install command".
+
+**Why:** feedback from agencies: a production admin is the wrong place to research
+extensions, and a copyable command beside each module tells a merchant they can install
+it themselves and it will work. Composer on a live server is how stores get broken.
+Researching modules is still useful in the admin, because that is where the shop's own
+version and installed modules are known. So the output becomes a list for the person who
+does the install, with the facts that person needs, rather than a command for the person
+reading. Developers on their own copies still get the command from one setting.
+
+**Rejected:** gating on deploy mode (staging runs in production mode, and some live
+stores wrongly run in developer mode, so the mode says little about who is reading);
+keeping the command behind a button with a disclaimer (people click through disclaimers,
+and it still implies "you can install this"); a separate ACL resource (merchants usually
+hold full access, so it would gate nothing for the users in question); dropping the
+shortlist from the admin (it is the one thing the admin knows that the public site
+doesn't: what fits this shop); renaming the `mosd:install-list` session key (it would
+silently drop open lists, for a name no reader sees).

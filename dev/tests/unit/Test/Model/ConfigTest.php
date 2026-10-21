@@ -63,6 +63,14 @@ final class ConfigTest extends TestCase
         self::assertSame(Config::HTTP_TIMEOUT, $config->getHttpTimeout());
     }
 
+    public function testInstallCommandsFollowTheirFlag(): void
+    {
+        self::assertSame('admin/mageos_extension_directory/install_commands', Config::XML_PATH_INSTALL_COMMANDS);
+        self::assertTrue($this->config([Config::XML_PATH_INSTALL_COMMANDS => '1'])->isInstallCommandsEnabled());
+        self::assertFalse($this->config([Config::XML_PATH_INSTALL_COMMANDS => '0'])->isInstallCommandsEnabled());
+        self::assertFalse($this->config([])->isInstallCommandsEnabled(), 'Off is the shipped default.');
+    }
+
     public function testTheDashboardTipFollowsItsFlag(): void
     {
         self::assertTrue($this->config([Config::XML_PATH_DASHBOARD_CTA => '1'])->isDashboardCtaEnabled());
