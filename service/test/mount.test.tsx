@@ -577,11 +577,6 @@ describe('mountDirectory', () => {
     await flush();
     expect(writeText).toHaveBeenCalledWith(expected);
     expect(tray.querySelector('.mosd-btn-primary')!.textContent).toBe('Copied ✓');
-
-    const mailto = new URL(tray.querySelector<HTMLAnchorElement>('.mosd-tray-email')!.href);
-    expect(mailto.protocol).toBe('mailto:');
-    expect(mailto.searchParams.get('subject')).toBe('Module shortlist');
-    expect(mailto.searchParams.get('body')).toBe(expected.replace(/\n/g, '\r\n'));
   });
 
   it('names a distribution in the shortlist the way its admin knows it', async () => {
@@ -589,6 +584,8 @@ describe('mountDirectory', () => {
       'fetch',
       vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
     );
+    const writeText = vi.fn(async (_text: string) => {});
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
     unmount = mountDirectory(el, {
       feedUrl: '/feed.json',
       shadow: false,
@@ -600,10 +597,10 @@ describe('mountDirectory', () => {
 
     el.querySelector<HTMLButtonElement>('.mosd-mark')!.click();
     await flush();
+    el.querySelector<HTMLButtonElement>('.mosd-tray .mosd-btn-primary')!.click();
+    await flush();
 
-    const body = new URL(el.querySelector<HTMLAnchorElement>('.mosd-tray-email')!.href).searchParams
-      .get('body')!
-      .split('\r\n');
+    const body = writeText.mock.calls[0]![0].split('\n');
     expect(body[0]).toBe('Module shortlist for Mage-OS 1.0.0, from the Mage-OS Extension Directory:');
     expect(body[2]).toBe('- Acme Pay (acme/module-pay): v1.0.0, tested with Mage-OS 1.0.0');
   });
@@ -637,7 +634,7 @@ describe('mountDirectory', () => {
     expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(
       'composer require acme/module-pay:^1.0.0 acme/module-search:^2.1.0',
     );
-    expect(el.querySelector('.mosd-tray-email')).toBeNull();
+    expect(el.querySelector('.mosd-tray-list')).toBeNull();
     // The tray says where the command goes next, so "Copy" is not taken for "Install".
     expect(el.querySelector('.mosd-tray-help')!.textContent).toContain(
       'development copy of the store',

@@ -22,6 +22,10 @@ class Config
     public const MODE_DIRECT = 'direct';
     public const MODE_PROXY = 'proxy';
 
+    public const INSTALL_COMMANDS_DEVELOPER = 'developer';
+    public const INSTALL_COMMANDS_ALWAYS = 'always';
+    public const INSTALL_COMMANDS_NEVER = 'never';
+
     public const XML_PATH_MODE = 'admin/mageos_extension_directory/mode';
     public const XML_PATH_INSTALL_COMMANDS = 'admin/mageos_extension_directory/install_commands';
     public const XML_PATH_DASHBOARD_CTA = 'admin/dashboard/mageos_extension_directory_tip';
@@ -63,13 +67,18 @@ class Config
     }
 
     /**
-     * Whether the directory page shows composer require commands, in its shortlist tray and on
-     * the detail pages it frames. Shipped off (config.xml): a command in a production admin reads
-     * as "run this here", so it is for the developers who turn it on, on their own copies.
+     * When the directory page shows composer require commands, in its shortlist tray and on the
+     * detail pages it frames: in developer mode, always, or never. A command in a production
+     * admin reads as "run this here", so the shipped default (and anything unrecognised) is
+     * developer mode only.
      */
-    public function isInstallCommandsEnabled(): bool
+    public function getInstallCommands(): string
     {
-        return $this->scopeConfig->isSetFlag(self::XML_PATH_INSTALL_COMMANDS);
+        $setting = (string)$this->scopeConfig->getValue(self::XML_PATH_INSTALL_COMMANDS);
+
+        return in_array($setting, [self::INSTALL_COMMANDS_ALWAYS, self::INSTALL_COMMANDS_NEVER], true)
+            ? $setting
+            : self::INSTALL_COMMANDS_DEVELOPER;
     }
 
     /**

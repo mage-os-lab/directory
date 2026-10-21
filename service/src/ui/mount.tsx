@@ -14,8 +14,8 @@
  *    via CSS custom properties.
  *  - installed (composer name → version, read from the host's composer.lock)
  *    adds Installed/update badges and an installed-state filter; selectable
- *    adds shortlist toggles and a tray that hands the list on as copyable or
- *    emailable text (installCommands: true swaps that for a copyable
+ *    adds shortlist toggles and a tray that hands the list on as copyable
+ *    text (installCommands: true swaps that for a copyable
  *    composer-require command), with every change dispatched as
  *    CustomEvent('mosd:selection', {detail: {packages, command}}). The list
  *    is kept in sessionStorage per

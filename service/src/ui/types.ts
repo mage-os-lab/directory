@@ -94,7 +94,7 @@ export interface MountOptions {
   installed?: Record<string, string>;
   /**
    * Enable the shortlist: cards get a "Shortlist" toggle and a tray hands the
-   * list on — copyable text, or a mailto link, naming each module, the
+   * list on as copyable text naming each module, the
    * release that fits the shop, how it was tested and a link to its page.
    * Every change dispatches mosd:selection on the mount element. The list is
    * kept in sessionStorage, so it survives a reload of the tab and ends with

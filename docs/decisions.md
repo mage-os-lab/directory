@@ -406,11 +406,11 @@ page view, when the npm package serves the same file from our origin).
 
 **Decision:** the admin's install list becomes a shortlist. Cards and the detail modal
 say "Shortlist" / "Shortlisted" instead of "Mark for install", and the tray's output is
-plain text to copy or email (a `mailto:` link): each module's name, the release that
-fits the shop, how it was tested against the shop's version, any abandonment or warning,
-and a link to its detail page. The `composer require` command moves behind **Show Install
-Commands** (Advanced → Admin → Extension Directory, default no). Turned on, the tray
-builds the command as before; turned off, the admin frames detail pages with
+plain text to copy: each module's name, the release that fits the shop, how it was
+tested against the shop's version, any abandonment or warning, and a link to its detail
+page. The `composer require` command moves behind **Show Install Commands** (Advanced →
+Admin → Extension Directory): in developer mode (the default), always, or never. Shown,
+the tray builds the command as before; hidden, the admin frames detail pages with
 `?install=0`, which hides their copyable command too. The bundle gains an
 `installCommands` mount option (default false) for this; `mosd:selection` still carries
 `command` either way. The dashboard tip stops promising "the install command".
@@ -421,11 +421,13 @@ it themselves and it will work. Composer on a live server is how stores get brok
 Researching modules is still useful in the admin, because that is where the shop's own
 version and installed modules are known. So the output becomes a list for the person who
 does the install, with the facts that person needs, rather than a command for the person
-reading. Developers on their own copies still get the command from one setting.
+reading. Developers on their own copies get the command without touching anything,
+since local copies run in developer mode; deploy mode alone is a weak signal (staging
+runs in production mode, some live stores wrongly run in developer mode), so the setting
+can pin it either way.
 
-**Rejected:** gating on deploy mode (staging runs in production mode, and some live
-stores wrongly run in developer mode, so the mode says little about who is reading);
-keeping the command behind a button with a disclaimer (people click through disclaimers,
+**Rejected:** a plain yes/no setting, off by default (every developer would have to
+turn it on for each copy, which is the common case to get right); keeping the command behind a button with a disclaimer (people click through disclaimers,
 and it still implies "you can install this"); a separate ACL resource (merchants usually
 hold full access, so it would gate nothing for the users in question); dropping the
 shortlist from the admin (it is the one thing the admin knows that the public site

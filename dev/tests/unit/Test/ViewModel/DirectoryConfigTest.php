@@ -5,6 +5,7 @@ namespace MageOS\ExtensionDirectory\Test\Unit\ViewModel;
 
 use MageOS\ExtensionDirectory\Model\Config;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\ArrayScopeConfig;
+use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeAppState;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeAssetRepository;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeBackendUrl;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeFeedProvider;
@@ -13,6 +14,7 @@ use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeMageOsProductMetadata;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeProductMetadata;
 use MageOS\ExtensionDirectory\ViewModel\DirectoryConfig;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\App\State;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -111,26 +113,36 @@ final class DirectoryConfigTest extends TestCase
         self::assertSame(self::BASE_URL, $mount['baseUrl']);
         self::assertSame('event', $mount['linkMode']);
         self::assertTrue($mount['selectable']);
-        self::assertFalse($mount['installCommands'], 'Install commands are off unless turned on.');
+        self::assertFalse($mount['installCommands'], 'A production admin gets no install commands.');
         self::assertSame('light', $mount['colorScheme'], 'The admin chrome is light-only.');
         self::assertSame('2.4.7-p3', $mount['magentoVersion']);
         self::assertArrayNotHasKey('distribution', $mount, 'Plain Magento is not a distribution.');
     }
 
-    public function testInstallCommandsAreShippedOff(): void
-    {
-        $viewModel = $this->viewModel([]);
+    #[DataProvider('installCommandsProvider')]
+    public function testInstallCommandsFollowTheSettingAndTheDeployMode(
+        ?string $setting,
+        string $deployMode,
+        bool $expected
+    ): void {
+        $values = $setting === null ? [] : [Config::XML_PATH_INSTALL_COMMANDS => $setting];
+        $viewModel = $this->viewModel($values, [], null, $deployMode);
 
-        self::assertFalse($viewModel->areInstallCommandsShown());
-        self::assertFalse($this->decode($viewModel->getMountConfigJson())['installCommands']);
+        self::assertSame($expected, $viewModel->areInstallCommandsShown());
+        self::assertSame($expected, $this->decode($viewModel->getMountConfigJson())['installCommands']);
     }
 
-    public function testTurningInstallCommandsOnReachesBothThePageAndTheBundle(): void
+    public static function installCommandsProvider(): array
     {
-        $viewModel = $this->viewModel([Config::XML_PATH_INSTALL_COMMANDS => '1']);
-
-        self::assertTrue($viewModel->areInstallCommandsShown());
-        self::assertTrue($this->decode($viewModel->getMountConfigJson())['installCommands']);
+        return [
+            'default, developer mode' => [null, State::MODE_DEVELOPER, true],
+            'default, production mode' => [null, State::MODE_PRODUCTION, false],
+            'default, default mode' => [null, State::MODE_DEFAULT, false],
+            'developer, developer mode' => [Config::INSTALL_COMMANDS_DEVELOPER, State::MODE_DEVELOPER, true],
+            'developer, production mode' => [Config::INSTALL_COMMANDS_DEVELOPER, State::MODE_PRODUCTION, false],
+            'always, production mode' => [Config::INSTALL_COMMANDS_ALWAYS, State::MODE_PRODUCTION, true],
+            'never, developer mode' => [Config::INSTALL_COMMANDS_NEVER, State::MODE_DEVELOPER, false],
+        ];
     }
 
     public function testAMageOsHostSendsBothTheMagentoEquivalentVersionAndItsOwnName(): void
@@ -303,7 +315,8 @@ final class DirectoryConfigTest extends TestCase
     private function viewModel(
         array $configValues,
         array $installed = [],
-        ?ProductMetadataInterface $productMetadata = null
+        ?ProductMetadataInterface $productMetadata = null,
+        string $deployMode = State::MODE_PRODUCTION
     ): DirectoryConfig {
         return new DirectoryConfig(
             new Config(new ArrayScopeConfig($configValues)),
@@ -312,7 +325,8 @@ final class DirectoryConfigTest extends TestCase
             $productMetadata ?? new FakeProductMetadata(),
             $this->backendUrl,
             $this->assetRepository,
-            new Json()
+            new Json(),
+            new FakeAppState($deployMode)
         );
     }
 

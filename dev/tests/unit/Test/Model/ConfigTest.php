@@ -63,12 +63,35 @@ final class ConfigTest extends TestCase
         self::assertSame(Config::HTTP_TIMEOUT, $config->getHttpTimeout());
     }
 
-    public function testInstallCommandsFollowTheirFlag(): void
+    #[DataProvider('installCommandsProvider')]
+    public function testInstallCommandsFallBackToDeveloperModeForAnythingUnrecognised(
+        mixed $stored,
+        string $expected
+    ): void {
+        self::assertSame(
+            $expected,
+            $this->config([Config::XML_PATH_INSTALL_COMMANDS => $stored])->getInstallCommands()
+        );
+    }
+
+    public static function installCommandsProvider(): array
+    {
+        return [
+            'developer' => ['developer', Config::INSTALL_COMMANDS_DEVELOPER],
+            'always' => ['always', Config::INSTALL_COMMANDS_ALWAYS],
+            'never' => ['never', Config::INSTALL_COMMANDS_NEVER],
+            'junk' => ['1', Config::INSTALL_COMMANDS_DEVELOPER],
+            'unset' => [null, Config::INSTALL_COMMANDS_DEVELOPER],
+        ];
+    }
+
+    public function testInstallCommandsAreReadFromTheirDocumentedConfigPath(): void
     {
         self::assertSame('admin/mageos_extension_directory/install_commands', Config::XML_PATH_INSTALL_COMMANDS);
-        self::assertTrue($this->config([Config::XML_PATH_INSTALL_COMMANDS => '1'])->isInstallCommandsEnabled());
-        self::assertFalse($this->config([Config::XML_PATH_INSTALL_COMMANDS => '0'])->isInstallCommandsEnabled());
-        self::assertFalse($this->config([])->isInstallCommandsEnabled(), 'Off is the shipped default.');
+        self::assertSame(
+            Config::INSTALL_COMMANDS_ALWAYS,
+            $this->config(['admin/mageos_extension_directory/install_commands' => 'always'])->getInstallCommands()
+        );
     }
 
     public function testTheDashboardTipFollowsItsFlag(): void

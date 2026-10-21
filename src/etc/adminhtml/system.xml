@@ -24,8 +24,8 @@
                 </field>
                 <field id="install_commands" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
                     <label>Show Install Commands</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>For development copies of the store. No (default): the directory's shortlist is a list of modules with links, to copy or email. Yes: it builds a composer require command instead, and module detail pages show theirs. Nothing is ever installed from the admin either way.</comment>
+                    <source_model>MageOS\ExtensionDirectory\Model\Config\Source\InstallCommands</source_model>
+                    <comment>When shown, the directory's shortlist builds a composer require command and module detail pages show theirs; otherwise the shortlist is a list of modules with links, to copy. The default shows them only in developer mode, so production admins never see them. Nothing is ever installed from the admin either way.</comment>
                 </field>
             </group>
         </section>

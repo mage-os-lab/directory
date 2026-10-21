@@ -649,12 +649,6 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
     return [header, '', ...items].join('\n');
   };
 
-  /** RFC 6068 wants CRLF line breaks in a mailto body. */
-  const shortlistMailto = (text: string): string =>
-    `mailto:?subject=${encodeURIComponent('Module shortlist')}&body=${encodeURIComponent(
-      text.replace(/\n/g, '\r\n'),
-    )}`;
-
   /**
    * The card's fit answer. With a host Magento version it leads the card in
    * a coloured strip; without one it is a neutral range in the footer. The
@@ -1088,9 +1082,6 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
               >
                 {copied ? 'Copied ✓' : 'Copy list'}
               </button>
-              <a class="mosd-btn mosd-tray-email" href={shortlistMailto(shortlistText())}>
-                Email list
-              </a>
             </>
           )}
           <button type="button" class="mosd-btn mosd-tray-clear" onClick={clearMarks}>

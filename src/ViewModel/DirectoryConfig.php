@@ -8,6 +8,7 @@ use MageOS\ExtensionDirectory\Model\Config;
 use MageOS\ExtensionDirectory\Model\Feed\FeedProvider;
 use Magento\Backend\Model\UrlInterface;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\App\State;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\View\Asset\Repository as AssetRepository;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
@@ -40,7 +41,8 @@ class DirectoryConfig implements ArgumentInterface
         private readonly ProductMetadataInterface $productMetadata,
         private readonly UrlInterface $backendUrl,
         private readonly AssetRepository $assetRepository,
-        private readonly Json $json
+        private readonly Json $json,
+        private readonly State $appState
     ) {
     }
 
@@ -63,7 +65,7 @@ class DirectoryConfig implements ArgumentInterface
             'baseUrl' => $this->config->getBaseUrl(),
             'linkMode' => 'event',
             'selectable' => true,
-            'installCommands' => $this->config->isInstallCommandsEnabled(),
+            'installCommands' => $this->areInstallCommandsShown(),
             // Both admin themes are light-only; the bundle must not follow the OS into dark.
             'colorScheme' => 'light',
         ];
@@ -95,7 +97,11 @@ class DirectoryConfig implements ArgumentInterface
      */
     public function areInstallCommandsShown(): bool
     {
-        return $this->config->isInstallCommandsEnabled();
+        return match ($this->config->getInstallCommands()) {
+            Config::INSTALL_COMMANDS_ALWAYS => true,
+            Config::INSTALL_COMMANDS_NEVER => false,
+            default => $this->appState->getMode() === State::MODE_DEVELOPER,
+        };
     }
 
     public function getDirectoryBaseUrl(): string

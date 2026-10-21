@@ -474,7 +474,7 @@ mountDirectory(el: HTMLElement, options: {
                                    // host from composer.lock; adds Installed /
                                    // "update available" badges + an installed-state filter
   selectable?: boolean;            // default false: shortlist toggles + a tray that hands
-                                   // the list on as copyable text or a mailto link; the
+                                   // the list on as copyable text; the
                                    // list lives in sessionStorage, so it survives a
                                    // reload of the tab and ends with the tab
   installCommands?: boolean;       // default false: the tray shows the copyable composer
@@ -505,8 +505,7 @@ Contract details the admin module depends on:
   dispatches `CustomEvent('mosd:error', { detail: { message } })`; it never throws out
   of `mountDirectory`.
 - With `selectable: true`, cards get a "Shortlist" toggle and a tray that hands the
-  list on: "Copy list" and "Email list" (a `mailto:` link) give the same plain text —
-  each module's name, the release the list pins, how it fits the shop's version, any
+  list on: "Copy list" copies plain text — each module's name, the release the list pins, how it fits the shop's version, any
   abandonment or warning, and its detail-page URL. The text names versions, never a
   command. With `installCommands: true` the tray shows the copyable `composer require`
   instead; that is the developer's view, and the admin module puts it behind a setting.

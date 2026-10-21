@@ -85,17 +85,17 @@ PackageMaven's test matrix. Package details open in an admin modal showing the
 directory site's detail page; external links (Packagist, the repository,
 PackageMaven) are followed only when clicked.
 
-**It never installs anything.** Shortlisting modules builds a list to copy or email to
-whoever maintains the store — each module with the release that fits this shop, how it
-was tested, any warning, and a link to its page. Installing and testing modules is
-development work, done on a development copy, so by default the admin shows no Composer
-commands at all. The list is kept per browser tab, so a reload or a look at a module's
+**It never installs anything.** Shortlisting modules builds a list to copy for whoever
+maintains the store — each module with the release that fits this shop, how it was
+tested, any warning, and a link to its page. Installing and testing modules is
+development work, done on a development copy, so outside developer mode the admin shows
+no Composer commands at all. The list is kept per browser tab, so a reload or a look at a module's
 details does not lose it.
 
 Three settings, all under Stores → Configuration → Advanced → Admin. **Extension
-Directory → Show Install Commands** (default no): for development copies of the store —
-the shortlist builds a `composer require vendor/module:^x.y` command instead, and the
-framed detail pages show theirs. **Extension Directory → Mode**: **Direct** (default — admin browsers load the UI bundle and catalog
+Directory → Show Install Commands** (default: in developer mode; or always, or never):
+when shown, the shortlist builds a `composer require vendor/module:^x.y` command
+instead, and the framed detail pages show theirs. **Extension Directory → Mode**: **Direct** (default — admin browsers load the UI bundle and catalog
 straight from the directory host) or **Proxy** (the store's server fetches and caches
 the feed, revalidating against the 200-byte `manifest.json`, and serves the UI copy
 bundled with the module — fully same-origin for restricted networks or
