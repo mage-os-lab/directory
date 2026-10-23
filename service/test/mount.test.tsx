@@ -522,6 +522,89 @@ describe('mountDirectory', () => {
     expect(foot.querySelector('.mosd-card-actions')).not.toBeNull();
   });
 
+  it('hands the shortlist on as text, with no command in sight by default', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const writeText = vi.fn(async () => {});
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      baseUrl: 'https://directory.example',
+      shadow: false,
+      selectable: true,
+      magentoVersion: '2.4.6',
+      installed: { 'acme/module-pay': '0.8.0' },
+    });
+    await flush();
+
+    const cardOf = (name: string) =>
+      [...el.querySelectorAll('.mosd-card')].find((c) =>
+        c.querySelector('.mosd-card-name')!.textContent!.includes(name),
+      )!;
+    const markOf = (name: string) => cardOf(name).querySelector<HTMLButtonElement>('.mosd-mark')!;
+    expect(markOf('acme/module-pay').textContent).toBe('+ Shortlist');
+    markOf('acme/module-pay').click();
+    await flush();
+    markOf('acme/module-search').click();
+    await flush();
+    markOf('acme/module-legacy').click();
+    await flush();
+    expect(markOf('acme/module-pay').textContent).toBe('✓ Shortlisted');
+
+    const tray = el.querySelector('.mosd-tray')!;
+    expect(tray.querySelector('.mosd-tray-command')).toBeNull();
+    expect(tray.textContent).not.toContain('composer');
+    expect(tray.querySelector('.mosd-tray-count')!.textContent).toBe('3 modules shortlisted');
+    expect(tray.querySelector('.mosd-tray-list')!.textContent).toBe(
+      'Acme Pay, Acme Search, Acme Legacy',
+    );
+
+    const expected = [
+      'Module shortlist for Magento 2.4.6, from the Mage-OS Extension Directory:',
+      '',
+      // The update pins the release verified against the shop's version, not the latest.
+      '- Acme Pay (acme/module-pay): update from v0.8.0 to v0.9.0, tested with Magento 2.4.6',
+      '  https://directory.example/packages/acme/module-pay/',
+      '- Acme Search (acme/module-search): v2.1.0, not tested with Magento 2.4.6',
+      '  https://directory.example/packages/acme/module-search/',
+      '- Acme Legacy (acme/module-legacy): v0.4.0, not tested with Magento 2.4.6, abandoned by its maintainer',
+      '  https://directory.example/packages/acme/module-legacy/',
+    ].join('\n');
+
+    tray.querySelector<HTMLButtonElement>('.mosd-btn-primary')!.click();
+    await flush();
+    expect(writeText).toHaveBeenCalledWith(expected);
+    expect(tray.querySelector('.mosd-btn-primary')!.textContent).toBe('Copied ✓');
+  });
+
+  it('names a distribution in the shortlist the way its admin knows it', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
+    );
+    const writeText = vi.fn(async (_text: string) => {});
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      selectable: true,
+      magentoVersion: '2.4.7',
+      distribution: { name: 'Mage-OS', version: '1.0.0' },
+    });
+    await flush();
+
+    el.querySelector<HTMLButtonElement>('.mosd-mark')!.click();
+    await flush();
+    el.querySelector<HTMLButtonElement>('.mosd-tray .mosd-btn-primary')!.click();
+    await flush();
+
+    const body = writeText.mock.calls[0]![0].split('\n');
+    expect(body[0]).toBe('Module shortlist for Mage-OS 1.0.0, from the Mage-OS Extension Directory:');
+    expect(body[2]).toBe('- Acme Pay (acme/module-pay): v1.0.0, tested with Mage-OS 1.0.0');
+  });
+
   it('builds the composer command and dispatches mosd:selection when marking', async () => {
     vi.stubGlobal(
       'fetch',
@@ -531,7 +614,12 @@ describe('mountDirectory', () => {
     el.addEventListener('mosd:selection', (event) =>
       selections.push((event as CustomEvent).detail),
     );
-    unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, selectable: true });
+    unmount = mountDirectory(el, {
+      feedUrl: '/feed.json',
+      shadow: false,
+      selectable: true,
+      installCommands: true,
+    });
     await flush();
 
     const buttons = [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')];
@@ -546,6 +634,7 @@ describe('mountDirectory', () => {
     expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(
       'composer require acme/module-pay:^1.0.0 acme/module-search:^2.1.0',
     );
+    expect(el.querySelector('.mosd-tray-list')).toBeNull();
     // The tray says where the command goes next, so "Copy" is not taken for "Install".
     expect(el.querySelector('.mosd-tray-help')!.textContent).toContain(
       'development copy of the store',
@@ -565,13 +654,13 @@ describe('mountDirectory', () => {
     ]);
 
     // Clear empties the list and announces it.
-    (el.querySelector('.mosd-tray .mosd-btn:not(.mosd-btn-primary)') as HTMLButtonElement).click();
+    (el.querySelector('.mosd-tray-clear') as HTMLButtonElement).click();
     await flush();
     expect(el.querySelector('.mosd-tray')).toBeNull();
     expect(selections[2]).toEqual({ packages: [], command: '' });
   });
 
-  it('keeps the install list across a reload of the tab, minus what the catalog lost', async () => {
+  it('keeps the shortlist across a reload of the tab, minus what the catalog lost', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
@@ -603,9 +692,7 @@ describe('mountDirectory', () => {
     unmount = mountDirectory(el, { feedUrl: '/feed.json', shadow: false, selectable: true });
     await flush();
 
-    expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(
-      'composer require acme/module-pay:^1.0.0',
-    );
+    expect(el.querySelector('.mosd-tray-list')!.textContent).toBe('Acme Pay');
     expect(el.querySelectorAll('.mosd-mark.mosd-marked')).toHaveLength(1);
     // The restored list is announced once on mount, since the host never saw it built.
     expect(selections.at(-1)).toEqual({
@@ -615,12 +702,12 @@ describe('mountDirectory', () => {
     expect(JSON.parse(sessionStorage.getItem('mosd:install-list')!)).toEqual(['acme/module-pay']);
 
     // Clear empties the tab's copy as well.
-    (el.querySelector('.mosd-tray .mosd-btn:not(.mosd-btn-primary)') as HTMLButtonElement).click();
+    (el.querySelector('.mosd-tray-clear') as HTMLButtonElement).click();
     await flush();
     expect(sessionStorage.getItem('mosd:install-list')).toBeNull();
   });
 
-  it('leaves the tab\'s install list alone on a mount that cannot select', async () => {
+  it('leaves the tab\'s shortlist alone on a mount that cannot select', async () => {
     sessionStorage.setItem('mosd:install-list', JSON.stringify(['acme/module-pay']));
     vi.stubGlobal(
       'fetch',
@@ -855,7 +942,7 @@ describe('mountDirectory', () => {
     expect(el.querySelector('.mosd-browser')!.hasAttribute('data-mosd-scheme')).toBe(false);
   });
 
-  it('pins the newest release verified for the host Magento in the install list', async () => {
+  it('pins the newest release verified for the host Magento in the shortlist', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response(JSON.stringify(feed), { status: 200 })),
@@ -868,6 +955,7 @@ describe('mountDirectory', () => {
       feedUrl: '/feed.json',
       shadow: false,
       selectable: true,
+      installCommands: true,
       magentoVersion: '2.4.6',
       // Installed 0.8.0 < the 2.4.6-verified 0.9.0 → update targeting 0.9.0,
       // NOT the 2.4.7-only 1.0.0.
@@ -878,10 +966,10 @@ describe('mountDirectory', () => {
     expect(el.querySelector('.mosd-state-update')!.textContent!.replace(/\s+/g, ' ').trim()).toBe(
       '↑ Update v0.8.0 → v0.9.0',
     );
-    const updateButton = [...el.querySelectorAll<HTMLButtonElement>('.mosd-mark')].find((b) =>
-      b.textContent!.includes('update'),
+    const payCard = [...el.querySelectorAll('.mosd-card')].find((c) =>
+      c.querySelector('.mosd-card-name')!.textContent!.includes('acme/module-pay'),
     )!;
-    updateButton.click();
+    payCard.querySelector<HTMLButtonElement>('.mosd-mark')!.click();
     await flush();
 
     expect(el.querySelector('.mosd-tray-command')!.textContent).toBe(

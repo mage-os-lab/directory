@@ -4,7 +4,7 @@ A trustworthy catalog for discovering quality open source modules for Mage-OS /
 Magento — a public website, an open JSON feed, and a Magento admin module, all built
 from one repository.
 
-![The Mage-OS Extension Directory in the Magento admin: search, filter chips and a page of package cards, with installed and version-fit badges](https://raw.githubusercontent.com/mage-os-lab/directory/main/docs/images/admin-directory.png)
+![The Mage-OS Extension Directory in the Magento admin: search, filter chips and package cards with version-fit badges; three modules are shortlisted and the tray offers to copy the list](https://raw.githubusercontent.com/mage-os-lab/directory/main/docs/images/admin-directory.png)
 
 ## Install the admin module
 
@@ -85,13 +85,18 @@ PackageMaven's test matrix. Package details open in an admin modal showing the
 directory site's detail page; external links (Packagist, the repository,
 PackageMaven) are followed only when clicked.
 
-**It never installs anything.** Marking modules builds a
-`composer require vendor/module:^x.y` command to copy and run on the server, where
-Composer resolves dependencies. The list is kept per browser tab, so a reload or a look
-at a module's details does not lose it.
+**It never installs anything.** Shortlisting modules builds a list to copy for whoever
+maintains the store — each module with the release that fits this shop, how it was
+tested, any warning, and a link to its page. Installing and testing modules is
+development work, done on a development copy, so outside developer mode the admin shows
+no Composer commands at all. The list is kept per browser tab, so a reload or a look at a module's
+details does not lose it.
 
-Two settings, both under Stores → Configuration → Advanced → Admin. **Extension
-Directory → Mode**: **Direct** (default — admin browsers load the UI bundle and catalog
+Three settings, all under Stores → Configuration → Advanced → Admin. **Extension
+Directory → Show Install Commands** (default: in developer mode; or always, or never):
+when shown, the shortlist builds a `composer require vendor/module:^x.y` command
+instead, and the framed detail pages show theirs. **Extension Directory → Mode**:
+**Direct** (default — admin browsers load the UI bundle and catalog
 straight from the directory host) or **Proxy** (the store's server fetches and caches
 the feed, revalidating against the 200-byte `manifest.json`, and serves the UI copy
 bundled with the module — fully same-origin for restricted networks or
@@ -100,6 +105,8 @@ short panel on the admin dashboard that points administrators whose role allows
 everything at the directory; its own "Hide this tip" button turns the setting off for
 everyone.
 
+![The same page in developer mode: the shortlist tray shows a copyable composer require command for the three modules](https://raw.githubusercontent.com/mage-os-lab/directory/main/docs/images/admin-directory-developer.png)
+
 The Composer package is this repository's root; `.gitattributes` strips everything
 except `composer.json`, `LICENSE`, `README.md`, and `src/` from dist archives, and CI
 guards both the archive contents and that the vendored UI bundle in
@@ -107,8 +114,9 @@ guards both the archive contents and that the vendored UI bundle in
 
 ## Key principles
 
-- **Read-only in production** — no installs from any UI; "install" means a copyable
-  `composer require` command.
+- **Read-only in production** — no installs from any UI; the admin hands on a
+  shortlist, and a copyable `composer require` appears only where a developer turns it
+  on (and on the public site's detail pages).
 - **Trust signals over completeness** — a curated, quality-tested universe rather
   than all of Packagist.
 - **Static and simple** — no servers to run; the whole system is a build artifact,

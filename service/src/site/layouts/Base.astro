@@ -32,17 +32,21 @@ const dataAsOf = staleNotice(feed);
       // frames detail pages in its own light chrome: ?scheme=light keeps the
       // frame from going dark on its own, and ?embed=1 drops the site header,
       // whose navigation makes no sense inside a modal that already names
-      // the page. Both are set before the body paints, and both are carried
-      // through in-page links so a related listing opened inside the frame
-      // stays framed.
+      // the page. ?install=0 drops the copyable composer require from detail
+      // pages, for a host that keeps install commands away from its readers
+      // (the admin, unless a developer turned them on). All are set before
+      // the body paints, and all are carried through in-page links so a
+      // related listing opened inside the frame stays framed.
       (function () {
         var params = new URLSearchParams(location.search);
         var scheme = params.get('scheme');
         var embed = params.get('embed') === '1';
+        var noInstall = params.get('install') === '0';
         if (scheme !== 'light' && scheme !== 'dark') scheme = null;
         if (scheme) document.documentElement.setAttribute('data-theme', scheme);
         if (embed) document.documentElement.setAttribute('data-embed', '');
-        if (!scheme && !embed) return;
+        if (noInstall) document.documentElement.setAttribute('data-no-install', '');
+        if (!scheme && !embed && !noInstall) return;
         document.addEventListener(
           'click',
           function (event) {
@@ -52,6 +56,7 @@ const dataAsOf = staleNotice(feed);
             var url = new URL(link.href);
             if (scheme && !url.searchParams.has('scheme')) url.searchParams.set('scheme', scheme);
             if (embed && !url.searchParams.has('embed')) url.searchParams.set('embed', '1');
+            if (noInstall && !url.searchParams.has('install')) url.searchParams.set('install', '0');
             link.href = url.href;
           },
           true,

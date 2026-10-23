@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace MageOS\ExtensionDirectory\Test\Unit\Model\Config\Source;
 
 use MageOS\ExtensionDirectory\Model\Config;
+use MageOS\ExtensionDirectory\Model\Config\Source\InstallCommands;
 use MageOS\ExtensionDirectory\Model\Config\Source\Mode;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\ArrayScopeConfig;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,23 @@ final class OptionSourcesTest extends TestCase
         foreach ($options as $option) {
             self::assertNotSame('', (string)$option['label']);
             self::assertSame($option['value'], $this->config($option['value'])->getMode());
+        }
+    }
+
+    public function testTheInstallCommandOptionsAreTheValuesConfigAcceptsBack(): void
+    {
+        $options = (new InstallCommands())->toOptionArray();
+
+        self::assertSame(
+            [Config::INSTALL_COMMANDS_DEVELOPER, Config::INSTALL_COMMANDS_ALWAYS, Config::INSTALL_COMMANDS_NEVER],
+            array_column($options, 'value'),
+            'Developer mode is the default, so it is offered first.'
+        );
+
+        foreach ($options as $option) {
+            self::assertNotSame('', (string)$option['label']);
+            $config = new Config(new ArrayScopeConfig([Config::XML_PATH_INSTALL_COMMANDS => $option['value']]));
+            self::assertSame($option['value'], $config->getInstallCommands());
         }
     }
 
