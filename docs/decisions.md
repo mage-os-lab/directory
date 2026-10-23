@@ -415,7 +415,8 @@ the tray builds the command as before; hidden, the admin frames detail pages wit
 `installCommands` mount option (default false) for this; `mosd:selection` still carries
 `command` either way. The dashboard tip stops promising "the install command".
 
-**Why:** feedback from agencies: a production admin is the wrong place to research
+**Why:** feedback from the Mage-OS maintainers on bundling the module
+(mage-os/generate-mirror-repo-js#364): a production admin is the wrong place to research
 extensions, and a copyable command beside each module tells a merchant they can install
 it themselves and it will work. Composer on a live server is how stores get broken.
 Researching modules is still useful in the admin, because that is where the shop's own

@@ -4,7 +4,7 @@ A trustworthy catalog for discovering quality open source modules for Mage-OS /
 Magento — a public website, an open JSON feed, and a Magento admin module, all built
 from one repository.
 
-![The Mage-OS Extension Directory in the Magento admin: search, filter chips and a page of package cards, with installed and version-fit badges](https://raw.githubusercontent.com/mage-os-lab/directory/main/docs/images/admin-directory.png)
+![The Mage-OS Extension Directory in the Magento admin: search, filter chips and package cards with version-fit badges; three modules are shortlisted and the tray offers to copy the list](https://raw.githubusercontent.com/mage-os-lab/directory/main/docs/images/admin-directory.png)
 
 ## Install the admin module
 
@@ -95,7 +95,8 @@ details does not lose it.
 Three settings, all under Stores → Configuration → Advanced → Admin. **Extension
 Directory → Show Install Commands** (default: in developer mode; or always, or never):
 when shown, the shortlist builds a `composer require vendor/module:^x.y` command
-instead, and the framed detail pages show theirs. **Extension Directory → Mode**: **Direct** (default — admin browsers load the UI bundle and catalog
+instead, and the framed detail pages show theirs. **Extension Directory → Mode**:
+**Direct** (default — admin browsers load the UI bundle and catalog
 straight from the directory host) or **Proxy** (the store's server fetches and caches
 the feed, revalidating against the 200-byte `manifest.json`, and serves the UI copy
 bundled with the module — fully same-origin for restricted networks or
@@ -103,6 +104,8 @@ privacy-sensitive admins). **Dashboard → Show Extension Directory Tip** (defau
 short panel on the admin dashboard that points administrators whose role allows
 everything at the directory; its own "Hide this tip" button turns the setting off for
 everyone.
+
+![The same page in developer mode: the shortlist tray shows a copyable composer require command for the three modules](https://raw.githubusercontent.com/mage-os-lab/directory/main/docs/images/admin-directory-developer.png)
 
 The Composer package is this repository's root; `.gitattributes` strips everything
 except `composer.json`, `LICENSE`, `README.md`, and `src/` from dist archives, and CI
