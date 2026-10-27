@@ -5,14 +5,14 @@
   "url": "https://github.com/customgento",
   "partnerTier": null,
   "packages": {
+    "customgento/module-default-store-code-remover-m2": {
+      "editorialPick": true
+    },
     "customgento/module-koality-m2": {
       "displayName": "Koality"
     },
     "customgento/module-youtube-no-cookie-m2": {
       "displayName": "YouTube No Cookie"
-    },
-    "customgento/module-default-store-code-remover-m2": {
-      "editorialPick": true
     }
   }
 }
