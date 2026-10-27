@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
 <!--
-    No script-src: the UI bundle always comes from this module's static files, never from the
-    directory host. connect-src serves Direct mode, where each admin browser fetches the feed
-    (data only) from the directory host; Proxy mode fetches it server-side. frame-src serves the
-    package detail modal, which frames the directory site in either mode. Moving the directory
-    to another host means changing this file and Config::BASE_URL.
+    connect-src serves Direct mode, where each admin browser fetches the feed from the
+    directory host; Proxy mode fetches it server-side. frame-src serves the package detail
+    modal, which frames the directory site in either mode. Moving the directory to another
+    host means changing this file and Config::BASE_URL.
 -->
 <csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
