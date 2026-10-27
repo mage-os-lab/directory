@@ -5,7 +5,7 @@ import {
   type SourceCategory,
   type SourcePackage,
 } from '../schema/source.js';
-import type { QualityTier } from '../schema/common.js';
+import { httpUrl, type QualityTier } from '../schema/common.js';
 import { normalizeVersion } from '../shared/version.js';
 
 /**
@@ -90,7 +90,7 @@ function toIso(date: string | null): string | null {
 
 function validUrl(url: string | null): string | null {
   if (!url) return null;
-  return z.url().safeParse(url).success ? url : null;
+  return httpUrl.safeParse(url).success ? url : null;
 }
 
 /** Split PM's comma-separated SPDX string ("OSL-3.0, AFL-3.0") into a list. */

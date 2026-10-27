@@ -16,11 +16,11 @@ class Mode implements OptionSourceInterface
         return [
             [
                 'value' => Config::MODE_DIRECT,
-                'label' => __('Direct — load from the directory host (default)'),
+                'label' => __('Direct — browsers fetch the catalog from the directory host (default)'),
             ],
             [
                 'value' => Config::MODE_PROXY,
-                'label' => __('Proxy — serve through this store'),
+                'label' => __('Proxy — this store fetches and caches the catalog'),
             ],
         ];
     }

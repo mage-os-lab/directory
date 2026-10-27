@@ -68,7 +68,7 @@ const jsonLd = {
 ---
 
 <Base title={pkg.displayName} description={pkg.description}>
-  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd).replaceAll('<', '\\u003c')} />
 
   {
     pkg.trust.hidden && (

@@ -453,8 +453,9 @@ mechanical rather than clever.
 `directory-ui.js` (ES) / `directory-ui.iife.js` (classic script, global
 `MageOSDirectory`) + `directory-ui.css` (only needed for `shadow: false` embedders —
 shadow mounts inline the styles). The build lands in `public/embed/`, so every deploy
-publishes it at `/embed/*` on the directory's own origin — that URL is what the admin
-module loads in Direct mode (Proxy mode serves the copy vendored in `src/`). It exposes:
+publishes it at `/embed/*` on the directory's own origin for other embedders. The admin
+module never loads it from there: it always serves the copy vendored in `src/` (module
+releases up to 0.3.0 loaded `/embed/` in Direct mode, so the URL stays). It exposes:
 
 ```ts
 mountDirectory(el: HTMLElement, options: {

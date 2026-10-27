@@ -434,3 +434,39 @@ hold full access, so it would gate nothing for the users in question); dropping 
 shortlist from the admin (it is the one thing the admin knows that the public site
 doesn't: what fits this shop); renaming the `mosd:install-list` session key (it would
 silently drop open lists, for a name no reader sees).
+
+## 19. The admin runs only its own bundle; the feed is data
+
+**Decision:** the admin page always loads the UI bundle from the module's own static
+files. The Direct/Proxy setting now decides only where the feed comes from: the admin's
+browser (Direct) or the store's server, cached (Proxy). `script-src` leaves the module's
+CSP whitelist; `connect-src` (Direct's feed fetch) and `frame-src` (the detail modal)
+stay. Everything the directory host serves to an admin is treated as data and held to it:
+
+- Every published URL is http(s) (`httpUrl` in `service/src/schema/common.ts`); the
+  pipeline drops anything else from PackageMaven before it can fail the build, and the
+  schemas reject it in vendor files.
+- The detail page's JSON-LD block escapes `<`, so a description cannot close its script.
+- `/api/v1/*` is served with `nosniff` and `default-src 'none'; sandbox`; the admin's
+  feed proxy sends `nosniff`.
+- The admin frames or opens a module only when the bundle's URL is a directory
+  `/packages/` page.
+
+The bundle itself renders feed values as text and builds its only links from the
+directory base URL and the package name.
+
+**Why:** in Direct mode every admin that used the default ran a script from
+`directory.mage-os.org` with full admin rights. A compromise of the host, its Cloudflare
+account or the deploy workflow would have been code execution in every such admin, and a
+file that changes on every deploy cannot be pinned with an integrity hash. It also let the
+bundle and the module's template drift apart: 0.2.0 installs changed behaviour when #25
+deployed, with no module release. The only thing loading remotely bought was shipping UI
+changes without a release, and for a module bundled with a distribution, releases are
+the right cadence. The data still updates daily, and the feed's `/api/v1/` path and
+`schemaVersion` already keep an older bundle working against it.
+
+**Rejected:** keeping Direct mode's remote bundle behind Subresource Integrity (the hash
+would have to ship with the module, which is the same as shipping the file); making
+Proxy the default (it requires outbound HTTP from every store's server, and Direct's feed
+fetch is harmless once the feed cannot execute); dropping `/embed/` from the site (0.3.0
+and earlier load it in Direct mode, and other embedders may use it).

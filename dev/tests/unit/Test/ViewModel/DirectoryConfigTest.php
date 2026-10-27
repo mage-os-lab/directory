@@ -82,26 +82,30 @@ final class DirectoryConfigTest extends TestCase
         $viewModel = $this->viewModel([]);
 
         self::assertSame(self::BASE_URL . '/api/v1/feed.json', $this->decode($viewModel->getMountConfigJson())['feedUrl']);
-        self::assertSame(self::BASE_URL . '/embed/directory-ui.iife.js', $viewModel->getBundleUrl());
     }
 
-    public function testProxyModeResolvesTheBundleThroughTheAssetRepository(): void
+    #[DataProvider('modeProvider')]
+    public function testTheBundleIsAlwaysTheModulesOwnCopy(array $settings): void
     {
-        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_PROXY]);
+        $viewModel = $this->viewModel($settings);
 
-        self::assertSame(
-            FakeAssetRepository::STATIC_BASE . 'MageOS_ExtensionDirectory/js/directory-ui.iife.js',
-            $viewModel->getBundleUrl()
-        );
+        $bundleUrl = $viewModel->getBundleUrl();
+
+        self::assertSame(FakeAssetRepository::STATIC_BASE . 'MageOS_ExtensionDirectory/js/directory-ui.iife.js', $bundleUrl);
+        self::assertStringStartsNotWith(self::BASE_URL, $bundleUrl, 'No mode runs script from the directory host.');
         self::assertSame([self::BUNDLE_ASSET_ID], $this->assetRepository->getRequestedAssetIds());
     }
 
-    public function testDirectModeResolvesTheBundleAgainstTheDirectoryOrigin(): void
+    /**
+     * @return array<string, array{array<string, string>}>
+     */
+    public static function modeProvider(): array
     {
-        $viewModel = $this->viewModel([Config::XML_PATH_MODE => Config::MODE_DIRECT]);
-
-        self::assertSame(self::BASE_URL . '/embed/directory-ui.iife.js', $viewModel->getBundleUrl());
-        self::assertSame([], $this->assetRepository->getRequestedAssetIds());
+        return [
+            'default' => [[]],
+            'direct' => [[Config::XML_PATH_MODE => Config::MODE_DIRECT]],
+            'proxy' => [[Config::XML_PATH_MODE => Config::MODE_PROXY]],
+        ];
     }
 
     public function testTheMountConfigCarriesTheHandoffContract(): void

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   buildStatus,
   categorySlug,
+  httpUrl,
   isoDateTime,
   packageName,
   partnerTier,
@@ -83,7 +84,7 @@ export const packageSummary = z.object({
   description: z.string(),
   /** PackageMaven category slugs; a trust-file override wins. */
   categories: z.array(categorySlug),
-  repositoryUrl: z.url().nullable(),
+  repositoryUrl: httpUrl.nullable(),
   latestVersion: z.string().nullable(),
   latestReleasedAt: isoDateTime.nullable(),
   /** Magento versions the latest release was verified against (PM test data). */
@@ -116,7 +117,7 @@ export const categoryEntry = z.object({
 export const vendorSummary = z.object({
   slug: vendorSlug,
   name: z.string(),
-  url: z.url().nullable(),
+  url: httpUrl.nullable(),
   partnerTier: partnerTier.nullable(),
   packageCount: z.number().int().min(0),
 });
@@ -149,17 +150,17 @@ export const packageDetail = packageSummary.extend({
   /** Sanitized at build time; null when the README is unavailable. */
   readmeHtml: z.string().nullable(),
   /** The README's source, for attribution; null whenever readmeHtml is. */
-  readmeSourceUrl: z.url().nullable(),
+  readmeSourceUrl: httpUrl.nullable(),
   /** PM's per-release test matrix, newest release first (latest included).
    * Empty when PM supplied no per-release data. */
   releases: z.array(packageRelease),
   license: z.array(z.string()).nullable(),
   links: z.object({
-    packagist: z.url(),
-    packagemaven: z.url(),
-    repository: z.url().nullable(),
-    issues: z.url().nullable(),
-    docs: z.url().nullable(),
+    packagist: httpUrl,
+    packagemaven: httpUrl,
+    repository: httpUrl.nullable(),
+    issues: httpUrl.nullable(),
+    docs: httpUrl.nullable(),
   }),
 });
 export type PackageDetail = z.infer<typeof packageDetail>;

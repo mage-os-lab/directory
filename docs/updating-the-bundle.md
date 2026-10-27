@@ -2,8 +2,9 @@
 
 `src/view/adminhtml/web/js/directory-ui.iife.js` is a **built artifact**: the embeddable
 browse/search UI compiled from `service/src/ui/` by Vite (`service/vite.ui.config.ts`).
-The module ships this copy so its Proxy mode works fully same-origin — restricted
-networks, no CSP surprises. Do not edit it by hand.
+The admin page always runs this copy, in both modes — it never loads script from the
+directory host ([decision 19](decisions.md#19-the-admin-runs-only-its-own-bundle-the-feed-is-data)).
+A UI change therefore reaches stores with a module release. Do not edit it by hand.
 
 Since the module and the bundle source live in this repository, keeping them in sync is
 a build step, not a cross-repo ritual — and CI enforces it: the **Module CI /
