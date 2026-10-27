@@ -10,6 +10,7 @@ import {
   visiblePackages,
 } from '../../../lib/data.js';
 import { withBase } from '../../../lib/base.js';
+import { partnerLabel } from '../../../../shared/partner.js';
 import { qualityLabel } from '../../../../shared/quality.js';
 
 export function getStaticPaths() {
@@ -112,7 +113,7 @@ const jsonLd = {
     )}
     <span class="badge">Build {pkg.quality.buildStatus}</span>
     {pkg.trust.partnerTier && (
-      <span class={`badge badge-partner-${pkg.trust.partnerTier}`}>{pkg.trust.partnerTier} partner</span>
+      <span class={`badge badge-partner-${pkg.trust.partnerTier}`}>{partnerLabel(pkg.trust.partnerTier)}</span>
     )}
     {pkg.quality.semver?.status === 'compliant' && (
       <span class="badge badge-semver-ok">SemVer compliant</span>

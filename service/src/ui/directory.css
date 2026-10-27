@@ -49,6 +49,11 @@
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #fdf5e7);
   --mosd-risk: var(--mosd-theme-risk, #a52626);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #fdeeee);
+  /* Tinted badges use their colour as text in light; dark lifts it toward white. */
+  --mosd-badge-text-mix: 100%;
+  /* Silver's metal, and the highlight across the metallic partner badges. */
+  --mosd-silver: #565d65;
+  --mosd-sheen: #ffffff;
   --mosd-shadow-color: 0 0 0;
   --mosd-elevation-1: 0 1px 2px rgb(var(--mosd-shadow-color) / 0.1),
     0 1px 3px 1px rgb(var(--mosd-shadow-color) / 0.06);
@@ -89,6 +94,9 @@
     --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
     --mosd-risk: var(--mosd-theme-risk, #ff8585);
     --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
+    --mosd-badge-text-mix: 65%;
+    --mosd-silver: #8c949c;
+    --mosd-sheen: #474c52;
     --mosd-shadow-color: 0 0 0;
     color-scheme: dark;
   }
@@ -115,6 +123,9 @@
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
   --mosd-risk: var(--mosd-theme-risk, #ff8585);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
+  --mosd-badge-text-mix: 65%;
+  --mosd-silver: #8c949c;
+  --mosd-sheen: #474c52;
   --mosd-shadow-color: 0 0 0;
   color-scheme: dark;
 }
@@ -544,8 +555,8 @@
   overflow: hidden;
 }
 
-/* One line for "who is behind this": the vendor, and the partner tier where
- * there is one. The earned marks are badges below the categories. */
+/* One line for "who is behind this": the vendor, and the partner tier as a
+ * badge where there is one. The earned marks are badges below the categories. */
 .mosd-card-vendor {
   align-items: center;
   color: var(--mosd-fg-muted);
@@ -565,12 +576,6 @@
 .mosd-card-vendor a:focus {
   color: var(--mosd-accent);
   text-decoration: underline;
-}
-
-.mosd-card-vendor > :not(:last-child)::after {
-  color: var(--mosd-border);
-  content: '·';
-  margin-left: 7px;
 }
 
 /* The card already carries the risk tint and rail, so the message needs no
@@ -732,14 +737,47 @@
   white-space: nowrap;
 }
 
-/* The earned marks: the pick in the accent's container, the only mark that is
+/* The earned marks: the pick filled with the accent, the only mark that is
  * a recommendation; high quality with a check; popular and trending in the
  * same soft fill, since they are counts, not verdicts. */
-.mosd-badge-pick { background: var(--mosd-accent-container); color: var(--mosd-on-accent-container); }
+.mosd-badge-pick { background: var(--mosd-accent); color: var(--mosd-on-accent); }
 .mosd-badge-high-quality { color: var(--mosd-fg); }
 .mosd-badge-high-quality::before { content: '✓ '; }
 .mosd-badge-popular { color: var(--mosd-fg); }
 .mosd-badge-trending { color: var(--mosd-fg); }
+/* Partner tiers each name a colour, mixed as the site's badges are, and a
+ * brighter star of the same metal. The top three tiers carry a sheen. */
+.mosd-trust-partner {
+  background: color-mix(in srgb, var(--mosd-partner) 14%, var(--mosd-surface));
+  color: color-mix(in srgb, var(--mosd-partner) var(--mosd-badge-text-mix), #fff);
+}
+.mosd-trust-partner::before { color: var(--mosd-partner-star); content: '★ '; }
+.mosd-trust-partner-platinum { --mosd-partner: #5b5d9e; --mosd-partner-star: #8d90e0; }
+.mosd-trust-partner-gold { --mosd-partner: #997404; --mosd-partner-star: #e8a400; }
+.mosd-trust-partner-silver { --mosd-partner: var(--mosd-silver); --mosd-partner-star: #6b737c; }
+.mosd-trust-partner-platinum,
+.mosd-trust-partner-gold,
+.mosd-trust-partner-silver {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mosd-partner) 3%, var(--mosd-surface)) 0%,
+    color-mix(in srgb, var(--mosd-partner) 10%, var(--mosd-sheen)) 40%,
+    color-mix(in srgb, var(--mosd-partner) 20%, var(--mosd-surface)) 80%,
+    color-mix(in srgb, var(--mosd-partner) 12%, var(--mosd-surface)) 100%
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mosd-partner) 25%, transparent);
+}
+/* Without text clipping, the star keeps its flat colour rather than vanishing. */
+@supports (background-clip: text) {
+  .mosd-trust-partner-platinum::before,
+  .mosd-trust-partner-gold::before,
+  .mosd-trust-partner-silver::before {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--mosd-partner-star) 45%, #fff), var(--mosd-partner-star));
+    background-clip: text;
+    color: transparent;
+  }
+}
+.mosd-trust-partner-bronze { --mosd-partner: #9a4f1c; --mosd-partner-star: #cd7f32; }
 
 /* Empty, loading and error states share one quiet, centred voice. */
 
