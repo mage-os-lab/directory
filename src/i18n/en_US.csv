@@ -1,7 +1,7 @@
 "Mage-OS Extension Directory","Mage-OS Extension Directory"
 "Extension Directory","Extension Directory"
 "Mode","Mode"
-"Where the catalog data comes from. The directory's interface always runs from this module's own copy. Direct: admin browsers fetch the catalog feed from the directory host. Proxy: this store's server fetches and caches the feed, so the page makes no requests to the directory host — for restricted networks or privacy-sensitive admins. Module detail pages open from the directory host in either mode.","Where the catalog data comes from. The directory's interface always runs from this module's own copy. Direct: admin browsers fetch the catalog feed from the directory host. Proxy: this store's server fetches and caches the feed, so the page makes no requests to the directory host — for restricted networks or privacy-sensitive admins. Module detail pages open from the directory host in either mode."
+"Use Proxy when admin browsers can't or shouldn't reach the directory host.","Use Proxy when admin browsers can't or shouldn't reach the directory host."
 "Direct — browsers fetch the catalog from the directory host (default)","Direct — browsers fetch the catalog from the directory host (default)"
 "Proxy — this store fetches and caches the catalog","Proxy — this store fetches and caches the catalog"
 "Show Install Commands","Show Install Commands"

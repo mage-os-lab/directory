@@ -20,7 +20,7 @@
                 <field id="mode" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
                     <label>Mode</label>
                     <source_model>MageOS\ExtensionDirectory\Model\Config\Source\Mode</source_model>
-                    <comment>Where the catalog data comes from. The directory's interface always runs from this module's own copy. Direct: admin browsers fetch the catalog feed from the directory host. Proxy: this store's server fetches and caches the feed, so the page makes no requests to the directory host — for restricted networks or privacy-sensitive admins. Module detail pages open from the directory host in either mode.</comment>
+                    <comment>Use Proxy when admin browsers can't or shouldn't reach the directory host.</comment>
                 </field>
                 <field id="install_commands" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
                     <label>Show Install Commands</label>
