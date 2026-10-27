@@ -5,6 +5,9 @@
   "url": "https://github.com/customgento",
   "partnerTier": null,
   "packages": {
+    "customgento/module-default-store-code-remover-m2": {
+      "editorialPick": true
+    },
     "customgento/module-koality-m2": {
       "displayName": "Koality"
     },

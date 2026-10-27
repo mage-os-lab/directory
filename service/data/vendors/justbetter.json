@@ -1,0 +1,12 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "justbetter",
+  "vendorName": "JustBetter",
+  "url": "https://github.com/justbetter",
+  "partnerTier": null,
+  "packages": {
+    "justbetter/magento2-sentry": {
+      "editorialPick": true
+    }
+  }
+}

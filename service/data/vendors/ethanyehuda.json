@@ -1,0 +1,12 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "ethanyehuda",
+  "vendorName": "Ethan Yehuda",
+  "url": "https://github.com/Ethan3600",
+  "partnerTier": null,
+  "packages": {
+    "ethanyehuda/magento2-cronjobmanager": {
+      "editorialPick": true
+    }
+  }
+}

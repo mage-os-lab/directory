@@ -1,0 +1,12 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "magepal",
+  "vendorName": "MagePal",
+  "url": "https://github.com/magepal",
+  "partnerTier": null,
+  "packages": {
+    "magepal/magento2-gmailsmtpapp": {
+      "editorialPick": true
+    }
+  }
+}

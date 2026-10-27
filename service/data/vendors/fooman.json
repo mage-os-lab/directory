@@ -1,0 +1,12 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "fooman",
+  "vendorName": "Fooman",
+  "url": "https://github.com/fooman",
+  "partnerTier": null,
+  "packages": {
+    "fooman/emailattachments-m2": {
+      "editorialPick": true
+    }
+  }
+}

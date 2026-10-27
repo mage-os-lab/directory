@@ -1,0 +1,12 @@
+{
+  "$schema": "../vendor.schema.json",
+  "vendor": "ghoster",
+  "vendorName": "Ghoster",
+  "url": "https://github.com/tuyennn",
+  "partnerTier": null,
+  "packages": {
+    "ghoster/module-outofstockatlast": {
+      "editorialPick": true
+    }
+  }
+}
