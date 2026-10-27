@@ -31,6 +31,9 @@
   --danger-border: #ffa8a8;
   /* Badge text is the badge colour itself in light; dark lifts it toward white. */
   --badge-text-mix: 100%;
+  /* Silver's metal, and the highlight across the metallic partner badges. */
+  --silver: #565d65;
+  --sheen: #ffffff;
   --radius: 12px;
   --max-width: 1040px;
   color-scheme: light;
@@ -59,6 +62,8 @@
     --danger-bg: #33191b;
     --danger-border: #5c2a2d;
     --badge-text-mix: 65%;
+    --silver: #8c949c;
+    --sheen: #474c52;
     color-scheme: dark;
   }
 }
@@ -85,6 +90,8 @@
   --danger-bg: #33191b;
   --danger-border: #5c2a2d;
   --badge-text-mix: 65%;
+  --silver: #8c949c;
+  --sheen: #474c52;
   color-scheme: dark;
 }
 
@@ -369,12 +376,33 @@ html[data-no-install] .install-block {
 .badge-warning { --badge: #c92a2a; }
 .badge-partner-platinum { --badge: #5b5d9e; --star: #8d90e0; }
 .badge-partner-gold { --badge: #997404; --star: #e8a400; }
-.badge-partner-silver { --badge: #636a72; --star: #9aa3ad; }
+.badge-partner-silver { --badge: var(--silver); --star: #6b737c; }
+/* The top three tiers carry a sheen; bronze stays flat. */
+.badge-partner-platinum,
+.badge-partner-gold,
+.badge-partner-silver {
+  background: linear-gradient(
+    115deg,
+    color-mix(in srgb, var(--badge) 18%, var(--bg)) 0%,
+    color-mix(in srgb, var(--badge) 15%, var(--sheen)) 40%,
+    color-mix(in srgb, var(--badge) 28%, var(--bg)) 62%,
+    color-mix(in srgb, var(--badge) 12%, var(--bg)) 100%
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--badge) 35%, transparent);
+}
 .badge-partner-bronze { --badge: #9a4f1c; --star: #cd7f32; }
 .badge-partner-platinum::before,
 .badge-partner-gold::before,
 .badge-partner-silver::before,
 .badge-partner-bronze::before { color: var(--star); content: '★ '; }
+.badge-partner-platinum::before,
+.badge-partner-gold::before,
+.badge-partner-silver::before {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--star) 45%, #fff), var(--star));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 .badge-semver-ok { --badge: #087f5b; }
 .badge-semver-violations { --badge: #a61e4d; }
 .badge-abandoned { background: var(--fg); color: var(--bg); }
