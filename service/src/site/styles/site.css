@@ -395,13 +395,15 @@ html[data-no-install] .install-block {
 .badge-partner-gold::before,
 .badge-partner-silver::before,
 .badge-partner-bronze::before { color: var(--star); content: '★ '; }
-.badge-partner-platinum::before,
-.badge-partner-gold::before,
-.badge-partner-silver::before {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--star) 45%, #fff), var(--star));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* Without text clipping, the star keeps its flat colour rather than vanishing. */
+@supports (background-clip: text) {
+  .badge-partner-platinum::before,
+  .badge-partner-gold::before,
+  .badge-partner-silver::before {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--star) 45%, #fff), var(--star));
+    background-clip: text;
+    color: transparent;
+  }
 }
 .badge-semver-ok { --badge: #087f5b; }
 .badge-semver-violations { --badge: #a61e4d; }
