@@ -759,13 +759,13 @@
 .mosd-trust-partner-gold,
 .mosd-trust-partner-silver {
   background: linear-gradient(
-    115deg,
-    color-mix(in srgb, var(--mosd-partner) 18%, var(--mosd-surface)) 0%,
-    color-mix(in srgb, var(--mosd-partner) 15%, var(--mosd-sheen)) 40%,
-    color-mix(in srgb, var(--mosd-partner) 28%, var(--mosd-surface)) 62%,
+    180deg,
+    color-mix(in srgb, var(--mosd-partner) 3%, var(--mosd-surface)) 0%,
+    color-mix(in srgb, var(--mosd-partner) 10%, var(--mosd-sheen)) 40%,
+    color-mix(in srgb, var(--mosd-partner) 20%, var(--mosd-surface)) 80%,
     color-mix(in srgb, var(--mosd-partner) 12%, var(--mosd-surface)) 100%
   );
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mosd-partner) 35%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mosd-partner) 25%, transparent);
 }
 /* Without text clipping, the star keeps its flat colour rather than vanishing. */
 @supports (background-clip: text) {
