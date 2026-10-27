@@ -49,6 +49,9 @@
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #fdf5e7);
   --mosd-risk: var(--mosd-theme-risk, #a52626);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #fdeeee);
+  /* The partner tier's gold, as the site's partner badge draws it. */
+  --mosd-partner: var(--mosd-theme-partner, #997404);
+  --mosd-partner-soft: var(--mosd-theme-partner-soft, #f1ecdc);
   --mosd-shadow-color: 0 0 0;
   --mosd-elevation-1: 0 1px 2px rgb(var(--mosd-shadow-color) / 0.1),
     0 1px 3px 1px rgb(var(--mosd-shadow-color) / 0.06);
@@ -89,6 +92,8 @@
     --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
     --mosd-risk: var(--mosd-theme-risk, #ff8585);
     --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
+    --mosd-partner: var(--mosd-theme-partner, #bda55c);
+    --mosd-partner-soft: var(--mosd-theme-partner-soft, #302b1b);
     --mosd-shadow-color: 0 0 0;
     color-scheme: dark;
   }
@@ -115,6 +120,8 @@
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
   --mosd-risk: var(--mosd-theme-risk, #ff8585);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
+  --mosd-partner: var(--mosd-theme-partner, #bda55c);
+  --mosd-partner-soft: var(--mosd-theme-partner-soft, #302b1b);
   --mosd-shadow-color: 0 0 0;
   color-scheme: dark;
 }
@@ -544,8 +551,8 @@
   overflow: hidden;
 }
 
-/* One line for "who is behind this": the vendor, and the partner tier where
- * there is one. The earned marks are badges below the categories. */
+/* One line for "who is behind this": the vendor, and the partner tier as a
+ * badge where there is one. The earned marks are badges below the categories. */
 .mosd-card-vendor {
   align-items: center;
   color: var(--mosd-fg-muted);
@@ -565,12 +572,6 @@
 .mosd-card-vendor a:focus {
   color: var(--mosd-accent);
   text-decoration: underline;
-}
-
-.mosd-card-vendor > :not(:last-child)::after {
-  color: var(--mosd-border);
-  content: '·';
-  margin-left: 7px;
 }
 
 /* The card already carries the risk tint and rail, so the message needs no
@@ -732,14 +733,16 @@
   white-space: nowrap;
 }
 
-/* The earned marks: the pick in the accent's container, the only mark that is
+/* The earned marks: the pick filled with the accent, the only mark that is
  * a recommendation; high quality with a check; popular and trending in the
  * same soft fill, since they are counts, not verdicts. */
-.mosd-badge-pick { background: var(--mosd-accent-container); color: var(--mosd-on-accent-container); }
+.mosd-badge-pick { background: var(--mosd-accent); color: var(--mosd-on-accent); }
 .mosd-badge-high-quality { color: var(--mosd-fg); }
 .mosd-badge-high-quality::before { content: '✓ '; }
 .mosd-badge-popular { color: var(--mosd-fg); }
 .mosd-badge-trending { color: var(--mosd-fg); }
+.mosd-trust-partner { background: var(--mosd-partner-soft); color: var(--mosd-partner); }
+.mosd-trust-partner::before { color: #e8a400; content: '★ '; }
 
 /* Empty, loading and error states share one quiet, centred voice. */
 

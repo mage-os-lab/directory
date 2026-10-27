@@ -359,17 +359,22 @@ html[data-no-install] .install-block {
 .badge-ready-to-install { --badge: #997404; }
 .badge-needs-help { --badge: #c92a2a; }
 .badge-untested { --badge: #495057; }
-/* The earned marks on listing cards, as the island draws them: the pick in
- * the accent's container, high quality with a check, "Popular" in the plain
+/* The earned marks on listing cards, as the island draws them: the pick
+ * filled with the accent, high quality with a check, "Popular" in the plain
  * badge tone. */
 .badge-high-quality { background: var(--bg-soft); color: var(--fg); }
 .badge-high-quality::before { content: '✓ '; }
-.badge-pick { background: var(--accent-container); color: var(--on-accent-container); }
+.badge-pick { background: var(--accent); color: var(--bg); }
+.badge-pick::before { content: '★ '; }
 .badge-warning { --badge: #c92a2a; }
 .badge-partner-platinum,
 .badge-partner-gold,
 .badge-partner-silver,
 .badge-partner-bronze { --badge: #997404; }
+.badge-partner-platinum::before,
+.badge-partner-gold::before,
+.badge-partner-silver::before,
+.badge-partner-bronze::before { color: #e8a400; content: '★ '; }
 .badge-semver-ok { --badge: #087f5b; }
 .badge-semver-violations { --badge: #a61e4d; }
 .badge-abandoned { background: var(--fg); color: var(--bg); }

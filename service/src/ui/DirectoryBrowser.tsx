@@ -11,6 +11,7 @@ import {
   isTrending,
   monthlyDownloadsAtPercentile,
 } from '../shared/merits.js';
+import { partnerLabel } from '../shared/partner.js';
 import { qualityLabel } from '../shared/quality.js';
 import { compareVersions, isNewer } from '../shared/version.js';
 import type {
@@ -961,9 +962,8 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                     <span>{vendorNames.get(pkg.vendor) ?? pkg.vendor}</span>
                   )}
                   {pkg.trust.partnerTier && (
-                    <span class="mosd-trust-partner">
-                      {pkg.trust.partnerTier[0].toUpperCase() + pkg.trust.partnerTier.slice(1)}{' '}
-                      partner
+                    <span class="mosd-badge mosd-trust-partner">
+                      {partnerLabel(pkg.trust.partnerTier)}
                     </span>
                   )}
                 </p>
