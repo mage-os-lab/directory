@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   buildStatus,
   categorySlug,
+  httpUrl,
   isoDateTime,
   packageName,
   qualityTier,
@@ -37,7 +38,7 @@ export const sourcePackage = z.object({
   description: z.string().default(''),
   /** PM's category slugs, published as the package's categories. */
   rawCategories: z.array(z.string()).default([]),
-  repositoryUrl: z.url().nullable().default(null),
+  repositoryUrl: httpUrl.nullable().default(null),
   latestVersion: z.string().nullable().default(null),
   latestReleasedAt: isoDateTime.nullable().default(null),
   /** Magento versions PM verified the *latest* release against, e.g. ["2.4.7"]. */
@@ -80,7 +81,7 @@ export const sourcePackage = z.object({
     .nullable()
     .default(null),
   /** The package's page on package-maven.com, as reported by PM itself. */
-  pmUrl: z.url().nullable().default(null),
+  pmUrl: httpUrl.nullable().default(null),
 });
 export type SourcePackage = z.infer<typeof sourcePackage>;
 

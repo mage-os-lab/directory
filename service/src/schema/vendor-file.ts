@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   categorySlug,
+  httpUrl,
   isoDate,
   packageName,
   partnerTier,
@@ -19,7 +20,7 @@ export const packageWarning = z.object({
   message: z.string().min(10),
   date: isoDate,
   /** Link to the evidence: issue, advisory, discussion. Required for derank/hide. */
-  evidenceUrl: z.url().optional(),
+  evidenceUrl: httpUrl.optional(),
 });
 export type PackageWarning = z.infer<typeof packageWarning>;
 
@@ -31,8 +32,8 @@ export const packageTrustEntry = z
     editorialPick: z.boolean().optional(),
     warnings: z.array(packageWarning).optional(),
     /** Extra links surfaced on the detail page. */
-    docsUrl: z.url().optional(),
-    issuesUrl: z.url().optional(),
+    docsUrl: httpUrl.optional(),
+    issuesUrl: httpUrl.optional(),
   })
   .strict();
 export type PackageTrustEntry = z.infer<typeof packageTrustEntry>;
@@ -47,7 +48,7 @@ export const vendorFile = z
     $schema: z.string().optional(),
     vendor: vendorSlug,
     vendorName: z.string().min(1),
-    url: z.url().optional(),
+    url: httpUrl.optional(),
     partnerTier: partnerTier.nullable().default(null),
     packages: z.record(packageName, packageTrustEntry).default({}),
   })

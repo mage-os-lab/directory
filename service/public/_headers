@@ -1,11 +1,16 @@
 # Cloudflare Pages response headers.
 # CORS-open /api/v1/* is what lets the embeddable bundle (Magento admin, other
 # origins) fetch the feed; the short max-age keeps manifest.json's freshness
-# check honest instead of pinned at the edge.
+# check honest instead of pinned at the edge. The API is data only: nosniff
+# and a sandboxing CSP mean no browser treats a response as script or a page.
 /api/v1/*
   Access-Control-Allow-Origin: *
   Cache-Control: public, max-age=300, must-revalidate
+  X-Content-Type-Options: nosniff
+  Content-Security-Policy: default-src 'none'; sandbox
 
+# The admin module ships its own copy of the bundle; these URLs stay for other
+# embedders and for module releases up to 0.3.0, which load them in Direct mode.
 # The embeddable bundle lives at a stable (unfingerprinted) URL, so it gets
 # the same short max-age. CORS is required for cross-origin ES-module imports
 # of directory-ui.js (a classic <script src> of the IIFE doesn't need it, but

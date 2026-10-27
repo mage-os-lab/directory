@@ -34,6 +34,8 @@ class Index extends Action implements HttpGetActionInterface
         /** @var Raw $result */
         $result = $this->resultFactory->create(ResultFactory::TYPE_RAW);
         $result->setHeader('Content-Type', 'application/json', true);
+        // The feed is data: a browser must never sniff it into script or a page.
+        $result->setHeader('X-Content-Type-Options', 'nosniff', true);
         // The body already comes out of Magento's cache; letting the browser cache it on top of
         // that would hide the staleness signalled below.
         $result->setHeader('Cache-Control', 'private, max-age=0, no-store', true);

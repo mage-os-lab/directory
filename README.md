@@ -95,12 +95,12 @@ details does not lose it.
 Three settings, all under Stores → Configuration → Advanced → Admin. **Extension
 Directory → Show Install Commands** (default: in developer mode; or always, or never):
 when shown, the shortlist builds a `composer require vendor/module:^x.y` command
-instead, and the framed detail pages show theirs. **Extension Directory → Mode**:
-**Direct** (default — admin browsers load the UI bundle and catalog
-straight from the directory host) or **Proxy** (the store's server fetches and caches
-the feed, revalidating against the 200-byte `manifest.json`, and serves the UI copy
-bundled with the module — fully same-origin for restricted networks or
-privacy-sensitive admins). **Dashboard → Show Extension Directory Tip** (default on): a
+instead, and the framed detail pages show theirs. **Extension Directory → Mode**
+decides where the catalog data comes from: **Direct** (default — admin browsers fetch the
+feed from the directory host) or **Proxy** (the store's server fetches and caches it,
+revalidating against the 200-byte `manifest.json` — no requests to the directory host,
+for restricted networks or privacy-sensitive admins). Either way the interface runs
+from the copy bundled with the module; the admin never loads script from the directory. **Dashboard → Show Extension Directory Tip** (default on): a
 short panel on the admin dashboard that points administrators whose role allows
 everything at the directory; its own "Hide this tip" button turns the setting off for
 everyone.

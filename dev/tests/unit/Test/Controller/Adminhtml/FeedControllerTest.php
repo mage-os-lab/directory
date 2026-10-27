@@ -36,6 +36,7 @@ final class FeedControllerTest extends TestCase
 
         self::assertSame('application/json', $raw->getHeader('Content-Type'));
         self::assertSame('private, max-age=0, no-store', $raw->getHeader('Cache-Control'));
+        self::assertSame('nosniff', $raw->getHeader('X-Content-Type-Options'));
         self::assertTrue($raw->isHeaderReplacing('Content-Type'));
         self::assertTrue($raw->isHeaderReplacing('Cache-Control'));
         self::assertSame([ResultFactory::TYPE_RAW], $this->resultFactory->getRequestedTypes());

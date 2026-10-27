@@ -19,7 +19,6 @@ use Magento\Framework\View\Element\Block\ArgumentInterface;
 class DirectoryConfig implements ArgumentInterface
 {
     private const BUNDLE_ASSET_ID = 'MageOS_ExtensionDirectory::js/directory-ui.iife.js';
-    private const REMOTE_BUNDLE_PATH = '/embed/directory-ui.iife.js';
     private const REMOTE_FEED_PATH = '/api/v1/feed.json';
     private const PROXY_FEED_ROUTE = 'mageos_directory/feed/index';
 
@@ -46,13 +45,13 @@ class DirectoryConfig implements ArgumentInterface
     ) {
     }
 
+    /**
+     * The copy that ships with this module, in either mode: the admin never runs script from the
+     * directory host. The mode only decides where the feed, which is data, comes from.
+     */
     public function getBundleUrl(): string
     {
-        if ($this->config->isProxy()) {
-            return $this->assetRepository->getUrl(self::BUNDLE_ASSET_ID);
-        }
-
-        return $this->config->getBaseUrl() . self::REMOTE_BUNDLE_PATH;
+        return $this->assetRepository->getUrl(self::BUNDLE_ASSET_ID);
     }
 
     /**

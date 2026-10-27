@@ -223,6 +223,17 @@ describe('normalizePmApiPackage', () => {
     ]);
   });
 
+  it('drops links that are not http(s), so they never reach an href', () => {
+    const source = normalizePmApiPackage(
+      apiPackage({
+        repository_url: 'javascript:alert(document.domain)',
+        links: { web: 'data:text/html,<script>alert(1)</script>' },
+      }),
+    );
+    expect(source?.repositoryUrl).toBeNull();
+    expect(source?.pmUrl).toBeNull();
+  });
+
   it('attributes test results to the tested version when it lags the latest release', () => {
     const source = normalizePmApiPackage(
       apiPackage({

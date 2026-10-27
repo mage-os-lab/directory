@@ -21,6 +21,12 @@ export const categorySlug = z
   .string()
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'must be a lowercase kebab-case slug');
 
+/**
+ * A link the site and the admin render as an href. http(s) only: z.url() on
+ * its own accepts javascript: and data: URLs.
+ */
+export const httpUrl = z.url({ protocol: /^https?$/ });
+
 /** ISO 8601 timestamp. */
 export const isoDateTime = z.iso.datetime();
 

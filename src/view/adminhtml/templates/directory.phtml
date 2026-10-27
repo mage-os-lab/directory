@@ -18,7 +18,7 @@ $packagistUrl = 'https://packagist.org/';
 
 // escapeJs takes a string, and strict_types will not coerce a Phrase into one.
 $loadFailureMessage = $escaper->escapeJs(
-    (string)__('The directory UI failed to load. Check that this browser can reach the script, then reload the page.')
+    (string)__('The directory UI failed to load. Reload the page; if it keeps failing, check that the static files for this module are deployed.')
 );
 $detailFrameTitle = $escaper->escapeJs((string)__('Module details'));
 $markLabel = $escaper->escapeJs((string)__('Shortlist'));
@@ -169,6 +169,12 @@ $initJs = <<<JS
     // reader's own click inside that page.
     host.addEventListener('mosd:select', function (event) {
         var detail = event.detail;
+
+        // The URL is built from feed data, so only a directory package page is framed or opened.
+        if (typeof detail.packageUrl !== 'string'
+            || detail.packageUrl.indexOf(config.baseUrl + '/packages/') !== 0) {
+            return;
+        }
 
         if (typeof require !== 'function') {
             window.open(detail.packageUrl, '_blank', 'noopener');
