@@ -10,6 +10,9 @@
     },
     "customgento/module-youtube-no-cookie-m2": {
       "displayName": "YouTube No Cookie"
+    },
+    "customgento/module-default-store-code-remover-m2": {
+      "editorialPick": true
     }
   }
 }
