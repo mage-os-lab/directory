@@ -367,14 +367,14 @@ html[data-no-install] .install-block {
 .badge-pick { background: var(--accent); color: var(--bg); }
 .badge-pick::before { content: '★ '; }
 .badge-warning { --badge: #c92a2a; }
-.badge-partner-platinum,
-.badge-partner-gold,
-.badge-partner-silver,
-.badge-partner-bronze { --badge: #997404; }
+.badge-partner-platinum { --badge: #5b5d9e; --star: #8d90e0; }
+.badge-partner-gold { --badge: #997404; --star: #e8a400; }
+.badge-partner-silver { --badge: #636a72; --star: #9aa3ad; }
+.badge-partner-bronze { --badge: #9a4f1c; --star: #cd7f32; }
 .badge-partner-platinum::before,
 .badge-partner-gold::before,
 .badge-partner-silver::before,
-.badge-partner-bronze::before { color: #e8a400; content: '★ '; }
+.badge-partner-bronze::before { color: var(--star); content: '★ '; }
 .badge-semver-ok { --badge: #087f5b; }
 .badge-semver-violations { --badge: #a61e4d; }
 .badge-abandoned { background: var(--fg); color: var(--bg); }

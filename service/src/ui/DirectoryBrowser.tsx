@@ -962,7 +962,7 @@ export function DirectoryBrowser(props: DirectoryBrowserProps) {
                     <span>{vendorNames.get(pkg.vendor) ?? pkg.vendor}</span>
                   )}
                   {pkg.trust.partnerTier && (
-                    <span class="mosd-badge mosd-trust-partner">
+                    <span class={`mosd-badge mosd-trust-partner mosd-trust-partner-${pkg.trust.partnerTier}`}>
                       {partnerLabel(pkg.trust.partnerTier)}
                     </span>
                   )}

@@ -49,9 +49,8 @@
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #fdf5e7);
   --mosd-risk: var(--mosd-theme-risk, #a52626);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #fdeeee);
-  /* The partner tier's gold, as the site's partner badge draws it. */
-  --mosd-partner: var(--mosd-theme-partner, #997404);
-  --mosd-partner-soft: var(--mosd-theme-partner-soft, #f1ecdc);
+  /* Tinted badges use their colour as text in light; dark lifts it toward white. */
+  --mosd-badge-text-mix: 100%;
   --mosd-shadow-color: 0 0 0;
   --mosd-elevation-1: 0 1px 2px rgb(var(--mosd-shadow-color) / 0.1),
     0 1px 3px 1px rgb(var(--mosd-shadow-color) / 0.06);
@@ -92,8 +91,7 @@
     --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
     --mosd-risk: var(--mosd-theme-risk, #ff8585);
     --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
-    --mosd-partner: var(--mosd-theme-partner, #bda55c);
-    --mosd-partner-soft: var(--mosd-theme-partner-soft, #302b1b);
+    --mosd-badge-text-mix: 65%;
     --mosd-shadow-color: 0 0 0;
     color-scheme: dark;
   }
@@ -120,8 +118,7 @@
   --mosd-warn-soft: var(--mosd-theme-warn-soft, #302614);
   --mosd-risk: var(--mosd-theme-risk, #ff8585);
   --mosd-risk-soft: var(--mosd-theme-risk-soft, #33191b);
-  --mosd-partner: var(--mosd-theme-partner, #bda55c);
-  --mosd-partner-soft: var(--mosd-theme-partner-soft, #302b1b);
+  --mosd-badge-text-mix: 65%;
   --mosd-shadow-color: 0 0 0;
   color-scheme: dark;
 }
@@ -741,8 +738,17 @@
 .mosd-badge-high-quality::before { content: '✓ '; }
 .mosd-badge-popular { color: var(--mosd-fg); }
 .mosd-badge-trending { color: var(--mosd-fg); }
-.mosd-trust-partner { background: var(--mosd-partner-soft); color: var(--mosd-partner); }
-.mosd-trust-partner::before { color: #e8a400; content: '★ '; }
+/* Partner tiers each name a colour, mixed as the site's badges are, and a
+ * brighter star of the same metal. */
+.mosd-trust-partner {
+  background: color-mix(in srgb, var(--mosd-partner) 14%, var(--mosd-surface));
+  color: color-mix(in srgb, var(--mosd-partner) var(--mosd-badge-text-mix), #fff);
+}
+.mosd-trust-partner::before { color: var(--mosd-partner-star); content: '★ '; }
+.mosd-trust-partner-platinum { --mosd-partner: #5b5d9e; --mosd-partner-star: #8d90e0; }
+.mosd-trust-partner-gold { --mosd-partner: #997404; --mosd-partner-star: #e8a400; }
+.mosd-trust-partner-silver { --mosd-partner: #636a72; --mosd-partner-star: #9aa3ad; }
+.mosd-trust-partner-bronze { --mosd-partner: #9a4f1c; --mosd-partner-star: #cd7f32; }
 
 /* Empty, loading and error states share one quiet, centred voice. */
 
