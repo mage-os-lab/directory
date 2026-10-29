@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace MageOS\ExtensionDirectory\Model\Feed;
 
-use MageOS\ExtensionDirectory\Model\Cache\Type as DirectoryCache;
 use MageOS\ExtensionDirectory\Model\Config;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\HTTP\ClientFactory;
 use Psr\Log\LoggerInterface;
 
@@ -30,7 +30,7 @@ class FeedProvider
 
     public function __construct(
         private readonly Config $config,
-        private readonly DirectoryCache $cache,
+        private readonly CacheInterface $cache,
         private readonly ClientFactory $httpClientFactory,
         private readonly LoggerInterface $logger
     ) {
@@ -63,7 +63,7 @@ class FeedProvider
         $body = $this->fetchFeed();
         if ($body !== null) {
             $fetchedAt = time();
-            $this->cache->save($body, self::BODY_CACHE_ID, [DirectoryCache::CACHE_TAG], self::CACHE_LIFETIME);
+            $this->cache->save($body, self::BODY_CACHE_ID, [Config::CACHE_TAG], self::CACHE_LIFETIME);
             $this->saveMeta($fetchedAt, hash('sha256', $body));
 
             return new FeedResult($body, $fetchedAt, false);
@@ -133,7 +133,7 @@ class FeedProvider
         $this->cache->save(
             (string)json_encode(['fetchedAt' => $fetchedAt, 'feedHash' => $feedHash]),
             self::META_CACHE_ID,
-            [DirectoryCache::CACHE_TAG],
+            [Config::CACHE_TAG],
             self::CACHE_LIFETIME
         );
     }

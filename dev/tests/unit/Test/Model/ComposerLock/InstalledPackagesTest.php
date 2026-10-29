@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace MageOS\ExtensionDirectory\Test\Unit\Model\ComposerLock;
 
-use MageOS\ExtensionDirectory\Model\Cache\Type as DirectoryCache;
 use MageOS\ExtensionDirectory\Model\ComposerLock\InstalledPackages;
+use MageOS\ExtensionDirectory\Model\Config;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\CollectingLogger;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeDirectoryRead;
 use MageOS\ExtensionDirectory\Test\Unit\Fake\FakeFilesystem;
@@ -214,7 +214,7 @@ final class InstalledPackagesTest extends TestCase
         $writes = $this->cache->getWrites();
 
         self::assertCount(1, $writes);
-        self::assertSame([DirectoryCache::CACHE_TAG], $writes[0]['tags']);
+        self::assertSame([Config::CACHE_TAG], $writes[0]['tags']);
         self::assertGreaterThan(0, $writes[0]['lifetime']);
     }
 

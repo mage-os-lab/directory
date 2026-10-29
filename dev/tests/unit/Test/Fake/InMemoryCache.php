@@ -3,15 +3,12 @@ declare(strict_types=1);
 
 namespace MageOS\ExtensionDirectory\Test\Unit\Fake;
 
-use MageOS\ExtensionDirectory\Model\Cache\Type as DirectoryCache;
+use Magento\Framework\App\CacheInterface;
 
 /**
- * The module's cache type backed by an array instead of a cache frontend.
- *
- * It extends the real cache type so the classes under test keep their declared dependency, but it
- * replaces every storage method and skips the parent constructor, which would want a frontend pool.
+ * Magento's application cache backed by an array instead of a cache frontend.
  */
-final class InMemoryCache extends DirectoryCache
+final class InMemoryCache implements CacheInterface
 {
     /**
      * @var array<string, string>
@@ -23,14 +20,12 @@ final class InMemoryCache extends DirectoryCache
      */
     private array $writes = [];
 
-    /**
-     * Deliberately does not call the parent constructor: there is no frontend pool to hand it.
-     */
-    public function __construct()
+    public function getFrontend()
     {
+        throw new \LogicException('InMemoryCache has no cache frontend.');
     }
 
-    public function save($data, $identifier, array $tags = [], $lifeTime = null)
+    public function save($data, $identifier, $tags = [], $lifeTime = null)
     {
         $this->entries[(string)$identifier] = (string)$data;
         $this->writes[] = ['id' => (string)$identifier, 'tags' => $tags, 'lifetime' => $lifeTime];
@@ -50,7 +45,7 @@ final class InMemoryCache extends DirectoryCache
         return true;
     }
 
-    public function clean($mode = 'all', array $tags = [])
+    public function clean($tags = [])
     {
         $this->entries = [];
 

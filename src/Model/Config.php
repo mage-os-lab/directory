@@ -42,6 +42,11 @@ class Config
     public const CACHE_TTL = 3600;
 
     /**
+     * Tag on every entry the module writes to Magento's cache.
+     */
+    public const CACHE_TAG = 'MAGEOS_EXTENSION_DIRECTORY';
+
+    /**
      * Outbound HTTP timeout in seconds.
      */
     public const HTTP_TIMEOUT = 10;

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace MageOS\ExtensionDirectory\Test\Unit\Model\Feed;
 
-use MageOS\ExtensionDirectory\Model\Cache\Type as DirectoryCache;
 use MageOS\ExtensionDirectory\Model\Config;
 use MageOS\ExtensionDirectory\Model\Feed\FeedProvider;
 use MageOS\ExtensionDirectory\Model\Feed\FeedUnavailableException;
@@ -286,7 +285,7 @@ final class FeedProviderTest extends TestCase
 
         self::assertCount(2, $writes, 'The body and its metadata are stored separately.');
         foreach ($writes as $write) {
-            self::assertSame([DirectoryCache::CACHE_TAG], $write['tags']);
+            self::assertSame([Config::CACHE_TAG], $write['tags']);
             self::assertGreaterThan(Config::CACHE_TTL, $write['lifetime'], 'A stale copy has to outlive the TTL.');
         }
     }
