@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 namespace MageOS\ExtensionDirectory\Model\ComposerLock;
 
-use MageOS\ExtensionDirectory\Model\Cache\Type as DirectoryCache;
+use MageOS\ExtensionDirectory\Model\Config;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Filesystem;
 use Psr\Log\LoggerInterface;
@@ -19,7 +20,7 @@ class InstalledPackages
 
     public function __construct(
         private readonly Filesystem $filesystem,
-        private readonly DirectoryCache $cache,
+        private readonly CacheInterface $cache,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -53,7 +54,7 @@ class InstalledPackages
             $this->cache->save(
                 (string)json_encode($map),
                 $cacheId,
-                [DirectoryCache::CACHE_TAG],
+                [Config::CACHE_TAG],
                 self::CACHE_LIFETIME
             );
 
